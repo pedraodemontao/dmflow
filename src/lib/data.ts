@@ -118,12 +118,23 @@ const DM_WINDOW_MS = 24 * 60 * 60 * 1000
 /** `windowOpen` é calculado aqui para a página não precisar de relógio no render. */
 export type ContactRow = Contact & { windowOpen: boolean }
 
-export async function getContacts(limit = 50): Promise<ContactRow[]> {
-  const { data } = await supabaseAdmin
-    .from('contacts')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(limit)
+export async function getContacts(
+  options: { search?: string; tag?: string; limit?: number } = {},
+): Promise<ContactRow[]> {
+  let query = supabaseAdmin.from('contacts').select('*')
+
+  const search = options.search?.trim()
+  if (search) {
+    // `,` separa os OR do PostgREST, então vírgula na busca quebraria a query.
+    const safe = search.replace(/[,()]/g, ' ').trim()
+    if (safe) query = query.or(`username.ilike.%${safe}%,name.ilike.%${safe}%`)
+  }
+
+  if (options.tag) query = query.contains('tags', [options.tag])
+
+  const { data } = await query
+    .order('last_message_at', { ascending: false, nullsFirst: false })
+    .limit(options.limit ?? 100)
 
   const now = Date.now()
   return ((data ?? []) as Contact[]).map((contact) => ({
@@ -132,6 +143,45 @@ export async function getContacts(limit = 50): Promise<ContactRow[]> {
       ? now - new Date(contact.last_inbound_at).getTime() < DM_WINDOW_MS
       : false,
   }))
+}
+
+/** Todas as etiquetas em uso, para o filtro da lista. */
+export async function getAllTags(): Promise<string[]> {
+  const { data } = await supabaseAdmin.from('contacts').select('tags')
+  const tags = new Set<string>()
+  for (const row of (data ?? []) as Array<{ tags: string[] }>) {
+    for (const tag of row.tags ?? []) tags.add(tag)
+  }
+  return [...tags].sort((a, b) => a.localeCompare(b, 'pt-BR'))
+}
+
+export interface ContactDetail {
+  contact: ContactRow
+  messages: ThreadMessage[]
+  runs: Array<{ id: string; status: string; created_at: string; flowName: string }>
+}
+
+export async function getContactDetail(contactId: string): Promise<ContactDetail | null> {
+  const thread = await getThread(contactId, 30)
+  if (!thread) return null
+
+  const { data: runs } = await supabaseAdmin
+    .from('flow_runs')
+    .select('id, status, created_at, flows(name)')
+    .eq('contact_id', contactId)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  return {
+    contact: thread.contact,
+    messages: thread.messages,
+    runs: ((runs ?? []) as unknown as Array<{
+      id: string
+      status: string
+      created_at: string
+      flows: { name: string } | null
+    }>).map(({ flows, ...rest }) => ({ ...rest, flowName: flows?.name ?? 'fluxo removido' })),
+  }
 }
 
 export interface InboxItem {

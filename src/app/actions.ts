@@ -226,6 +226,83 @@ export async function markThreadRead(contactId: string): Promise<ActionResult> {
   return { ok: true }
 }
 
+export async function updateContactTags(
+  contactId: string,
+  tags: string[],
+): Promise<ActionResult> {
+  const clean = [...new Set(tags.map((tag) => tag.trim()).filter(Boolean))]
+
+  const { error } = await supabaseAdmin
+    .from('contacts')
+    .update({ tags: clean })
+    .eq('id', contactId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/contatos')
+  revalidatePath(`/contatos/${contactId}`)
+  return { ok: true }
+}
+
+export async function saveContactField(
+  contactId: string,
+  key: string,
+  value: string,
+): Promise<ActionResult> {
+  const cleanKey = key.trim()
+  if (!cleanKey) return { ok: false, error: 'Dê um nome ao campo.' }
+
+  const { data } = await supabaseAdmin
+    .from('contacts')
+    .select('fields')
+    .eq('id', contactId)
+    .maybeSingle()
+
+  if (!data) return { ok: false, error: 'Contato não encontrado.' }
+
+  const fields = { ...((data.fields ?? {}) as Record<string, unknown>), [cleanKey]: value }
+  const { error } = await supabaseAdmin.from('contacts').update({ fields }).eq('id', contactId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/contatos/${contactId}`)
+  return { ok: true }
+}
+
+export async function removeContactField(contactId: string, key: string): Promise<ActionResult> {
+  const { data } = await supabaseAdmin
+    .from('contacts')
+    .select('fields')
+    .eq('id', contactId)
+    .maybeSingle()
+
+  if (!data) return { ok: false, error: 'Contato não encontrado.' }
+
+  const fields = { ...((data.fields ?? {}) as Record<string, unknown>) }
+  delete fields[key]
+
+  const { error } = await supabaseAdmin.from('contacts').update({ fields }).eq('id', contactId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath(`/contatos/${contactId}`)
+  return { ok: true }
+}
+
+export async function setContactSubscribed(
+  contactId: string,
+  subscribed: boolean,
+): Promise<ActionResult> {
+  const { error } = await supabaseAdmin
+    .from('contacts')
+    .update({ subscribed })
+    .eq('id', contactId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/contatos')
+  revalidatePath(`/contatos/${contactId}`)
+  return { ok: true }
+}
+
 export async function duplicateAutomation(triggerId: string): Promise<ActionResult> {
   const { data: trigger } = await supabaseAdmin
     .from('triggers')
