@@ -91,11 +91,21 @@ vercel env ls --cwd ~/projects/dm-flow
 
 ## Pendências
 
-1. **Rotacionar chaves que passaram pelo chat da sessão de 2026-07-29**:
-   - Token Supabase (`sbp_...`): Account → Access Tokens → revoke
-   - App Secret Meta: Config → Básico → Redefinir → atualizar `INSTAGRAM_APP_SECRET` na Vercel e `.env.local`
-   - Keys Tailscale (`tskey-...`): admin console → Keys → revoke
-   - Senha antiga do painel local já não vale em produção
+1. **Rotacionar chaves que passaram pelo chat da sessão de 2026-07-29** (auditado em 2026-07-30):
+   - ✅ Token Supabase (`sbp_...`, chamado "claude"): revogado, confirmado 401.
+   - ✅ Keys Tailscale: auth key "manychat" e API key "claude" revogadas via API, confirmado 401.
+     Revogar auth key não desconecta máquina já registrada.
+   - ⏳ **App Secret do Instagram** — pendente, só o Pedro faz (nada de automação em site da Meta).
+     Fica no app **`dm-flow-IG` (`2815946815447454`)**, em Instagram → Configuração da API com
+     login do Instagram → "Chave secreta do app do Instagram". **Não** é Configurações → Básico:
+     aquele é o secret do Facebook App e não é o que o código usa. Depois de redefinir, atualizar
+     `INSTAGRAM_APP_SECRET` na Vercel (Settings → Environment Variables) e no `.env.local`,
+     e **redeploy** para valer.
+     Impacto: nenhum na automação em curso — o refresh do token não usa o secret (`oauth.ts`).
+     Só afeta validação de assinatura do webhook (que não entrega, o disparo é por polling) e
+     reconexão de conta via OAuth.
+   - Nunca vazaram: token de acesso do Instagram e a `service_role` do Supabase (auditado).
+   - Senha antiga do painel local já não vale em produção.
 2. **URI de OAuth de produção** (`https://dm.nocodepedro.site/api/auth/instagram/callback`) nas
    Configurações do login da empresa (Meta → Instagram → seção 4). Só importa para reconectar conta.
 3. **Backlog de produto**: pausar/duplicar automação no painel · métricas por fluxo · multi-conta ·
