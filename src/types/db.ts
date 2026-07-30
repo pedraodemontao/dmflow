@@ -28,8 +28,24 @@ export interface Contact {
   fields: Record<string, unknown>
   last_inbound_at: string | null
   subscribed: boolean
+  automation_paused: boolean
+  last_message_at: string | null
+  unread_count: number
   created_at: string
   updated_at: string
+}
+
+export type MessageSource = 'flow' | 'manual'
+
+export interface Message {
+  id: string
+  account_id: string
+  contact_id: string | null
+  direction: MessageDirection
+  mid: string | null
+  text: string | null
+  source: MessageSource
+  created_at: string
 }
 
 export interface Flow {

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { MessageCircle, Zap } from 'lucide-react'
 
+import { AutomationActions } from '@/components/automacoes/automation-actions'
 import { Badge, Button, Card, EmptyState } from '@/components/ui'
 import { getAutomations } from '@/lib/data'
 
@@ -43,40 +44,47 @@ export default async function AutomacoesPage() {
         ) : (
           <div className="space-y-2">
             {automations.map(({ trigger, flow, stats }) => (
-              <Link key={trigger.id} href={`/automacoes/${trigger.id}`} className="block">
-                <Card className="flex items-center gap-4 p-4 transition-colors hover:border-muted">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium">{flow.name}</p>
-                      <Badge tone={trigger.is_active ? 'success' : 'neutral'}>
-                        {trigger.is_active ? 'ativa' : 'pausada'}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-xs text-muted">
-                      {TRIGGER_LABEL[trigger.type] ?? trigger.type} ·{' '}
-                      {trigger.keywords.join(', ') || 'qualquer texto'}
-                      {trigger.media_id ? ' · post específico' : ''}
-                    </p>
+              <Card
+                key={trigger.id}
+                className="flex items-center gap-4 p-4 transition-colors hover:border-muted"
+              >
+                <Link href={`/automacoes/${trigger.id}`} className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="truncate text-sm font-medium">{flow.name}</p>
+                    <Badge tone={trigger.is_active ? 'success' : 'neutral'}>
+                      {trigger.is_active ? 'ativa' : 'pausada'}
+                    </Badge>
                   </div>
+                  <p className="mt-1 text-xs text-muted">
+                    {TRIGGER_LABEL[trigger.type] ?? trigger.type} ·{' '}
+                    {trigger.keywords.join(', ') || 'qualquer texto'}
+                    {trigger.media_id ? ' · post específico' : ''}
+                  </p>
+                </Link>
 
-                  <div className="hidden shrink-0 gap-6 text-center sm:flex">
-                    <div>
-                      <p className="text-sm font-semibold tabular-nums">{stats.runs}</p>
-                      <p className="text-[11px] text-muted">disparos</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold tabular-nums">{stats.done}</p>
-                      <p className="text-[11px] text-muted">concluídos</p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold tabular-nums">
-                        {Object.keys(flow.definition?.nodes ?? {}).length}
-                      </p>
-                      <p className="text-[11px] text-muted">blocos</p>
-                    </div>
+                <div className="hidden shrink-0 gap-6 text-center sm:flex">
+                  <div>
+                    <p className="text-sm font-semibold tabular-nums">{stats.runs}</p>
+                    <p className="text-[11px] text-muted">disparos</p>
                   </div>
-                </Card>
-              </Link>
+                  <div>
+                    <p className="text-sm font-semibold tabular-nums">{stats.done}</p>
+                    <p className="text-[11px] text-muted">concluídos</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold tabular-nums">
+                      {Object.keys(flow.definition?.nodes ?? {}).length}
+                    </p>
+                    <p className="text-[11px] text-muted">blocos</p>
+                  </div>
+                </div>
+
+                <AutomationActions
+                  triggerId={trigger.id}
+                  name={flow.name}
+                  isActive={trigger.is_active}
+                />
+              </Card>
             ))}
           </div>
         )}

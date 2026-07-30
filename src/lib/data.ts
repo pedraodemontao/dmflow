@@ -134,6 +134,100 @@ export async function getContacts(limit = 50): Promise<ContactRow[]> {
   }))
 }
 
+export interface InboxItem {
+  contact: ContactRow
+  lastMessage: { text: string | null; direction: 'in' | 'out'; created_at: string } | null
+}
+
+/**
+ * Lista do inbox: contatos ordenados pela última mensagem. A prévia vem de uma
+ * segunda query reduzida em memória — o volume é de uso próprio, não vale um
+ * lateral join via PostgREST.
+ */
+export async function getInbox(limit = 50): Promise<InboxItem[]> {
+  const { data } = await supabaseAdmin
+    .from('contacts')
+    .select('*')
+    .not('last_message_at', 'is', null)
+    .order('last_message_at', { ascending: false })
+    .limit(limit)
+
+  const contacts = (data ?? []) as Contact[]
+  if (contacts.length === 0) return []
+
+  const { data: messages } = await supabaseAdmin
+    .from('messages')
+    .select('contact_id, text, direction, created_at')
+    .in(
+      'contact_id',
+      contacts.map((c) => c.id),
+    )
+    .order('created_at', { ascending: false })
+    .limit(limit * 6)
+
+  const lastByContact = new Map<string, InboxItem['lastMessage']>()
+  for (const message of messages ?? []) {
+    if (!message.contact_id || lastByContact.has(message.contact_id)) continue
+    lastByContact.set(message.contact_id, {
+      text: message.text,
+      direction: message.direction,
+      created_at: message.created_at,
+    })
+  }
+
+  const now = Date.now()
+  return contacts.map((contact) => ({
+    contact: {
+      ...contact,
+      windowOpen: contact.last_inbound_at
+        ? now - new Date(contact.last_inbound_at).getTime() < DM_WINDOW_MS
+        : false,
+    },
+    lastMessage: lastByContact.get(contact.id) ?? null,
+  }))
+}
+
+export interface ThreadMessage {
+  id: string
+  direction: 'in' | 'out'
+  text: string | null
+  source: 'flow' | 'manual'
+  created_at: string
+}
+
+export interface Thread {
+  contact: ContactRow
+  messages: ThreadMessage[]
+}
+
+export async function getThread(contactId: string, limit = 100): Promise<Thread | null> {
+  const { data: contact } = await supabaseAdmin
+    .from('contacts')
+    .select('*')
+    .eq('id', contactId)
+    .maybeSingle()
+
+  if (!contact) return null
+
+  const { data: messages } = await supabaseAdmin
+    .from('messages')
+    .select('id, direction, text, source, created_at')
+    .eq('contact_id', contactId)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  const row = contact as Contact
+  return {
+    contact: {
+      ...row,
+      windowOpen: row.last_inbound_at
+        ? Date.now() - new Date(row.last_inbound_at).getTime() < DM_WINDOW_MS
+        : false,
+    },
+    messages: ((messages ?? []) as ThreadMessage[]).slice().reverse(),
+  }
+}
+
 export interface ConversationRow {
   id: string
   direction: 'in' | 'out'

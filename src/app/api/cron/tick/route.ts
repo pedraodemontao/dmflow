@@ -45,6 +45,8 @@ async function resumeSleepingRuns(): Promise<number> {
     ])
 
     if (!account || !contact) continue
+    // Atendimento humano em curso: não retomar fluxo por cima.
+    if ((contact as Contact).automation_paused) continue
 
     try {
       await resumeFlow({ run: row, account: account as Account, contact: contact as Contact })

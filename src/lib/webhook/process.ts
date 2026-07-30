@@ -199,6 +199,10 @@ async function handleMessaging(account: Account, value: MessagingValue) {
 
   if (!text) return
 
+  // Contato em atendimento humano: a mensagem fica registrada para o inbox,
+  // mas nenhum fluxo dispara nem retoma por cima da pessoa.
+  if (contact.automation_paused) return
+
   // Fluxo esperando resposta tem prioridade sobre disparar um novo.
   const { data: waiting } = await supabaseAdmin
     .from('flow_runs')
@@ -252,6 +256,8 @@ async function handleComment(account: Account, value: CommentValue) {
     // Comentário não abre a janela de 24h de DM. Só a private reply passa.
     markInbound: false,
   })
+
+  if (contact.automation_paused) return
 
   if (trigger.public_reply) {
     try {
