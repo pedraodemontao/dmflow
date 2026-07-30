@@ -40,6 +40,7 @@ function autoLayout(definition: FlowDefinition): Record<string, { x: number; y: 
 
 function outgoing(node: FlowNode): Array<string | null | undefined> {
   if (node.type === 'condition') return [...node.cases.map((c) => c.next), node.fallback]
+  if (node.type === 'randomize') return node.paths.map((p) => p.next)
   if (node.type === 'end') return []
   return [node.next]
 }
@@ -77,6 +78,18 @@ export function definitionToGraph(definition: FlowDefinition): { nodes: Node[]; 
           label: 'senão',
         })
       }
+    } else if (node.type === 'randomize') {
+      node.paths.forEach((path, i) => {
+        if (path.next) {
+          edges.push({
+            id: `${id}-path-${i}`,
+            source: id,
+            sourceHandle: `path-${i}`,
+            target: path.next,
+            label: path.label,
+          })
+        }
+      })
     } else if (node.type !== 'end' && node.next) {
       edges.push({ id: `${id}-next`, source: id, target: node.next })
     }
@@ -104,6 +117,11 @@ export function graphToDefinition(nodes: Node[], edges: Edge[], entry: string): 
       }))
       clean.fallback =
         edges.find((e) => e.source === node.id && e.sourceHandle === 'fallback')?.target ?? null
+    } else if (clean.type === 'randomize') {
+      clean.paths = clean.paths.map((path, i) => ({
+        ...path,
+        next: edges.find((e) => e.source === node.id && e.sourceHandle === `path-${i}`)?.target ?? null,
+      }))
     } else if (clean.type !== 'end') {
       clean.next = edges.find((e) => e.source === node.id && !e.sourceHandle)?.target ?? null
     }
@@ -140,6 +158,29 @@ export function blankNode(type: FlowNode['type']): FlowNode {
         buttons: [{ title: 'Quero saber mais' }],
         next: null,
       }
+    case 'image':
+      return { type: 'image', url: 'https://', next: null }
+    case 'ask':
+      return {
+        type: 'ask',
+        text: 'Qual é o seu melhor e-mail?',
+        saveAs: 'email',
+        expect: 'email',
+        maxRetries: 2,
+        next: null,
+      }
+    case 'set_field':
+      return { type: 'set_field', fields: [{ key: 'origem', value: 'instagram' }], next: null }
+    case 'randomize':
+      return {
+        type: 'randomize',
+        paths: [
+          { label: 'A', next: null },
+          { label: 'B', next: null },
+        ],
+      }
+    case 'unsubscribe':
+      return { type: 'unsubscribe', next: null }
     case 'wait_reply':
       return { type: 'wait_reply', saveAs: 'resposta', next: null }
     case 'condition':

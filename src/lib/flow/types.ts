@@ -78,6 +78,53 @@ const httpNodeSchema = z.object({
   next: z.string().nullable().optional(),
 })
 
+/** Manda uma imagem por URL pública (a Meta busca o arquivo). */
+const imageNodeSchema = z.object({
+  type: z.literal('image'),
+  url: z.string().url(),
+  caption: z.string().optional(),
+  next: z.string().nullable().optional(),
+})
+
+/**
+ * Pergunta e valida a resposta. Diferente de `wait_reply`, que aceita
+ * qualquer coisa: aqui, resposta fora do formato faz o fluxo repreguntar.
+ */
+const askNodeSchema = z.object({
+  type: z.literal('ask'),
+  text: z.string().min(1),
+  saveAs: z.string().min(1),
+  expect: z.enum(['text', 'email', 'phone', 'number']).default('text'),
+  retryText: z.string().optional(),
+  /** Tentativas extras antes de desistir e seguir mesmo assim. */
+  maxRetries: z.number().int().min(0).max(5).default(2),
+  next: z.string().nullable().optional(),
+})
+
+/** Grava valores em `contacts.fields` — o que a pessoa respondeu vira dado. */
+const setFieldNodeSchema = z.object({
+  type: z.literal('set_field'),
+  fields: z
+    .array(z.object({ key: z.string().min(1), value: z.string() }))
+    .min(1),
+  next: z.string().nullable().optional(),
+})
+
+/** Divide o tráfego entre caminhos — teste A/B. */
+const randomizeNodeSchema = z.object({
+  type: z.literal('randomize'),
+  paths: z
+    .array(z.object({ label: z.string().min(1), next: z.string().nullable() }))
+    .min(2)
+    .max(4),
+})
+
+/** Marca o contato como descadastrado; nenhum fluxo dispara mais para ele. */
+const unsubscribeNodeSchema = z.object({
+  type: z.literal('unsubscribe'),
+  next: z.string().nullable().optional(),
+})
+
 const endNodeSchema = z.object({
   type: z.literal('end'),
 })
@@ -85,11 +132,16 @@ const endNodeSchema = z.object({
 export const flowNodeSchema = z.discriminatedUnion('type', [
   messageNodeSchema,
   buttonsNodeSchema,
+  imageNodeSchema,
+  askNodeSchema,
   waitReplyNodeSchema,
   conditionNodeSchema,
   delayNodeSchema,
   tagNodeSchema,
+  setFieldNodeSchema,
+  randomizeNodeSchema,
   httpNodeSchema,
+  unsubscribeNodeSchema,
   endNodeSchema,
 ])
 
@@ -113,4 +165,6 @@ export interface FlowContext {
    */
   pendingCommentId?: string
   lastInput?: string
+  /** Nó `ask` que está esperando resposta, e quantas vezes já repreguntou. */
+  awaitingAsk?: { nodeId: string; retries: number }
 }

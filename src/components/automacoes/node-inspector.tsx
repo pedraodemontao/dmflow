@@ -162,6 +162,210 @@ export function NodeInspector({ node, isEntry, onChange, onDelete, onClose }: Pr
           </div>
         )}
 
+        {node.type === 'image' && (
+          <>
+            <div>
+              <Label>Link da imagem</Label>
+              <Input
+                value={node.url}
+                placeholder="https://exemplo.com/imagem.jpg"
+                onChange={(e) => patch({ url: e.target.value })}
+              />
+              <p className="mt-1.5 text-[11px] text-muted">
+                Precisa ser um link público — o Instagram busca o arquivo sozinho. JPG ou PNG,
+                até 8 MB.
+              </p>
+            </div>
+            <div>
+              <Label>Legenda (opcional)</Label>
+              <Textarea
+                rows={2}
+                value={node.caption ?? ''}
+                placeholder="Segue o material que prometi 👇"
+                onChange={(e) => patch({ caption: e.target.value || undefined })}
+              />
+              <p className="mt-1.5 text-[11px] text-muted">
+                Vai como mensagem separada, porque o Instagram não aceita legenda no anexo.
+              </p>
+            </div>
+          </>
+        )}
+
+        {node.type === 'ask' && (
+          <>
+            <div>
+              <Label>Pergunta</Label>
+              <Textarea
+                rows={3}
+                value={node.text}
+                placeholder="Qual é o seu melhor e-mail?"
+                onChange={(e) => patch({ text: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Tipo de resposta esperada</Label>
+              <Select
+                value={node.expect}
+                onChange={(e) => patch({ expect: e.target.value as typeof node.expect })}
+              >
+                <option value="text">Texto livre (aceita qualquer coisa)</option>
+                <option value="email">E-mail</option>
+                <option value="phone">Telefone com DDD</option>
+                <option value="number">Número</option>
+              </Select>
+            </div>
+            <div>
+              <Label>Guardar resposta como</Label>
+              <Input
+                value={node.saveAs}
+                placeholder="email"
+                onChange={(e) => patch({ saveAs: e.target.value })}
+              />
+              <p className="mt-1.5 text-[11px] text-muted">
+                Use depois com <code className="text-accent">{`{{${node.saveAs || 'email'}}}`}</code>{' '}
+                ou grave na ficha com o bloco “Gravar campo”.
+              </p>
+            </div>
+            {node.expect !== 'text' && (
+              <>
+                <div>
+                  <Label>Mensagem quando não validar (opcional)</Label>
+                  <Textarea
+                    rows={2}
+                    value={node.retryText ?? ''}
+                    placeholder="Esse e-mail não parece válido. Pode conferir?"
+                    onChange={(e) => patch({ retryText: e.target.value || undefined })}
+                  />
+                </div>
+                <div>
+                  <Label>Quantas vezes repreguntar</Label>
+                  <Select
+                    value={String(node.maxRetries)}
+                    onChange={(e) => patch({ maxRetries: Number(e.target.value) })}
+                  >
+                    <option value="0">Nenhuma — segue mesmo assim</option>
+                    <option value="1">1 vez</option>
+                    <option value="2">2 vezes</option>
+                    <option value="3">3 vezes</option>
+                  </Select>
+                  <p className="mt-1.5 text-[11px] text-muted">
+                    Esgotadas as tentativas, o fluxo segue guardando o que a pessoa escreveu.
+                  </p>
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {node.type === 'set_field' && (
+          <div>
+            <Label>Campos da ficha do contato</Label>
+            <div className="space-y-2">
+              {node.fields.map((field, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    className="w-28"
+                    value={field.key}
+                    placeholder="campo"
+                    onChange={(e) => {
+                      const fields = [...node.fields]
+                      fields[index] = { ...field, key: e.target.value }
+                      patch({ fields })
+                    }}
+                  />
+                  <Input
+                    value={field.value}
+                    placeholder="valor ou {{variavel}}"
+                    onChange={(e) => {
+                      const fields = [...node.fields]
+                      fields[index] = { ...field, value: e.target.value }
+                      patch({ fields })
+                    }}
+                  />
+                  {node.fields.length > 1 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => patch({ fields: node.fields.filter((_, i) => i !== index) })}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => patch({ fields: [...node.fields, { key: '', value: '' }] })}
+              >
+                <Plus className="size-3.5" />
+                Adicionar campo
+              </Button>
+            </div>
+            <p className="mt-1.5 text-[11px] text-muted">
+              O valor aceita variáveis — grave <code className="text-accent">{'{{email}}'}</code>{' '}
+              coletado no bloco “Perguntar”.
+            </p>
+          </div>
+        )}
+
+        {node.type === 'randomize' && (
+          <div>
+            <Label>Caminhos (chance igual entre eles)</Label>
+            <div className="space-y-2">
+              {node.paths.map((path, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    value={path.label}
+                    placeholder={`Variante ${index + 1}`}
+                    onChange={(e) => {
+                      const paths = [...node.paths]
+                      paths[index] = { ...path, label: e.target.value }
+                      patch({ paths })
+                    }}
+                  />
+                  {node.paths.length > 2 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => patch({ paths: node.paths.filter((_, i) => i !== index) })}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              {node.paths.length < 4 && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    patch({
+                      paths: [
+                        ...node.paths,
+                        { label: String.fromCharCode(65 + node.paths.length), next: null },
+                      ],
+                    })
+                  }
+                >
+                  <Plus className="size-3.5" />
+                  Adicionar caminho
+                </Button>
+              )}
+            </div>
+            <p className="mt-1.5 text-[11px] text-muted">
+              Ligue cada saída a um caminho diferente no canvas para comparar versões.
+            </p>
+          </div>
+        )}
+
+        {node.type === 'unsubscribe' && (
+          <p className="rounded-lg border border-border bg-surface-2 p-3 text-[11px] text-muted">
+            Marca o contato como descadastrado. Nenhum fluxo dispara mais para ele — nem por
+            comentário, nem por DM. Use depois de uma pergunta do tipo “quer parar de receber?”.
+          </p>
+        )}
+
         {node.type === 'wait_reply' && (
           <div>
             <Label>Guardar resposta como</Label>

@@ -87,6 +87,23 @@ export function sendButtons(args: {
   })
 }
 
+/** Imagem por URL pública — a Meta busca o arquivo, não subimos binário. */
+export function sendImage(args: {
+  igUserId: string
+  accessToken: string
+  recipientId: string
+  url: string
+}) {
+  return send({
+    igUserId: args.igUserId,
+    accessToken: args.accessToken,
+    recipient: { id: args.recipientId },
+    message: {
+      attachment: { type: 'image', payload: { url: args.url } },
+    },
+  })
+}
+
 /**
  * Private reply: DM disparada a partir de um comentário.
  * Só uma vez por comentário e até 7 dias depois dele.

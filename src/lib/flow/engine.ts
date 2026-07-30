@@ -1,8 +1,9 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { sendButtons, sendPrivateReply, sendText } from '@/lib/instagram/api'
+import { sendButtons, sendImage, sendPrivateReply, sendText } from '@/lib/instagram/api'
 import { flowDefinitionSchema, type FlowContext, type FlowNode } from '@/lib/flow/types'
 import { assertUnderSendCap, logSend, SendCapError } from '@/lib/flow/send-cap'
 import { spin } from '@/lib/flow/spintax'
+import { RETRY_FALLBACK, validateAnswer } from '@/lib/flow/validate-answer'
 import type { Account, Contact, Flow, FlowRun } from '@/types/db'
 
 /** Trava contra fluxo que cicla sozinho: nós executados por invocação. */
@@ -104,6 +105,7 @@ interface StepResult {
 }
 
 async function executeNode(
+  nodeId: string,
   node: FlowNode,
   account: Account,
   contact: Contact,
@@ -116,6 +118,65 @@ async function executeNode(
 
     case 'buttons':
       await deliver(account, contact, ctx, { text: node.text, buttons: node.buttons })
+      return { next: node.next ?? null }
+
+    case 'image': {
+      await assertUnderSendCap(account.id)
+      if (!canSendDm(contact) && !ctx.pendingCommentId) throw new WindowClosedError()
+
+      // Private reply não aceita anexo: manda a legenda por ela e a imagem em seguida.
+      if (ctx.pendingCommentId && node.caption) {
+        await deliver(account, contact, ctx, { text: node.caption })
+        await assertUnderSendCap(account.id)
+      }
+
+      await sendImage({
+        igUserId: account.ig_user_id,
+        accessToken: account.access_token,
+        recipientId: contact.ig_user_id,
+        url: node.url,
+      })
+      await logSend(account.id, 'dm')
+
+      await supabaseAdmin.from('messages').insert({
+        account_id: account.id,
+        contact_id: contact.id,
+        direction: 'out',
+        text: node.caption ?? '[imagem]',
+        payload: { image: node.url },
+      })
+
+      if (node.caption && !ctx.pendingCommentId) {
+        await deliver(account, contact, ctx, { text: node.caption })
+      }
+      return { next: node.next ?? null }
+    }
+
+    case 'ask':
+      await deliver(account, contact, ctx, { text: node.text })
+      ctx.awaitingAsk = { nodeId, retries: 0 }
+      // Fica parado no próprio nó: quem valida a resposta é o resumeFlow.
+      return { next: nodeId, halt: { status: 'waiting_reply' } }
+
+    case 'set_field': {
+      const fields = { ...(contact.fields ?? {}) }
+      for (const field of node.fields) {
+        fields[field.key] = interpolate(field.value, contact, ctx)
+      }
+
+      await supabaseAdmin.from('contacts').update({ fields }).eq('id', contact.id)
+      contact.fields = fields
+      return { next: node.next ?? null }
+    }
+
+    case 'randomize': {
+      const pick = node.paths[Math.floor(Math.random() * node.paths.length)]
+      return { next: pick?.next ?? null }
+    }
+
+    case 'unsubscribe':
+      await supabaseAdmin.from('contacts').update({ subscribed: false }).eq('id', contact.id)
+      contact.subscribed = false
       return { next: node.next ?? null }
 
     case 'wait_reply':
@@ -212,7 +273,7 @@ async function walk(
 
       let result: StepResult
       try {
-        result = await executeNode(node, account, contact, ctx)
+        result = await executeNode(cursor, node, account, contact, ctx)
       } catch (error) {
         if (error instanceof SendCapError) {
           await supabaseAdmin
@@ -270,6 +331,9 @@ export async function startFlow(args: {
   commentId?: string
   input?: string
 }) {
+  // Quem pediu para sair não recebe mais automação.
+  if (!args.contact.subscribed) return
+
   const { data: existing } = await supabaseAdmin
     .from('flow_runs')
     .select('id')
@@ -321,20 +385,48 @@ export async function resumeFlow(args: {
 
   const stored = args.run.context as Partial<FlowContext>
   const ctx: FlowContext = { ...stored, vars: stored.vars ?? {} }
+  const definition = flowDefinitionSchema.parse((flow as Flow).definition)
+  let startNode = args.run.current_node
 
   if (args.input !== undefined) {
     ctx.lastInput = args.input
 
-    // O nó wait_reply que pausou aqui pode ter pedido para guardar a resposta.
-    const definition = flowDefinitionSchema.parse((flow as Flow).definition)
-    const waitingNode = Object.values(definition.nodes).find(
-      (n) => n.type === 'wait_reply' && n.next === args.run.current_node,
-    )
-    if (waitingNode?.type === 'wait_reply' && waitingNode.saveAs) {
-      ctx.vars[waitingNode.saveAs] = args.input
+    const askState = ctx.awaitingAsk
+    const askNode = askState ? definition.nodes[askState.nodeId] : undefined
+
+    if (askState && askNode?.type === 'ask' && askState.nodeId === args.run.current_node) {
+      const { ok, value } = validateAnswer(askNode.expect, args.input)
+
+      if (!ok && askState.retries < askNode.maxRetries) {
+        // Não passou e ainda há tentativa: repergunta e continua parado no nó.
+        await deliver(args.account, args.contact, ctx, {
+          text: askNode.retryText || RETRY_FALLBACK[askNode.expect],
+        })
+
+        await supabaseAdmin
+          .from('flow_runs')
+          .update({
+            context: { ...ctx, awaitingAsk: { ...askState, retries: askState.retries + 1 } },
+          })
+          .eq('id', args.run.id)
+        return
+      }
+
+      // Validou, ou esgotou as tentativas: guarda o que deu e segue.
+      ctx.vars[askNode.saveAs] = value
+      delete ctx.awaitingAsk
+      startNode = askNode.next ?? null
+    } else {
+      // O nó wait_reply que pausou aqui pode ter pedido para guardar a resposta.
+      const waitingNode = Object.values(definition.nodes).find(
+        (n) => n.type === 'wait_reply' && n.next === args.run.current_node,
+      )
+      if (waitingNode?.type === 'wait_reply' && waitingNode.saveAs) {
+        ctx.vars[waitingNode.saveAs] = args.input
+      }
     }
   }
 
   await supabaseAdmin.from('flow_runs').update({ status: 'running' }).eq('id', args.run.id)
-  await walk(args.run, flow as Flow, args.account, args.contact, ctx, args.run.current_node)
+  await walk(args.run, flow as Flow, args.account, args.contact, ctx, startNode)
 }

@@ -2,12 +2,17 @@
 
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import {
+  BellOff,
   Clock,
   Flag,
   GitBranch,
+  HelpCircle,
+  Image as ImageIcon,
   MessageSquare,
   MousePointerClick,
+  Shuffle,
   Tag,
+  Variable,
   Webhook,
   type LucideIcon,
 } from 'lucide-react'
@@ -30,6 +35,36 @@ export const NODE_META: Record<
     icon: MousePointerClick,
     color: 'text-violet-400',
     description: 'Card com até 3 botões de link ou resposta',
+  },
+  image: {
+    label: 'Imagem',
+    icon: ImageIcon,
+    color: 'text-fuchsia-400',
+    description: 'Envia uma imagem por link público',
+  },
+  ask: {
+    label: 'Perguntar',
+    icon: HelpCircle,
+    color: 'text-teal-400',
+    description: 'Pergunta e valida a resposta (e-mail, telefone, número)',
+  },
+  set_field: {
+    label: 'Gravar campo',
+    icon: Variable,
+    color: 'text-indigo-400',
+    description: 'Guarda um valor na ficha do contato',
+  },
+  randomize: {
+    label: 'Sorteio',
+    icon: Shuffle,
+    color: 'text-rose-400',
+    description: 'Divide o tráfego entre caminhos — teste A/B',
+  },
+  unsubscribe: {
+    label: 'Descadastrar',
+    icon: BellOff,
+    color: 'text-red-400',
+    description: 'Para de enviar automação para este contato',
   },
   wait_reply: {
     label: 'Esperar resposta',
@@ -80,6 +115,23 @@ function preview(data: FlowNode): string {
       return truncate(data.text || 'Sem texto ainda')
     case 'buttons':
       return truncate(data.text || 'Sem texto ainda')
+    case 'image':
+      return data.url && data.url !== 'https://' ? truncate(data.url, 40) : 'Sem imagem ainda'
+    case 'ask': {
+      const label: Record<string, string> = {
+        text: 'texto',
+        email: 'e-mail',
+        phone: 'telefone',
+        number: 'número',
+      }
+      return `${truncate(data.text, 40)} → ${label[data.expect]} em "${data.saveAs}"`
+    }
+    case 'set_field':
+      return data.fields.map((f) => `${f.key}=${f.value}`).join(', ')
+    case 'randomize':
+      return `${data.paths.length} caminhos, chance igual`
+    case 'unsubscribe':
+      return 'Para de receber automação'
     case 'wait_reply':
       return data.saveAs ? `Guarda em "${data.saveAs}"` : 'Aguarda a resposta'
     case 'condition':
@@ -187,6 +239,20 @@ export function BuilderNode({ data, selected }: NodeProps) {
               style={{ left: `${((node.cases.length + 0.5) / (node.cases.length + 1)) * 100}%` }}
             />
           </div>
+        </div>
+      ) : node.type === 'randomize' ? (
+        <div className="flex border-t border-border">
+          {node.paths.map((path, i) => (
+            <div key={i} className="relative flex-1 px-2 py-1.5 text-center">
+              <span className="text-[10px] text-rose-400">{truncate(path.label, 10)}</span>
+              <Handle
+                type="source"
+                position={Position.Bottom}
+                id={`path-${i}`}
+                style={{ left: `${((i + 0.5) / node.paths.length) * 100}%` }}
+              />
+            </div>
+          ))}
         </div>
       ) : node.type !== 'end' ? (
         <Handle type="source" position={Position.Bottom} />
