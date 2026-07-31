@@ -249,6 +249,16 @@ export interface Series {
   points: SeriesPoint[]
 }
 
+/**
+ * Traço por posição na lista: cheio, tracejado, pontilhado.
+ *
+ * Cor sozinha não distingue série para quem não separa limão de âmbar — e são
+ * ~8% dos homens. O traço é um segundo canal que não custa nada e funciona
+ * inclusive em captura de tela em preto e branco, que é como esses gráficos
+ * acabam parando em conversa de WhatsApp.
+ */
+const DASH = [undefined, '6 3', '2 3'] as const
+
 const STROKE: Record<Tone, string> = {
   ink: 'stroke-muted',
   accent: 'stroke-accent',
@@ -309,9 +319,21 @@ export function LineSeries({
   return (
     <figure className={cn('m-0', className)} aria-label={ariaLabel}>
       <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-        {series.map((s) => (
+        {series.map((s, index) => (
           <span key={s.id} className="flex items-center gap-1.5">
-            <span className={cn('size-2 rounded-[2px]', FILL[s.tone])} />
+            {/* Amostra do traço, não quadrado de cor: a legenda tem que casar
+                com o que está desenhado, senão o segundo canal não ajuda. */}
+            <svg width="14" height="6" aria-hidden="true" className="shrink-0">
+              <line
+                x1="0"
+                y1="3"
+                x2="14"
+                y2="3"
+                strokeWidth={1.5}
+                strokeDasharray={DASH[index % DASH.length]}
+                className={STROKE[s.tone]}
+              />
+            </svg>
             <span className="label text-[9px] text-muted">{s.label}</span>
           </span>
         ))}
@@ -335,13 +357,14 @@ export function LineSeries({
           className="absolute inset-0 size-full overflow-visible"
           role="presentation"
         >
-          {series.map((s) => (
+          {series.map((s, index) => (
             <g key={s.id}>
               <path
                 d={caminho(s.points)}
                 fill="none"
                 className={STROKE[s.tone]}
                 strokeWidth={1.5}
+                strokeDasharray={DASH[index % DASH.length]}
                 vectorEffect="non-scaling-stroke"
                 strokeLinejoin="round"
               />
