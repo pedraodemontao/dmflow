@@ -138,11 +138,19 @@ export function sendCarousel(args: {
   })
 }
 
-/** Imagem por URL pública — a Meta busca o arquivo, não subimos binário. */
-export function sendImage(args: {
+export type MediaKind = 'image' | 'video' | 'audio' | 'file'
+
+/**
+ * Anexo por URL pública — a Meta busca o arquivo, não subimos binário.
+ * Imagem, vídeo, áudio e arquivo são a mesma chamada com um `type` diferente
+ * no attachment: uma função só em vez de quatro (`sendImage`, `sendVideo`,
+ * `sendAudio`, `sendFile`) quase idênticas.
+ */
+export function sendMedia(args: {
   igUserId: string
   accessToken: string
   recipientId: string
+  type: MediaKind
   url: string
 }) {
   return send({
@@ -150,7 +158,7 @@ export function sendImage(args: {
     accessToken: args.accessToken,
     recipient: { id: args.recipientId },
     message: {
-      attachment: { type: 'image', payload: { url: args.url } },
+      attachment: { type: args.type, payload: { url: args.url } },
     },
   })
 }

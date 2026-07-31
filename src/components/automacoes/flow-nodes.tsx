@@ -2,6 +2,7 @@
 
 import { Handle, Position, type NodeProps } from '@xyflow/react'
 import {
+  AudioLines,
   BellOff,
   Clock,
   Flag,
@@ -12,9 +13,11 @@ import {
   MessagesSquare,
   MessageSquare,
   MousePointerClick,
+  Paperclip,
   Shuffle,
   Tag,
   Variable,
+  Video,
   Webhook,
   Workflow,
   type LucideIcon,
@@ -62,6 +65,24 @@ export const NODE_META: Record<
     icon: ImageIcon,
     color: 'text-fuchsia-400',
     description: 'Envia uma imagem por link público',
+  },
+  video: {
+    label: 'Vídeo',
+    icon: Video,
+    color: 'text-fuchsia-300',
+    description: 'Envia um vídeo por link público',
+  },
+  audio: {
+    label: 'Áudio',
+    icon: AudioLines,
+    color: 'text-fuchsia-500',
+    description: 'Envia um áudio por link público',
+  },
+  file: {
+    label: 'Arquivo',
+    icon: Paperclip,
+    color: 'text-fuchsia-200',
+    description: 'Envia um arquivo (PDF, etc.) por link público',
   },
   ask: {
     label: 'Perguntar',
@@ -144,6 +165,12 @@ function preview(data: FlowNode): string {
       return data.flowId ? `Fluxo ${truncate(data.flowId, 24)}` : 'Escolha o fluxo de destino'
     case 'image':
       return data.url && data.url !== 'https://' ? truncate(data.url, 40) : 'Sem imagem ainda'
+    case 'video':
+      return data.url && data.url !== 'https://' ? truncate(data.url, 40) : 'Sem vídeo ainda'
+    case 'audio':
+      return data.url && data.url !== 'https://' ? truncate(data.url, 40) : 'Sem áudio ainda'
+    case 'file':
+      return data.url && data.url !== 'https://' ? truncate(data.url, 40) : 'Sem arquivo ainda'
     case 'ask': {
       const label: Record<string, string> = {
         text: 'texto',

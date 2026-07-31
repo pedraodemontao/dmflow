@@ -85,6 +85,25 @@ export async function getAutomation(triggerId: string): Promise<Automation | nul
   }
 }
 
+export interface FlowOption {
+  id: string
+  name: string
+}
+
+/**
+ * Lista enxuta (id + nome) para o seletor do bloco "pular para outro fluxo" —
+ * carregada no servidor e passada por props até o inspetor de nós, nunca via
+ * fetch no cliente. Quem chama decide se filtra o fluxo atual da lista.
+ */
+export async function getFlowOptions(): Promise<FlowOption[]> {
+  const { data } = await supabaseAdmin
+    .from('flows')
+    .select('id, name')
+    .order('name')
+
+  return (data ?? []) as FlowOption[]
+}
+
 export interface LeadSource {
   mediaId: string
   leads: number

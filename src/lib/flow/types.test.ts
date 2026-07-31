@@ -19,6 +19,9 @@ describe('flowNodeSchema', () => {
       },
       { type: 'bubbles', bubbles: [{ text: 'Oi!' }, { text: 'Tudo bem?' }], pauseMs: 1200, next: null },
       { type: 'image', url: 'https://exemplo.com/a.jpg', next: null },
+      { type: 'video', url: 'https://exemplo.com/a.mp4', next: null },
+      { type: 'audio', url: 'https://exemplo.com/a.mp3', next: null },
+      { type: 'file', url: 'https://exemplo.com/a.pdf', caption: 'O material', next: null },
       { type: 'ask', text: 'seu email?', saveAs: 'email', expect: 'email', next: null },
       { type: 'wait_reply', saveAs: 'r', next: null },
       { type: 'condition', cases: [{ source: 'last_input', op: 'contains', value: 'sim', next: null }] },
@@ -48,6 +51,29 @@ describe('flowNodeSchema', () => {
 
   it('exige URL válida na imagem — link quebrado falha no envio real', () => {
     expect(flowNodeSchema.safeParse({ type: 'image', url: 'https://' }).success).toBe(false)
+  })
+
+  it('exige URL válida em vídeo, áudio e arquivo — mesmo motivo da imagem', () => {
+    expect(flowNodeSchema.safeParse({ type: 'video', url: 'https://' }).success).toBe(false)
+    expect(flowNodeSchema.safeParse({ type: 'audio', url: 'https://' }).success).toBe(false)
+    expect(flowNodeSchema.safeParse({ type: 'file', url: 'https://' }).success).toBe(false)
+  })
+
+  it('aceita legenda opcional em vídeo, áudio e arquivo, igual à imagem', () => {
+    const withCaption = flowNodeSchema.safeParse({
+      type: 'video',
+      url: 'https://exemplo.com/a.mp4',
+      caption: 'Assista até o fim',
+      next: null,
+    })
+    expect(withCaption.success).toBe(true)
+
+    const withoutCaption = flowNodeSchema.safeParse({
+      type: 'file',
+      url: 'https://exemplo.com/a.pdf',
+      next: null,
+    })
+    expect(withoutCaption.success).toBe(true)
   })
 
   it('exige ao menos dois caminhos no sorteio', () => {

@@ -66,8 +66,8 @@ vi.mock('@/lib/instagram/api', () => ({
     sent.push({ kind: 'buttons', text: args.text })
     return {}
   },
-  sendImage: async () => {
-    sent.push({ kind: 'image', text: '' })
+  sendMedia: async (args: { type: string }) => {
+    sent.push({ kind: args.type, text: '' })
     return {}
   },
   sendPrivateReply: async (args: { text: string }) => {

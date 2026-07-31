@@ -92,13 +92,24 @@ const httpNodeSchema = z.object({
   next: z.string().nullable().optional(),
 })
 
-/** Manda uma imagem por URL pública (a Meta busca o arquivo). */
-const imageNodeSchema = z.object({
-  type: z.literal('image'),
-  url: z.string().url(),
-  caption: z.string().optional(),
-  next: z.string().nullable().optional(),
-})
+/**
+ * Anexo por URL pública (a Meta busca o arquivo, não subimos binário).
+ * Imagem, vídeo, áudio e arquivo só mudam o `type` do anexo na API — mesmo
+ * schema, então uma fábrica evita repetir os quatro campos quatro vezes.
+ */
+function mediaAttachmentSchema<T extends string>(type: T) {
+  return z.object({
+    type: z.literal(type),
+    url: z.string().url(),
+    caption: z.string().optional(),
+    next: z.string().nullable().optional(),
+  })
+}
+
+const imageNodeSchema = mediaAttachmentSchema('image')
+const videoNodeSchema = mediaAttachmentSchema('video')
+const audioNodeSchema = mediaAttachmentSchema('audio')
+const fileNodeSchema = mediaAttachmentSchema('file')
 
 /**
  * Pergunta e valida a resposta. Diferente de `wait_reply`, que aceita
@@ -177,6 +188,9 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
   carouselNodeSchema,
   bubblesNodeSchema,
   imageNodeSchema,
+  videoNodeSchema,
+  audioNodeSchema,
+  fileNodeSchema,
   askNodeSchema,
   waitReplyNodeSchema,
   conditionNodeSchema,

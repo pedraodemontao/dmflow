@@ -1,5 +1,12 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { sendButtons, sendCarousel, sendImage, sendPrivateReply, sendText } from '@/lib/instagram/api'
+import {
+  sendButtons,
+  sendCarousel,
+  sendMedia,
+  sendPrivateReply,
+  sendText,
+  type MediaKind,
+} from '@/lib/instagram/api'
 import { flowDefinitionSchema, type FlowContext, type FlowNode } from '@/lib/flow/types'
 import { assertUnderSendCap, logSend, SendCapError } from '@/lib/flow/send-cap'
 import { spin } from '@/lib/flow/spintax'
@@ -119,6 +126,64 @@ async function deliver(
   })
 }
 
+const MEDIA_LABEL: Record<MediaKind, string> = {
+  image: 'imagem',
+  video: 'vídeo',
+  audio: 'áudio',
+  file: 'arquivo',
+}
+
+/**
+ * Anexo por URL pública — imagem, vídeo, áudio e arquivo compartilham a mesma
+ * mecânica (cap, janela de 24h, legenda como mensagem à parte porque a Meta
+ * não aceita legenda no anexo), só troca o `type`. Uma função só evita
+ * repetir o bloco de 4 vezes (uma por tipo de mídia) no `executeNode`.
+ */
+async function deliverMedia(
+  mediaType: MediaKind,
+  node: { url: string; caption?: string; next?: string | null },
+  account: Account,
+  contact: Contact,
+  ctx: FlowContext,
+): Promise<StepResult> {
+  await assertUnderSendCap(account.id)
+  if (!canSendDm(contact) && !ctx.pendingCommentId) throw new WindowClosedError()
+
+  // Guardado antes de chamar `deliver()`: ela apaga `ctx.pendingCommentId` como
+  // efeito colateral (consome o comentário na private reply), então checar a
+  // flag de novo depois mandaria a legenda uma segunda vez — e a segunda,
+  // sem `pendingCommentId`, cai no caminho de DM comum e explode fora da janela.
+  const isCommentOrigin = Boolean(ctx.pendingCommentId)
+
+  // Private reply não aceita anexo: manda a legenda por ela e o anexo em seguida.
+  if (isCommentOrigin && node.caption) {
+    await deliver(account, contact, ctx, { text: node.caption })
+    await assertUnderSendCap(account.id)
+  }
+
+  await sendMedia({
+    igUserId: account.ig_user_id,
+    accessToken: account.access_token,
+    recipientId: contact.ig_user_id,
+    type: mediaType,
+    url: node.url,
+  })
+  await logSend(account.id, 'dm')
+
+  await supabaseAdmin.from('messages').insert({
+    account_id: account.id,
+    contact_id: contact.id,
+    direction: 'out',
+    text: node.caption ?? `[${MEDIA_LABEL[mediaType]}]`,
+    payload: { [mediaType]: node.url },
+  })
+
+  if (node.caption && !isCommentOrigin) {
+    await deliver(account, contact, ctx, { text: node.caption })
+  }
+  return { next: node.next ?? null }
+}
+
 interface StepResult {
   next: string | null
   halt?: { status: 'waiting_reply' } | { status: 'sleeping'; resumeAt: Date }
@@ -212,37 +277,17 @@ async function executeNode(
       // O `walk()` é quem troca a definição em uso; aqui só sinalizamos o alvo.
       return { next: null, gotoFlow: { flowId: node.flowId } }
 
-    case 'image': {
-      await assertUnderSendCap(account.id)
-      if (!canSendDm(contact) && !ctx.pendingCommentId) throw new WindowClosedError()
+    case 'image':
+      return deliverMedia('image', node, account, contact, ctx)
 
-      // Private reply não aceita anexo: manda a legenda por ela e a imagem em seguida.
-      if (ctx.pendingCommentId && node.caption) {
-        await deliver(account, contact, ctx, { text: node.caption })
-        await assertUnderSendCap(account.id)
-      }
+    case 'video':
+      return deliverMedia('video', node, account, contact, ctx)
 
-      await sendImage({
-        igUserId: account.ig_user_id,
-        accessToken: account.access_token,
-        recipientId: contact.ig_user_id,
-        url: node.url,
-      })
-      await logSend(account.id, 'dm')
+    case 'audio':
+      return deliverMedia('audio', node, account, contact, ctx)
 
-      await supabaseAdmin.from('messages').insert({
-        account_id: account.id,
-        contact_id: contact.id,
-        direction: 'out',
-        text: node.caption ?? '[imagem]',
-        payload: { image: node.url },
-      })
-
-      if (node.caption && !ctx.pendingCommentId) {
-        await deliver(account, contact, ctx, { text: node.caption })
-      }
-      return { next: node.next ?? null }
-    }
+    case 'file':
+      return deliverMedia('file', node, account, contact, ctx)
 
     case 'ask':
       await deliver(account, contact, ctx, { text: node.text })
