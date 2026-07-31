@@ -41,7 +41,9 @@ function autoLayout(definition: FlowDefinition): Record<string, { x: number; y: 
 function outgoing(node: FlowNode): Array<string | null | undefined> {
   if (node.type === 'condition') return [...node.cases.map((c) => c.next), node.fallback]
   if (node.type === 'randomize') return node.paths.map((p) => p.next)
-  if (node.type === 'end') return []
+  // `end` termina o fluxo; `goto_flow` termina o caminho atual e continua em
+  // outra definição — nenhum dos dois tem aresta de saída no canvas.
+  if (node.type === 'end' || node.type === 'goto_flow') return []
   return [node.next]
 }
 
@@ -90,7 +92,7 @@ export function definitionToGraph(definition: FlowDefinition): { nodes: Node[]; 
           })
         }
       })
-    } else if (node.type !== 'end' && node.next) {
+    } else if (node.type !== 'end' && node.type !== 'goto_flow' && node.next) {
       edges.push({ id: `${id}-next`, source: id, target: node.next })
     }
   }
@@ -122,7 +124,7 @@ export function graphToDefinition(nodes: Node[], edges: Edge[], entry: string): 
         ...path,
         next: edges.find((e) => e.source === node.id && e.sourceHandle === `path-${i}`)?.target ?? null,
       }))
-    } else if (clean.type !== 'end') {
+    } else if (clean.type !== 'end' && clean.type !== 'goto_flow') {
       clean.next = edges.find((e) => e.source === node.id && !e.sourceHandle)?.target ?? null
     }
 
@@ -158,6 +160,21 @@ export function blankNode(type: FlowNode['type']): FlowNode {
         buttons: [{ title: 'Quero saber mais' }],
         next: null,
       }
+    case 'carousel':
+      return {
+        type: 'carousel',
+        cards: [{ title: 'Primeiro card', subtitle: 'Descrição rápida' }],
+        next: null,
+      }
+    case 'bubbles':
+      return {
+        type: 'bubbles',
+        bubbles: [{ text: 'Oi! Vi seu comentário 👋' }, { text: 'Já te conto como funciona...' }],
+        pauseMs: 1200,
+        next: null,
+      }
+    case 'goto_flow':
+      return { type: 'goto_flow', flowId: '' }
     case 'image':
       return { type: 'image', url: 'https://', next: null }
     case 'ask':

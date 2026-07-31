@@ -12,6 +12,12 @@ describe('flowNodeSchema', () => {
     const nodes = [
       { type: 'message', text: 'oi', next: null },
       { type: 'buttons', text: 'escolha', buttons: [{ title: 'A' }], next: null },
+      {
+        type: 'carousel',
+        cards: [{ title: 'Card 1', subtitle: 'Descrição', imageUrl: 'https://exemplo.com/a.jpg' }],
+        next: null,
+      },
+      { type: 'bubbles', bubbles: [{ text: 'Oi!' }, { text: 'Tudo bem?' }], pauseMs: 1200, next: null },
       { type: 'image', url: 'https://exemplo.com/a.jpg', next: null },
       { type: 'ask', text: 'seu email?', saveAs: 'email', expect: 'email', next: null },
       { type: 'wait_reply', saveAs: 'r', next: null },
@@ -21,6 +27,7 @@ describe('flowNodeSchema', () => {
       { type: 'set_field', fields: [{ key: 'origem', value: 'ig' }], next: null },
       { type: 'randomize', paths: [{ label: 'A', next: null }, { label: 'B', next: null }] },
       { type: 'http', url: 'https://exemplo.com', method: 'POST', next: null },
+      { type: 'goto_flow', flowId: '11111111-1111-4111-8111-111111111111' },
       { type: 'unsubscribe', next: null },
       { type: 'end' },
     ]
@@ -56,6 +63,48 @@ describe('flowNodeSchema', () => {
   it('limita botões a 3, que é o teto do Instagram', () => {
     const buttons = [{ title: 'A' }, { title: 'B' }, { title: 'C' }, { title: 'D' }]
     expect(flowNodeSchema.safeParse({ type: 'buttons', text: 'x', buttons }).success).toBe(false)
+  })
+
+  it('limita o carrossel a 10 cards, o teto do generic template', () => {
+    const cards = Array.from({ length: 11 }, (_, i) => ({ title: `Card ${i}` }))
+    expect(flowNodeSchema.safeParse({ type: 'carousel', cards, next: null }).success).toBe(false)
+  })
+
+  it('exige ao menos um card no carrossel', () => {
+    expect(flowNodeSchema.safeParse({ type: 'carousel', cards: [], next: null }).success).toBe(false)
+  })
+
+  it('limita botões a 3 dentro de cada card do carrossel', () => {
+    const buttons = [{ title: 'A' }, { title: 'B' }, { title: 'C' }, { title: 'D' }]
+    const cards = [{ title: 'Card 1', buttons }]
+    expect(flowNodeSchema.safeParse({ type: 'carousel', cards, next: null }).success).toBe(false)
+  })
+
+  it('exige ao menos duas bolhas — uma só é o bloco message', () => {
+    expect(
+      flowNodeSchema.safeParse({ type: 'bubbles', bubbles: [{ text: 'oi' }], next: null }).success,
+    ).toBe(false)
+  })
+
+  it('limita bolhas a 5 e aplica a pausa padrão entre elas', () => {
+    const bubbles = Array.from({ length: 6 }, (_, i) => ({ text: `bolha ${i}` }))
+    expect(flowNodeSchema.safeParse({ type: 'bubbles', bubbles, next: null }).success).toBe(false)
+
+    const parsed = flowNodeSchema.parse({
+      type: 'bubbles',
+      bubbles: [{ text: 'oi' }, { text: 'tudo bem?' }],
+    })
+    expect(parsed).toMatchObject({ pauseMs: 1200 })
+  })
+
+  it('exige um id de fluxo válido (uuid) no pular-para-outro-fluxo', () => {
+    expect(flowNodeSchema.safeParse({ type: 'goto_flow', flowId: 'não-é-uuid' }).success).toBe(false)
+    expect(
+      flowNodeSchema.safeParse({
+        type: 'goto_flow',
+        flowId: '11111111-1111-4111-8111-111111111111',
+      }).success,
+    ).toBe(true)
   })
 })
 

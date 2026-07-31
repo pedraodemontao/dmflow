@@ -26,6 +26,8 @@ import { cn } from '@/lib/utils'
 const PALETTE: FlowNode['type'][] = [
   'message',
   'buttons',
+  'carousel',
+  'bubbles',
   'image',
   'ask',
   'wait_reply',
@@ -35,6 +37,7 @@ const PALETTE: FlowNode['type'][] = [
   'tag',
   'set_field',
   'http',
+  'goto_flow',
   'unsubscribe',
   'end',
 ]

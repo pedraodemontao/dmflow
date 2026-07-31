@@ -1,5 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import { sendButtons, sendImage, sendPrivateReply, sendText } from '@/lib/instagram/api'
+import { sendButtons, sendCarousel, sendImage, sendPrivateReply, sendText } from '@/lib/instagram/api'
 import { flowDefinitionSchema, type FlowContext, type FlowNode } from '@/lib/flow/types'
 import { assertUnderSendCap, logSend, SendCapError } from '@/lib/flow/send-cap'
 import { spin } from '@/lib/flow/spintax'
@@ -24,6 +24,11 @@ class WindowClosedError extends Error {
 function canSendDm(contact: Contact): boolean {
   if (!contact.last_inbound_at) return false
   return Date.now() - new Date(contact.last_inbound_at).getTime() < DM_WINDOW_MS
+}
+
+/** Pausa curta entre bolhas de um bloco `bubbles` — não é o bloco de delay. */
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }
 
 export function interpolate(text: string, contact: Contact, ctx: FlowContext): string {
@@ -117,6 +122,8 @@ async function deliver(
 interface StepResult {
   next: string | null
   halt?: { status: 'waiting_reply' } | { status: 'sleeping'; resumeAt: Date }
+  /** Nó `goto_flow`: sinaliza para o `walk()` trocar de definição no meio da execução. */
+  gotoFlow?: { flowId: string }
 }
 
 async function executeNode(
@@ -134,6 +141,76 @@ async function executeNode(
     case 'buttons':
       await deliver(account, contact, ctx, { text: node.text, buttons: node.buttons })
       return { next: node.next ?? null }
+
+    case 'carousel': {
+      await assertUnderSendCap(account.id)
+      if (!canSendDm(contact) && !ctx.pendingCommentId) throw new WindowClosedError()
+
+      const cards = node.cards.map((card) => ({
+        title: spin(interpolate(card.title, contact, ctx)),
+        ...(card.subtitle ? { subtitle: spin(interpolate(card.subtitle, contact, ctx)) } : {}),
+        ...(card.imageUrl ? { imageUrl: interpolate(card.imageUrl, contact, ctx) } : {}),
+        ...(card.buttons?.length
+          ? {
+              buttons: card.buttons.map((button) => ({
+                ...button,
+                title: spin(interpolate(button.title, contact, ctx)),
+                ...(button.url ? { url: interpolate(button.url, contact, ctx) } : {}),
+              })),
+            }
+          : {}),
+      }))
+
+      // Fallback de texto: usado se a private reply recusar o template, e
+      // também guardado no histórico como resumo do carrossel enviado.
+      const fallbackText = cards.map((c) => c.title).join(' · ')
+
+      if (ctx.pendingCommentId) {
+        const commentId = ctx.pendingCommentId
+        delete ctx.pendingCommentId
+        await sendPrivateReply({
+          igUserId: account.ig_user_id,
+          accessToken: account.access_token,
+          commentId,
+          text: fallbackText,
+          cards,
+        })
+        await logSend(account.id, 'private_reply')
+      } else {
+        await sendCarousel({
+          igUserId: account.ig_user_id,
+          accessToken: account.access_token,
+          recipientId: contact.ig_user_id,
+          cards,
+        })
+        await logSend(account.id, 'dm')
+      }
+
+      await supabaseAdmin.from('messages').insert({
+        account_id: account.id,
+        contact_id: contact.id,
+        direction: 'out',
+        text: `[carrossel] ${fallbackText}`,
+        payload: { carousel: cards },
+      })
+
+      return { next: node.next ?? null }
+    }
+
+    case 'bubbles': {
+      // Cada bolha passa pela mesma `deliver()` do bloco `message` — cap,
+      // janela de 24h e private reply valem por bolha, igual a um `message`
+      // sozinho. A pausa é só entre elas, para não atrasar a primeira.
+      for (let i = 0; i < node.bubbles.length; i += 1) {
+        if (i > 0) await sleep(node.pauseMs)
+        await deliver(account, contact, ctx, { text: node.bubbles[i].text })
+      }
+      return { next: node.next ?? null }
+    }
+
+    case 'goto_flow':
+      // O `walk()` é quem troca a definição em uso; aqui só sinalizamos o alvo.
+      return { next: null, gotoFlow: { flowId: node.flowId } }
 
     case 'image': {
       await assertUnderSendCap(account.id)
@@ -275,7 +352,8 @@ async function walk(
   ctx: FlowContext,
   startNode: string | null,
 ) {
-  const definition = flowDefinitionSchema.parse(flow.definition)
+  // `let`, não `const`: um nó `goto_flow` troca a definição em uso no meio do walk.
+  let definition = flowDefinitionSchema.parse(flow.definition)
   let cursor = startNode
   let steps = 0
 
@@ -331,6 +409,29 @@ async function walk(
           })
           .eq('id', runRow.id)
         return
+      }
+
+      if (result.gotoFlow) {
+        // account_id isola por conta mesmo hoje single-tenant — nunca pula
+        // para um fluxo de outra conta.
+        const { data: targetRow } = await supabaseAdmin
+          .from('flows')
+          .select('*')
+          .eq('id', result.gotoFlow.flowId)
+          .eq('account_id', account.id)
+          .maybeSingle()
+
+        if (!targetRow) {
+          throw new Error(`Fluxo de destino "${result.gotoFlow.flowId}" não existe.`)
+        }
+
+        flow = targetRow as Flow
+        definition = flowDefinitionSchema.parse(flow.definition)
+        // Persiste a troca antes de continuar: se o walk pausar (ou falhar)
+        // logo em seguida, o cron/resumeFlow tem que achar o fluxo certo.
+        await supabaseAdmin.from('flow_runs').update({ flow_id: flow.id }).eq('id', runRow.id)
+        cursor = definition.entry
+        continue
       }
 
       cursor = result.next
