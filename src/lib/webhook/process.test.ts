@@ -15,9 +15,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
  */
 
 const insertedMessages: Array<Record<string, unknown>> = []
+const insertedClicks: Array<Record<string, unknown>> = []
 const startFlowCalls: Array<Record<string, unknown>> = []
 const resumeFlowCalls: Array<Record<string, unknown>> = []
 const findTriggerCalls: Array<{ accountId: string; type: string; text: string }> = []
+
+/** Definições que a varredura de payload enxerga. Vazio = nenhum botão casa. */
+let accountFlows: Array<{ id: string; definition: unknown }> = []
+/** Liga o erro do PostgREST para simular a tabela `button_clicks` inexistente. */
+let clickInsertError: { message: string } | null = null
 
 let contactRow: Record<string, unknown> | null
 let waitingRun: Record<string, unknown> | null
@@ -50,6 +56,7 @@ function fakeQuery(table: string) {
 
   builder.insert = (payload: Record<string, unknown>) => {
     if (table === 'contacts') contactRow = { id: 'contact-new', automation_paused: false, ...payload }
+    if (table === 'button_clicks') insertedClicks.push(payload)
     return builder
   }
 
@@ -58,7 +65,21 @@ function fakeQuery(table: string) {
     return { data: null, error: null }
   }
 
+  // A varredura de payload e o insert do clique consomem a query direto, sem
+  // maybeSingle/single no fim — daí o builder também ser "thenable".
+  builder.then = (resolve: (value: unknown) => unknown) => {
+    if (table === 'flows') return Promise.resolve({ data: accountFlows, error: null }).then(resolve)
+    if (table === 'button_clicks')
+      return Promise.resolve({ data: null, error: clickInsertError }).then(resolve)
+    return Promise.resolve({ data: null, error: null }).then(resolve)
+  }
+
   return builder
+}
+
+/** Deixa o registro de clique (disparado sem await) terminar antes da asserção. */
+async function flush() {
+  for (let i = 0; i < 5; i += 1) await Promise.resolve()
 }
 
 vi.mock('@/lib/supabase/admin', () => ({
@@ -91,9 +112,12 @@ const account = { id: 'acc-1', ig_user_id: 'ig-1', access_token: 't' }
 
 beforeEach(() => {
   insertedMessages.length = 0
+  insertedClicks.length = 0
   startFlowCalls.length = 0
   resumeFlowCalls.length = 0
   findTriggerCalls.length = 0
+  accountFlows = []
+  clickInsertError = null
 
   contactRow = {
     id: 'contact-1',
@@ -281,5 +305,130 @@ describe('handleMessaging', () => {
     })
 
     expect(startFlowCalls).toHaveLength(0)
+  })
+})
+
+describe('registro do clique em botão', () => {
+  const flowComBotoes = {
+    id: 'flow-1',
+    definition: {
+      entry: 'oferta',
+      nodes: {
+        oferta: {
+          type: 'buttons',
+          text: 'Quer o mapa?',
+          buttons: [
+            { title: 'Quero o mapa', payload: 'QUERO_MAPA' },
+            { title: 'Depois eu vejo', payload: 'DEPOIS' },
+          ],
+        },
+      },
+    },
+  }
+
+  it('postback: grava payload, origem resolvida e o rótulo da definição', async () => {
+    accountFlows = [flowComBotoes]
+
+    await handleMessaging(account as never, {
+      sender: { id: 'lead-1' },
+      postback: { mid: 'p1', title: 'Quero o mapa', payload: 'QUERO_MAPA' },
+    })
+    await flush()
+
+    expect(insertedClicks).toEqual([
+      {
+        account_id: 'acc-1',
+        contact_id: 'contact-1',
+        flow_id: 'flow-1',
+        node_id: 'oferta',
+        payload: 'QUERO_MAPA',
+        title: 'Quero o mapa',
+      },
+    ])
+  })
+
+  it('quick reply também conta como clique', async () => {
+    accountFlows = [
+      {
+        id: 'flow-2',
+        definition: {
+          entry: 'p',
+          nodes: {
+            p: {
+              type: 'message',
+              text: 'Prefere qual?',
+              quickReplies: [{ title: 'Manhã', payload: 'TURNO_MANHA' }],
+            },
+          },
+        },
+      },
+    ]
+
+    await handleMessaging(account as never, {
+      sender: { id: 'lead-1' },
+      message: { mid: 'q1', quick_reply: { payload: 'TURNO_MANHA' } },
+    })
+    await flush()
+
+    expect(insertedClicks).toHaveLength(1)
+    expect(insertedClicks[0]).toMatchObject({ node_id: 'p', title: 'Manhã' })
+  })
+
+  it('payload órfão: grava mesmo assim, com origem nula e o título que a Meta mandou', async () => {
+    accountFlows = [flowComBotoes]
+
+    await handleMessaging(account as never, {
+      sender: { id: 'lead-1' },
+      postback: { mid: 'p2', title: 'Quanto custa?', payload: 'ICE_BREAKER' },
+    })
+    await flush()
+
+    expect(insertedClicks[0]).toMatchObject({
+      flow_id: null,
+      node_id: null,
+      payload: 'ICE_BREAKER',
+      title: 'Quanto custa?',
+    })
+  })
+
+  it('mensagem de texto comum não gera clique', async () => {
+    await handleMessaging(account as never, {
+      sender: { id: 'lead-1' },
+      message: { mid: 'm10', text: 'oi' },
+    })
+    await flush()
+
+    expect(insertedClicks).toHaveLength(0)
+  })
+
+  it('contato em atendimento humano: o clique é registrado mesmo sem automação rodar', async () => {
+    accountFlows = [flowComBotoes]
+    contactRow!.automation_paused = true
+
+    await handleMessaging(account as never, {
+      sender: { id: 'lead-1' },
+      postback: { mid: 'p3', title: 'Quero o mapa', payload: 'QUERO_MAPA' },
+    })
+    await flush()
+
+    expect(insertedClicks).toHaveLength(1)
+    expect(startFlowCalls).toHaveLength(0)
+  })
+
+  it('tabela ainda não criada: o erro vira log e a entrega segue normalmente', async () => {
+    accountFlows = [flowComBotoes]
+    clickInsertError = { message: 'relation "button_clicks" does not exist' }
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+    await handleMessaging(account as never, {
+      sender: { id: 'lead-1' },
+      postback: { mid: 'p4', title: 'Quero o mapa', payload: 'QUERO_MAPA' },
+    })
+    await flush()
+
+    // O fluxo disparou apesar do erro na métrica.
+    expect(startFlowCalls).toHaveLength(1)
+    expect(logged).toHaveBeenCalled()
+    logged.mockRestore()
   })
 })

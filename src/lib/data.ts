@@ -204,6 +204,85 @@ export async function getFlowMetrics(flowId: string): Promise<NodeMetric[]> {
     .sort((a, b) => b.people - a.people)
 }
 
+export interface ButtonChoice {
+  payload: string
+  /** Rótulo mais recente gravado para este payload. Null quando nunca deu para saber. */
+  title: string | null
+  clicks: number
+}
+
+export interface NodeButtonClicks {
+  /** Null junta os cliques cuja origem ficou ambígua dentro do fluxo. */
+  nodeId: string | null
+  clicks: number
+  choices: ButtonChoice[]
+}
+
+/**
+ * Qual botão do fluxo foi apertado, agrupado por bloco e por payload.
+ *
+ * O agrupamento por bloco é o ponto: um bloco com três botões só responde à
+ * pergunta que interessa ("o que essa gente escolheu?") quando as três opções
+ * são lidas juntas, uma contra a outra. Três contagens soltas numa lista
+ * global não diriam nada — 40 cliques é muito ou pouco depende do que o outro
+ * botão do mesmo bloco tirou.
+ *
+ * Dentro do bloco, a chave é o `payload`, não o `title`: o payload é a
+ * identidade da escolha e o rótulo é só como ela estava escrita. Renomear
+ * "Quero o mapa" para "Pegar o mapa" não pode partir a série em duas, então o
+ * rótulo mostrado é o do clique mais recente e a contagem continua inteira.
+ *
+ * Devolve lista vazia quando a tabela ainda não existe no banco — a migration
+ * é rodada à mão e a tela não pode quebrar até lá.
+ */
+export async function getButtonClicks(flowId: string): Promise<NodeButtonClicks[]> {
+  const { data, error } = await supabaseAdmin
+    .from('button_clicks')
+    .select('node_id, payload, title, created_at')
+    .eq('flow_id', flowId)
+    .order('created_at', { ascending: false })
+    .limit(10000)
+
+  if (error) {
+    console.error('[dm-flow] cliques de botão indisponíveis:', error.message)
+    return []
+  }
+
+  const rows = (data ?? []) as Array<{
+    node_id: string | null
+    payload: string
+    title: string | null
+  }>
+  if (rows.length === 0) return []
+
+  const byNode = new Map<string, Map<string, ButtonChoice>>()
+
+  for (const row of rows) {
+    const nodeKey = row.node_id ?? ''
+    const choices = byNode.get(nodeKey) ?? new Map<string, ButtonChoice>()
+    const choice = choices.get(row.payload) ?? { payload: row.payload, title: null, clicks: 0 }
+
+    choice.clicks += 1
+    // Linhas vêm da mais nova para a mais velha, então o primeiro rótulo não
+    // nulo que aparece é o mais recente.
+    if (choice.title === null) choice.title = row.title
+
+    choices.set(row.payload, choice)
+    byNode.set(nodeKey, choices)
+  }
+
+  return [...byNode.entries()]
+    .map(([nodeKey, choices]) => {
+      const list = [...choices.values()].sort((a, b) => b.clicks - a.clicks)
+      return {
+        nodeId: nodeKey === '' ? null : nodeKey,
+        clicks: list.reduce((total, choice) => total + choice.clicks, 0),
+        choices: list,
+      }
+    })
+    .sort((a, b) => b.clicks - a.clicks)
+}
+
 export interface DashboardStats {
   contacts: number
   automations: number

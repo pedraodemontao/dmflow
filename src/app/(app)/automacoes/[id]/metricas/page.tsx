@@ -2,10 +2,11 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 
+import { ButtonClicks } from '@/components/automacoes/button-clicks'
 import { FlowFunnel } from '@/components/automacoes/flow-funnel'
 import { Badge, Button, Card } from '@/components/ui'
 import { BigNumber, Meter } from '@/components/ui/chart'
-import { getAutomation, getFlowMetrics } from '@/lib/data'
+import { getAutomation, getButtonClicks, getFlowMetrics } from '@/lib/data'
 import { flowDefinitionSchema } from '@/lib/flow/types'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +16,10 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
   const automation = await getAutomation(id)
   if (!automation) notFound()
 
-  const metrics = await getFlowMetrics(automation.flow.id)
+  const [metrics, buttonClicks] = await Promise.all([
+    getFlowMetrics(automation.flow.id),
+    getButtonClicks(automation.flow.id),
+  ])
   const parsed = flowDefinitionSchema.safeParse(automation.flow.definition)
 
   const { runs, done } = automation.stats
@@ -72,6 +76,11 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
           </div>
 
           <FlowFunnel metrics={metrics} definition={parsed.success ? parsed.data : null} />
+
+          <ButtonClicks
+            groups={buttonClicks}
+            definition={parsed.success ? parsed.data : null}
+          />
 
           <p className="text-[11px] leading-relaxed text-muted">
             Contagem por pessoa, não por passagem: se o bloco “Perguntar” repreguntar, a mesma
