@@ -139,20 +139,65 @@ export interface FlowRun {
   updated_at: string
 }
 
+export type FunnelStageKey = 'topo' | 'meio' | 'fundo'
+export type LibrarySource = 'instagram' | 'youtube' | 'manual'
+
 /**
- * Perfil do nicho que o dono acompanha. A raspagem (Apify) traz os reels
- * deste perfil para a biblioteca de referência. Ver migration 0014.
+ * A parametrização do gerador de roteiro. Voz, proibições e formato vivem
+ * aqui e NÃO no código — é o que permite trocar de nicho editando linhas em
+ * vez de reescrever o gerador. Ver migration 0014.
  */
+export interface Persona {
+  id: string
+  account_id: string
+  name: string
+  niche: string
+  voice_prompt: string
+  forbidden_rules: string[]
+  format_rules: string
+  named_mechanisms: unknown
+  recording_guidance: string
+  headline_formula: string
+  offer: string
+  /** A palavra que o lead comenta — liga a biblioteca ao resto do produto. */
+  cta_keyword: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface FunnelStage {
+  id: string
+  account_id: string
+  persona_id: string
+  key: FunnelStageKey
+  label: string
+  cta_instruction: string
+  sort_order: number
+  created_at: string
+}
+
+export interface ContentPillar {
+  id: string
+  account_id: string
+  persona_id: string
+  name: string
+  description: string
+  default_funnel_stage: FunnelStageKey | null
+  sort_order: number
+  created_at: string
+}
+
+/** Perfil do nicho que a raspagem acompanha. */
 export interface TrackedProfile {
   id: string
   account_id: string
-  /** Sem "@" — é o que a Apify espera e o que evita o mesmo perfil duas vezes. */
+  /** Sem "@" — é o que a Apify espera e o que evita duplicar o perfil. */
   username: string
-  /** Rótulo livre do dono. Texto e não enum: o nicho muda mais rápido que o schema. */
   category: string | null
   is_active: boolean
   last_scraped_at: string | null
-  /** Régua do outlier: a mediana de views deste perfil, refeita a cada raspagem. */
+  /** Régua do outlier: mediana de views deste perfil, refeita a cada raspagem. */
   median_views: number | null
   created_at: string
 }
@@ -160,26 +205,50 @@ export interface TrackedProfile {
 export interface LibraryItem {
   id: string
   account_id: string
-  profile_id: string
-  /** Identidade na origem (shortcode). É o que impede duplicar entre raspagens. */
-  post_id: string
-  url: string
+  persona_id: string | null
+  profile_id: string | null
+  source: LibrarySource
+  owner_handle: string | null
+  category: string | null
+  post_type: string | null
+  external_url: string
   /**
    * URL ASSINADA QUE EXPIRA — mesma lição de `contacts.profile_pic_url`.
-   * Nunca trate como permanente; a tela precisa de fallback visual.
+   * A tela precisa de fallback visual.
    */
-  thumbnail_url: string | null
-  caption: string | null
+  thumb_url: string | null
+  views: number
+  likes: number
+  comments: number
+  duration_sec: number | null
+  caption: string
   posted_at: string | null
-  views: number | null
-  likes: number | null
-  comments: number | null
-  /** (curtidas + comentários) / views. Ver `src/lib/library/outlier.ts`. */
+  /** Vem do enriquecimento por IA, não da raspagem: é o que torna o vídeo modelável. */
+  visual_format: string | null
+  format_desc: string | null
+  hook_text: string | null
+  structure: string | null
   engagement: number | null
   /** Quantas vezes passou da mediana do próprio perfil. Null = amostra insuficiente. */
   outlier: number | null
-  /** Marcado pelo dono, não vem da raspagem. */
   watched: boolean
+  scraped_at: string | null
   created_at: string
   updated_at: string
+}
+
+export interface Script {
+  id: string
+  account_id: string
+  persona_id: string | null
+  pillar_id: string | null
+  funnel_stage: FunnelStageKey | null
+  theme: string | null
+  duration: string | null
+  source_library_item_id: string | null
+  output: unknown
+  model_used: string | null
+  tokens_in: number | null
+  tokens_out: number | null
+  created_at: string
 }
