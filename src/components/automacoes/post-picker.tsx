@@ -43,7 +43,7 @@ export function PostPicker({
   return (
     <div>
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-xs text-muted">
+        <p className="label text-[10px] text-muted">
           {loading ? 'Atualizando…' : `${media.length} posts encontrados`}
         </p>
         <Button variant="ghost" size="sm" type="button" onClick={load} disabled={loading}>
@@ -53,24 +53,32 @@ export function PostPicker({
       </div>
 
       {error && (
-        <p className="mb-3 rounded-lg bg-danger/10 p-3 text-xs text-danger">{error}</p>
+        <p className="mb-3 rounded-sm border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
+          {error}
+        </p>
       )}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        {/* Qualquer post: o gatilho vale para a conta inteira. */}
+        {/* Qualquer post: o gatilho vale para a conta inteira. Sem imagem por
+            baixo, então aqui a seleção pode preencher de limão como no canvas. */}
         <button
           type="button"
           onClick={() => onSelect(null)}
           className={cn(
-            'flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-4 text-center transition-colors',
+            'flex aspect-square flex-col items-center justify-center gap-2 rounded-sm border border-dashed p-4 text-center transition-colors',
             selectedId === null
-              ? 'border-accent bg-accent/10'
+              ? 'border-accent bg-accent text-background'
               : 'border-border hover:border-muted',
           )}
         >
-          <Globe className={cn('size-6', selectedId === null ? 'text-accent' : 'text-muted')} />
-          <span className="text-xs font-medium">Qualquer post</span>
-          <span className="text-[11px] leading-tight text-muted">
+          <Globe className={cn('size-6', selectedId === null ? 'text-background' : 'text-muted')} />
+          <span className="label text-[10px]">Qualquer post</span>
+          <span
+            className={cn(
+              'text-[11px] leading-tight',
+              selectedId === null ? 'text-background/80' : 'text-muted',
+            )}
+          >
             Vale para todos os posts e reels
           </span>
         </button>
@@ -85,8 +93,17 @@ export function PostPicker({
               type="button"
               onClick={() => onSelect(item.id)}
               className={cn(
-                'group relative aspect-square overflow-hidden rounded-2xl border-2 transition-colors',
-                selected ? 'border-accent' : 'border-transparent hover:border-border',
+                // A miniatura é imprevisível — pode ser branca, saturada, ou
+                // ter a mesma cor de qualquer estado que eu escolhesse. Por
+                // isso nada de tingir a imagem: o fio delimita o card, e a
+                // seleção vira um CONTORNO limão FORA dele (outline, que não
+                // ocupa layout, então nenhuma miniatura pula de tamanho ao ser
+                // escolhida) mais o selo no canto.
+                'group relative aspect-square overflow-hidden rounded-sm border border-border transition-colors',
+                'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none',
+                selected
+                  ? 'border-accent outline-2 outline-offset-2 outline-accent'
+                  : 'hover:border-muted',
               )}
             >
               {thumb ? (
@@ -102,8 +119,10 @@ export function PostPicker({
                 </div>
               )}
 
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 to-transparent p-2">
-                <div className="flex items-center gap-2.5 text-[11px] text-white">
+              {/* Véu que vai ao fundo da página: é ele que garante o contraste
+                  do contador sobre qualquer foto, inclusive a toda branca. */}
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background via-background/75 to-transparent px-2 pt-5 pb-1.5">
+                <div className="label flex items-center gap-2.5 text-[9px] text-foreground tabular-nums">
                   <span className="flex items-center gap-1">
                     <Heart className="size-3" />
                     {item.like_count ?? 0}
@@ -115,17 +134,23 @@ export function PostPicker({
                 </div>
               </div>
 
+              {/* Mesmo motivo do véu: o glifo de tipo mora numa plaquinha
+                  opaca em vez de contar com sombra por cima da foto. */}
               {item.media_type === 'VIDEO' && (
-                <Play className="absolute right-2 top-2 size-4 fill-white text-white drop-shadow" />
+                <span className="absolute top-1.5 right-1.5 rounded-sm bg-background/85 p-1">
+                  <Play className="size-3 fill-foreground text-foreground" />
+                </span>
               )}
               {item.media_type === 'CAROUSEL_ALBUM' && (
-                <Images className="absolute right-2 top-2 size-4 text-white drop-shadow" />
+                <span className="absolute top-1.5 right-1.5 rounded-sm bg-background/85 p-1">
+                  <Images className="size-3 text-foreground" />
+                </span>
               )}
 
               {selected && (
-                <div className="absolute left-2 top-2 flex size-5 items-center justify-center rounded-full bg-accent">
-                  <Check className="size-3 text-white" strokeWidth={3} />
-                </div>
+                <span className="absolute top-1.5 left-1.5 flex size-5 items-center justify-center rounded-sm bg-accent">
+                  <Check className="size-3 text-background" strokeWidth={3} />
+                </span>
               )}
             </button>
           )

@@ -38,7 +38,12 @@ function autoLayout(definition: FlowDefinition): Record<string, { x: number; y: 
   return positions
 }
 
-function outgoing(node: FlowNode): Array<string | null | undefined> {
+/**
+ * Arestas que saem de um bloco. Exportada porque a tela de métricas percorre o
+ * fluxo pela mesma regra para ordenar o funil — duas cópias desta lista fariam
+ * o funil mentir no dia em que um bloco novo ganhar saída própria.
+ */
+export function outgoing(node: FlowNode): Array<string | null | undefined> {
   if (node.type === 'condition') return [...node.cases.map((c) => c.next), node.fallback]
   if (node.type === 'randomize') return node.paths.map((p) => p.next)
   // `end` termina o fluxo; `goto_flow` termina o caminho atual e continua em

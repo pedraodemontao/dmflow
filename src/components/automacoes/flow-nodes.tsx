@@ -42,172 +42,180 @@ export const CATEGORY_LABEL: Record<NodeCategory, string> = {
 
 export const CATEGORY_ORDER: NodeCategory[] = ['send', 'wait', 'decide', 'data']
 
+/**
+ * A cor de categoria sobrevive como QUATRO tons, não dezoito. Antes cada tipo
+ * de bloco tinha matiz própria (sky, violet, fuchsia, teal, indigo, rose...) e
+ * o canvas virava arco-íris: dezoito cores não formam sistema, só ruído — e
+ * nenhuma delas significava nada, porque tipos da mesma natureza usavam
+ * matizes diferentes.
+ *
+ * Agora a cor identifica a NATUREZA do bloco e sai de tokens que já existem:
+ *
+ *   enviar  → `foreground`  o que a pessoa recebe; é o caso comum, então é
+ *                           branco — cor viva em tudo não destaca nada.
+ *   esperar → `warning`     tempo. Mesmo âmbar do aviso de janela de 24h.
+ *   decidir → `success`     o caminho que abre — mesmo verde das saídas de
+ *                           condição lá embaixo.
+ *   dados   → `muted`       bastidor: a pessoa não vê acontecer.
+ *
+ * O limão (`accent`) fica FORA desta tabela de propósito: no canvas ele é
+ * reservado para seleção e para o bloco de entrada. Se uma categoria inteira
+ * fosse limão, o bloco selecionado deixaria de ser óbvio.
+ *
+ * Contraste do glifo sobre `surface-2` (o chip): branco 15.5:1, âmbar 9.7:1,
+ * verde 9.7:1, cinza 5.7:1, coral 6.4:1 — todos acima dos 3:1 de elemento de
+ * UI. O NOME da categoria sai sempre em `muted`, nunca no tom: assim o texto
+ * tem contraste garantido e a cor fica só no glifo, que é sinal e não leitura.
+ */
+const CATEGORY_GLYPH: Record<NodeCategory, string> = {
+  send: 'text-foreground',
+  wait: 'text-warning',
+  decide: 'text-success',
+  data: 'text-muted',
+}
+
 export const NODE_META: Record<
   FlowNode['type'],
   {
     label: string
     icon: LucideIcon
-    /** Cor do glifo do ícone — mesma família de matiz do `chip`. */
-    color: string
-    /** Borda + fundo do chip que envolve o ícone, mesma matiz de `color` a baixa opacidade. */
-    chip: string
     description: string
     category: NodeCategory
+    /** Exceção à cor da categoria — só onde a cor é informação, não decoração. */
+    glyph?: string
   }
 > = {
   message: {
     label: 'Mensagem',
     icon: MessageSquare,
-    color: 'text-sky-400',
-    chip: 'border-sky-400/30 bg-sky-400/10',
     description: 'Envia um texto, com respostas rápidas opcionais',
     category: 'send',
   },
   buttons: {
     label: 'Botões',
     icon: MousePointerClick,
-    color: 'text-violet-400',
-    chip: 'border-violet-400/30 bg-violet-400/10',
     description: 'Card com até 3 botões de link ou resposta',
     category: 'send',
   },
   carousel: {
     label: 'Carrossel',
     icon: GalleryHorizontal,
-    color: 'text-orange-300',
-    chip: 'border-orange-300/30 bg-orange-300/10',
     description: 'Até 10 cards com título, subtítulo, imagem e botões',
     category: 'send',
   },
   bubbles: {
     label: 'Várias mensagens',
     icon: MessagesSquare,
-    color: 'text-sky-300',
-    chip: 'border-sky-300/30 bg-sky-300/10',
     description: 'Manda mensagens curtas em sequência, com pausa entre elas',
     category: 'send',
   },
   goto_flow: {
     label: 'Pular para outro fluxo',
     icon: Workflow,
-    color: 'text-lime-400',
-    chip: 'border-lime-400/30 bg-lime-400/10',
     description: 'Encerra este fluxo e continua a conversa em outro',
     category: 'data',
   },
   image: {
     label: 'Imagem',
     icon: ImageIcon,
-    color: 'text-fuchsia-400',
-    chip: 'border-fuchsia-400/30 bg-fuchsia-400/10',
     description: 'Envia uma imagem por link público',
     category: 'send',
   },
   video: {
     label: 'Vídeo',
     icon: Video,
-    color: 'text-fuchsia-300',
-    chip: 'border-fuchsia-300/30 bg-fuchsia-300/10',
     description: 'Envia um vídeo por link público',
     category: 'send',
   },
   audio: {
     label: 'Áudio',
     icon: AudioLines,
-    color: 'text-fuchsia-500',
-    chip: 'border-fuchsia-500/30 bg-fuchsia-500/10',
     description: 'Envia um áudio por link público',
     category: 'send',
   },
   file: {
     label: 'Arquivo',
     icon: Paperclip,
-    color: 'text-fuchsia-200',
-    chip: 'border-fuchsia-200/30 bg-fuchsia-200/10',
     description: 'Envia um arquivo (PDF, etc.) por link público',
     category: 'send',
   },
   ask: {
     label: 'Perguntar',
     icon: HelpCircle,
-    color: 'text-teal-400',
-    chip: 'border-teal-400/30 bg-teal-400/10',
     description: 'Pergunta e valida a resposta (e-mail, telefone, número)',
     category: 'wait',
   },
   set_field: {
     label: 'Gravar campo',
     icon: Variable,
-    color: 'text-indigo-400',
-    chip: 'border-indigo-400/30 bg-indigo-400/10',
     description: 'Guarda um valor na ficha do contato',
     category: 'data',
   },
   randomize: {
     label: 'Sorteio',
     icon: Shuffle,
-    color: 'text-rose-400',
-    chip: 'border-rose-400/30 bg-rose-400/10',
     description: 'Divide o tráfego entre caminhos — teste A/B',
     category: 'decide',
   },
   unsubscribe: {
     label: 'Descadastrar',
     icon: BellOff,
-    color: 'text-red-400',
-    chip: 'border-red-400/30 bg-red-400/10',
     description: 'Para de enviar automação para este contato',
     category: 'data',
+    // Único bloco irreversível para o contato: aqui o coral é informação.
+    glyph: 'text-danger',
   },
   wait_reply: {
     label: 'Esperar resposta',
     icon: Clock,
-    color: 'text-amber-400',
-    chip: 'border-amber-400/30 bg-amber-400/10',
     description: 'Pausa até a pessoa responder',
     category: 'wait',
   },
   condition: {
     label: 'Condição',
     icon: GitBranch,
-    color: 'text-emerald-400',
-    chip: 'border-emerald-400/30 bg-emerald-400/10',
     description: 'Divide o caminho conforme a resposta ou tag',
     category: 'decide',
   },
   delay: {
     label: 'Espera',
     icon: Clock,
-    color: 'text-orange-400',
-    chip: 'border-orange-400/30 bg-orange-400/10',
     description: 'Aguarda um tempo antes de continuar',
     category: 'wait',
   },
   tag: {
     label: 'Etiqueta',
     icon: Tag,
-    color: 'text-pink-400',
-    chip: 'border-pink-400/30 bg-pink-400/10',
     description: 'Marca ou desmarca etiquetas no contato',
     category: 'data',
   },
   http: {
     label: 'Webhook',
     icon: Webhook,
-    color: 'text-cyan-400',
-    chip: 'border-cyan-400/30 bg-cyan-400/10',
     description: 'Chama um sistema externo (n8n, CRM, checkout)',
     category: 'data',
   },
   end: {
     label: 'Fim',
     icon: Flag,
-    color: 'text-muted',
-    chip: 'border-border bg-surface-2',
     description: 'Encerra o fluxo',
     category: 'data',
   },
 }
+
+/** Cor do glifo de um tipo de bloco — categoria, salvo exceção documentada. */
+export function nodeGlyph(type: FlowNode['type']): string {
+  const meta = NODE_META[type]
+  return meta.glyph ?? CATEGORY_GLYPH[meta.category]
+}
+
+/**
+ * Moldura do ícone. Sempre neutra (fio + superfície recuada), em qualquer
+ * bloco: quem carrega a cor é o glifo dentro dela. Chip tingido por tipo era
+ * o que mais espalhava matiz pela tela. Falta só o tamanho, que cada uso põe.
+ */
+export const NODE_CHIP =
+  'flex shrink-0 items-center justify-center rounded-sm border border-border bg-surface-2'
 
 const OP_LABEL: Record<string, string> = {
   contains: 'contém',
@@ -284,27 +292,34 @@ export type BuilderNodeData = FlowNode & { isEntry?: boolean }
 
 /**
  * Tons das portas de saída "desenhadas" (condição/sorteio). Ficam levemente
- * tingidas na cor da família em repouso; o estado de arraste sempre vira
- * accent (ver `Port`), então a cor de família nunca compete com o feedback
+ * tingidas na cor da categoria em repouso; o estado de arraste sempre vira
+ * accent (ver `Port`), então a cor de categoria nunca compete com o feedback
  * de conexão.
  */
 const PORT_TONE = {
-  neutral: '!border-border !bg-surface-2',
-  emerald: '!border-emerald-400/50 !bg-emerald-400/10',
-  rose: '!border-rose-400/50 !bg-rose-400/10',
+  neutral: 'border-border! bg-surface-2!',
+  branch: 'border-success/50! bg-success/10!',
 } as const
 
 /**
- * Porta de encaixe do bloco — um "pino" quadrado com sombra interna em vez da
- * bolinha padrão do React Flow. Geometria e cor de repouso usam utilitários
- * `!importante`: as regras `.react-flow__handle` do globals.css são CSS puro
- * (fora de `@layer`), então batem qualquer utilitário Tailwind normal — só
- * `!important` (mesma origem, prioridade maior nessa comparação) ou `style`
- * inline vencem. Os estados de arraste (`connectingfrom`/`connectingto`/
- * `valid`/`connectionindicator`) são classes que o próprio React Flow
- * alterna no handle durante o drag; `[&.classe]:` os apanha sem JS extra.
- * Cresce por `width`/`height` (nunca `scale`) pra não brigar com o
- * `transform: translate(...)` que a biblioteca usa pra centralizar a porta.
+ * Porta de encaixe do bloco — um "pino" quadrado em vez da bolinha padrão do
+ * React Flow. Geometria e cor de repouso usam utilitários importantes: as
+ * regras `.react-flow__handle` do globals.css são CSS puro (fora de `@layer`),
+ * e no Tailwind 4 TODO utilitário mora em `@layer utilities` — regra sem
+ * camada ganha de regra em camada por definição, independente de ordem ou
+ * especificidade. Só declaração `!important` vence.
+ *
+ * O sufixo é `classe!`, a sintaxe do Tailwind 4. A forma antiga `!classe`
+ * (v3) não é reconhecida: não gera CSS nenhum, some sem erro — foi o que
+ * acontecia aqui, e por isso o pino não reagia a hover nem a arraste.
+ *
+ * Os estados de arraste (`connectingfrom`/`connectingto`/`valid`/
+ * `connectionindicator`) são classes que o próprio React Flow alterna no
+ * handle durante o drag; `[&.classe]:` os apanha sem JS extra. Cresce por
+ * `width`/`height` (nunca `scale`) pra não brigar com o `transform:
+ * translate(...)` que a biblioteca usa pra centralizar a porta.
+ *
+ * O halo do arraste é limão (`214 242 74`) — o mesmo accent do resto da tela.
  */
 function Port({
   type,
@@ -323,56 +338,73 @@ function Port({
       position={position}
       id={id}
       className={cn(
-        '!size-3 !rounded-[4px] !border-[1.5px] !shadow-[inset_0_1px_1px_rgb(0_0_0_/45%)]',
+        'size-3! rounded-[2px]! border-[1.5px]!',
         'transition-[width,height,background-color,border-color,box-shadow] duration-150',
         PORT_TONE[tone],
-        'hover:!size-3.5 hover:!border-accent hover:!bg-accent/20',
-        '[&.connectingfrom]:!size-3.5 [&.connectingfrom]:!border-accent [&.connectingfrom]:!bg-accent [&.connectingfrom]:!shadow-[0_0_0_4px_rgb(242_118_46_/25%)]',
-        '[&.connectingto]:!size-3.5 [&.connectingto]:!border-accent [&.connectingto]:!bg-accent',
-        '[&.valid]:!size-4 [&.valid]:!border-accent [&.valid]:!bg-accent [&.valid]:!shadow-[0_0_0_5px_rgb(242_118_46_/30%)]',
-        '[&.connectionindicator]:!border-accent/70',
+        'hover:size-3.5! hover:border-accent! hover:bg-accent/25!',
+        '[&.connectingfrom]:size-3.5! [&.connectingfrom]:border-accent! [&.connectingfrom]:bg-accent! [&.connectingfrom]:shadow-[0_0_0_4px_rgb(214_242_74_/25%)]!',
+        '[&.connectingto]:size-3.5! [&.connectingto]:border-accent! [&.connectingto]:bg-accent!',
+        '[&.valid]:size-4! [&.valid]:border-accent! [&.valid]:bg-accent! [&.valid]:shadow-[0_0_0_5px_rgb(214_242_74_/30%)]!',
+        '[&.connectionindicator]:border-accent/70!',
       )}
     />
   )
 }
 
 /** Fileira de saídas rotuladas (condição/sorteio) — cada uma com seu próprio pino. */
-function OutputRow({ children }: { children: ReactNode }) {
-  return <div className="flex divide-x divide-border/60 border-t border-border/60">{children}</div>
+function OutputRow({ selected, children }: { selected: boolean; children: ReactNode }) {
+  return (
+    <div
+      className={cn(
+        'flex divide-x border-t',
+        selected ? 'divide-background/25 border-background/25' : 'divide-border border-border',
+      )}
+    >
+      {children}
+    </div>
+  )
 }
 
-const OUTPUT_DOT: Record<'emerald' | 'rose' | 'muted', string> = {
-  emerald: 'bg-emerald-400',
-  rose: 'bg-rose-400',
-  muted: 'bg-muted',
-}
-const OUTPUT_TEXT: Record<'emerald' | 'rose' | 'muted', string> = {
-  emerald: 'text-emerald-300',
-  rose: 'text-rose-300',
-  muted: 'text-muted',
-}
-
+/**
+ * Saída rotulada. Segue a gramática do `Badge`: quadradinho de cor + texto
+ * neutro. Assim o rótulo (`.label`, monospace) tem contraste garantido em
+ * qualquer estado, e a cor continua distinguindo caminho de escape.
+ */
 function OutputCell({
   tone,
   label,
+  selected,
   children,
 }: {
-  tone: 'emerald' | 'rose' | 'muted'
+  tone: 'branch' | 'muted'
   label: string
+  selected: boolean
   children: ReactNode
 }) {
   return (
-    <div className="relative flex-1 px-1.5 pb-3.5 pt-2 text-center">
-      <div className="flex items-center justify-center gap-1">
-        <span className={cn('size-1 shrink-0 rounded-full', OUTPUT_DOT[tone])} />
-        <span className={cn('truncate text-[10px] font-semibold', OUTPUT_TEXT[tone])}>{label}</span>
+    <div className="relative flex-1 px-1.5 pt-2 pb-3.5 text-center">
+      <div className="flex items-center justify-center gap-1.5">
+        <span
+          className={cn(
+            'size-1.5 shrink-0 rounded-[1px]',
+            selected ? 'bg-background/60' : tone === 'branch' ? 'bg-success' : 'bg-muted',
+          )}
+        />
+        <span
+          className={cn(
+            'label truncate text-[9px]',
+            selected ? 'text-background/80' : 'text-muted',
+          )}
+        >
+          {label}
+        </span>
       </div>
       {children}
     </div>
   )
 }
 
-export function BuilderNode({ data, selected }: NodeProps) {
+export function BuilderNode({ data, selected = false }: NodeProps) {
   const node = data as unknown as BuilderNodeData
   const meta = NODE_META[node.type]
   const Icon = meta.icon
@@ -381,37 +413,64 @@ export function BuilderNode({ data, selected }: NodeProps) {
   return (
     <div
       className={cn(
-        // Card de dado no canvas — pode haver muitos ao mesmo tempo, por isso
-        // é sólido (.surface-panel), nunca vidro: dezenas de backdrop-filter
-        // no mesmo canvas custariam caro à toa. Profundidade vem de sombra e
-        // borda, nunca de blur.
-        'surface-panel w-64 rounded-2xl border transition-[transform,box-shadow,border-color] duration-150',
+        // Cartão colado no quadro: fio de cabelo, canto duro e sombra
+        // DESLOCADA SEM DESFOQUE. É a metáfora certa para um construtor —
+        // peça recortada e colada sobre a mesa, não card flutuando com brilho.
+        'w-64 rounded-md border shadow-[var(--shadow-hard)]',
+        'transition-[background-color,border-color,box-shadow] duration-150',
         selected
-          ? 'border-accent shadow-[0_0_0_1px_var(--accent),0_20px_40px_-18px_rgb(242_118_46_/40%)]'
-          : 'border-border/70 hover:-translate-y-0.5 hover:border-muted/80 hover:shadow-[0_18px_36px_-18px_rgb(0_0_0_/60%)]',
+          ? // Seleção = marca-texto. O limão preenche e o texto vira quase
+            // preto por cima (16:1). Um bloco por vez, então a cor rara
+            // continua rara — e não há como confundir qual está aberto no
+            // inspetor.
+            'border-accent bg-accent text-background'
+          : // `bg-surface border-border` em vez de `.surface-panel`: a classe
+            // do globals.css é regra sem camada e ganharia do utilitário de
+            // hover, deixando o realce morto (ver comentário do `Port`).
+            'border-border bg-surface hover:border-muted',
       )}
     >
       <Port type="target" position={Position.Top} />
 
       <div className="flex items-center gap-2.5 px-3 py-2.5">
-        <div className={cn('flex size-8 shrink-0 items-center justify-center rounded-lg border', meta.chip)}>
-          <Icon className={cn('size-4', meta.color)} />
+        <div
+          className={cn(
+            NODE_CHIP,
+            'size-8',
+            selected && 'border-background/30 bg-background/10',
+          )}
+        >
+          <Icon className={cn('size-4', selected ? 'text-background' : nodeGlyph(node.type))} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+          <p className={cn('label text-[9px]', selected ? 'text-background/80' : 'text-muted')}>
             {CATEGORY_LABEL[meta.category]}
           </p>
-          <p className="truncate text-[13px] font-semibold leading-tight text-foreground">{meta.label}</p>
+          <p className="mt-0.5 truncate text-[13px] leading-tight font-semibold">{meta.label}</p>
         </div>
         {node.isEntry && (
-          <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-medium text-accent ring-1 ring-inset ring-accent/25">
+          <span
+            className={cn(
+              'label shrink-0 rounded-sm border px-1.5 py-0.5 text-[9px]',
+              selected
+                ? 'border-background/40 text-background'
+                : 'border-accent/50 text-accent',
+            )}
+          >
             início
           </span>
         )}
       </div>
 
-      <div className="border-t border-border/60 px-3 py-2.5">
-        <p className="rounded-lg bg-surface-2/70 px-2.5 py-2 text-[11px] leading-relaxed text-muted ring-1 ring-inset ring-white/[0.03]">
+      <div className={cn('border-t px-3 py-2.5', selected ? 'border-background/25' : 'border-border')}>
+        <p
+          className={cn(
+            'rounded-sm border px-2.5 py-2 text-[11px] leading-relaxed',
+            selected
+              ? 'border-background/25 bg-background/10 text-background/80'
+              : 'border-border bg-surface-2 text-muted',
+          )}
+        >
           {preview(node)}
         </p>
 
@@ -420,13 +479,23 @@ export function BuilderNode({ data, selected }: NodeProps) {
             {node.quickReplies.slice(0, 6).map((qr, i) => (
               <span
                 key={i}
-                className="rounded-full border border-accent/40 bg-accent/5 px-2 py-0.5 text-[10px] text-accent"
+                className={cn(
+                  'rounded-sm border px-2 py-0.5 text-[10px]',
+                  selected
+                    ? 'border-background/30 text-background/80'
+                    : 'border-border bg-surface-2 text-muted',
+                )}
               >
                 {qr.title}
               </span>
             ))}
             {node.quickReplies.length > 6 && (
-              <span className="rounded-full border border-border px-2 py-0.5 text-[10px] text-muted">
+              <span
+                className={cn(
+                  'label rounded-sm border px-2 py-0.5 text-[10px]',
+                  selected ? 'border-background/30 text-background/80' : 'border-border text-muted',
+                )}
+              >
                 +{node.quickReplies.length - 6}
               </span>
             )}
@@ -438,7 +507,10 @@ export function BuilderNode({ data, selected }: NodeProps) {
             {node.buttons.map((b, i) => (
               <span
                 key={i}
-                className="truncate rounded-md border border-border bg-surface-2/50 px-2 py-1 text-center text-[10px]"
+                className={cn(
+                  'truncate rounded-sm border px-2 py-1 text-center text-[10px]',
+                  selected ? 'border-background/30' : 'border-border bg-surface-2',
+                )}
               >
                 {b.title}
               </span>
@@ -451,13 +523,21 @@ export function BuilderNode({ data, selected }: NodeProps) {
             {node.cards.slice(0, 4).map((card, i) => (
               <span
                 key={i}
-                className="truncate rounded-md border border-border bg-surface-2/50 px-2 py-1 text-[10px]"
+                className={cn(
+                  'truncate rounded-sm border px-2 py-1 text-[10px]',
+                  selected ? 'border-background/30' : 'border-border bg-surface-2',
+                )}
               >
                 {truncate(card.title, 16)}
               </span>
             ))}
             {node.cards.length > 4 && (
-              <span className="shrink-0 rounded-md border border-border px-2 py-1 text-[10px] text-muted">
+              <span
+                className={cn(
+                  'label shrink-0 rounded-sm border px-2 py-1 text-[10px]',
+                  selected ? 'border-background/30 text-background/80' : 'border-border text-muted',
+                )}
+              >
                 +{node.cards.length - 4}
               </span>
             )}
@@ -469,7 +549,10 @@ export function BuilderNode({ data, selected }: NodeProps) {
             {node.bubbles.map((b, i) => (
               <span
                 key={i}
-                className="truncate rounded-md border border-border bg-surface-2/50 px-2 py-1 text-[10px]"
+                className={cn(
+                  'truncate rounded-sm border px-2 py-1 text-[10px]',
+                  selected ? 'border-background/30' : 'border-border bg-surface-2',
+                )}
               >
                 {truncate(b.text, 30)}
               </span>
@@ -479,21 +562,28 @@ export function BuilderNode({ data, selected }: NodeProps) {
       </div>
 
       {node.type === 'condition' ? (
-        <OutputRow>
+        <OutputRow selected={selected}>
           {node.cases.map((c, i) => (
-            <OutputCell key={i} tone="emerald" label={c.value ? truncate(c.value, 12) : OP_LABEL[c.op]}>
-              <Port type="source" position={Position.Bottom} id={`case-${i}`} tone="emerald" />
+            <OutputCell
+              key={i}
+              tone="branch"
+              selected={selected}
+              label={c.value ? truncate(c.value, 12) : OP_LABEL[c.op]}
+            >
+              <Port type="source" position={Position.Bottom} id={`case-${i}`} tone="branch" />
             </OutputCell>
           ))}
-          <OutputCell tone="muted" label="senão">
+          <OutputCell tone="muted" selected={selected} label="senão">
             <Port type="source" position={Position.Bottom} id="fallback" />
           </OutputCell>
         </OutputRow>
       ) : node.type === 'randomize' ? (
-        <OutputRow>
+        <OutputRow selected={selected}>
           {node.paths.map((path, i) => (
-            <OutputCell key={i} tone="rose" label={truncate(path.label, 10)}>
-              <Port type="source" position={Position.Bottom} id={`path-${i}`} tone="rose" />
+            // Caminhos de sorteio têm a mesma chance: nenhum é o "certo",
+            // então nenhum recebe a cor de desvio.
+            <OutputCell key={i} tone="muted" selected={selected} label={truncate(path.label, 10)}>
+              <Port type="source" position={Position.Bottom} id={`path-${i}`} />
             </OutputCell>
           ))}
         </OutputRow>
