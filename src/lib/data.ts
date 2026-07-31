@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { computeDayTrend, dayWindows, type DayTrend } from '@/lib/day-trend'
 import { env } from '@/lib/env'
 import { fetchMedia } from '@/lib/instagram/api'
 import { assessRisk } from '@/lib/risk/assess'
@@ -539,4 +540,196 @@ export async function getRiskReport(): Promise<RiskReport | null> {
     recentSendTimestamps: sendRows.map((row) => new Date(row.created_at)),
     account: { quiet_from: account.quiet_from, quiet_to: account.quiet_to },
   })
+}
+
+// ---------------------------------------------------------------------------
+// Cockpit: as perguntas que o painel deveria responder ao abrir, em vez dos
+// quatro números de vaidade de sempre. Cada leitura abaixo é dedicada a UMA
+// pergunta — ver `getCockpitData` no fim, que junta todas numa chamada só
+// para a página compor.
+// ---------------------------------------------------------------------------
+
+/**
+ * "Quantos leads entraram hoje, contra ontem?" — tendência, não total
+ * histórico. `dayWindows`/`computeDayTrend` (src/lib/day-trend.ts) são puros
+ * e testados; aqui só viram duas contagens `head: true` (sem puxar linha
+ * nenhuma) nos limites do dia civil em America/Sao_Paulo.
+ */
+export async function getLeadsTrend(): Promise<DayTrend> {
+  const { todayStart, tomorrowStart, yesterdayStart } = dayWindows()
+
+  const [today, yesterday] = await Promise.all([
+    supabaseAdmin
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', todayStart.toISOString())
+      .lt('created_at', tomorrowStart.toISOString()),
+    supabaseAdmin
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .gte('created_at', yesterdayStart.toISOString())
+      .lt('created_at', todayStart.toISOString()),
+  ])
+
+  return computeDayTrend(today.count ?? 0, yesterday.count ?? 0)
+}
+
+/** Depois desse tanto sem resposta a janela de 24h já fechou — a conversa não reabre sozinha. */
+const STALE_WAITING_REPLY_MS = 24 * 60 * 60 * 1000
+/** Teto de linhas puxadas só para achar qual automação concentra mais gente travada. */
+const STUCK_SAMPLE_LIMIT = 500
+
+export interface StuckSummary {
+  /** Fluxo que quebrou no meio (`flow_runs.status = 'failed'`) — nunca mais anda sozinho. */
+  failed: number
+  /** Parado em `wait_reply`/`ask` há mais de 24h — recebeu a DM e não voltou. */
+  staleWaitingReply: number
+  total: number
+  /** A automação com mais gente travada, para o card linkar direto pra ela. */
+  topAutomation: { triggerId: string; flowName: string; count: number } | null
+}
+
+/**
+ * "Quantos travaram no meio?" — dinheiro parado: gente que o fluxo não
+ * conseguiu levar até o fim. Duas contagens `head: true` cobrem o total; só
+ * quando há alguém travado é que uma terceira query busca `flow_id` (só essa
+ * coluna, até `STUCK_SAMPLE_LIMIT` linhas — não a `flow_runs` inteira, o erro
+ * que `getAutomations` comete) para achar a automação mais afetada.
+ */
+export async function getStuckSummary(): Promise<StuckSummary> {
+  const staleBefore = new Date(Date.now() - STALE_WAITING_REPLY_MS).toISOString()
+
+  const [{ count: failed }, { count: stale }] = await Promise.all([
+    supabaseAdmin.from('flow_runs').select('id', { count: 'exact', head: true }).eq('status', 'failed'),
+    supabaseAdmin
+      .from('flow_runs')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'waiting_reply')
+      .lt('updated_at', staleBefore),
+  ])
+
+  const total = (failed ?? 0) + (stale ?? 0)
+  if (total === 0) {
+    return { failed: failed ?? 0, staleWaitingReply: stale ?? 0, total: 0, topAutomation: null }
+  }
+
+  const { data: stuckRows } = await supabaseAdmin
+    .from('flow_runs')
+    .select('flow_id')
+    .or(`status.eq.failed,and(status.eq.waiting_reply,updated_at.lt.${staleBefore})`)
+    .limit(STUCK_SAMPLE_LIMIT)
+
+  const countByFlow = new Map<string, number>()
+  for (const row of (stuckRows ?? []) as Array<{ flow_id: string }>) {
+    countByFlow.set(row.flow_id, (countByFlow.get(row.flow_id) ?? 0) + 1)
+  }
+
+  const topFlowId = [...countByFlow.entries()].sort((a, b) => b[1] - a[1])[0]?.[0]
+  let topAutomation: StuckSummary['topAutomation'] = null
+
+  if (topFlowId) {
+    const [{ data: flow }, { data: trigger }] = await Promise.all([
+      supabaseAdmin.from('flows').select('name').eq('id', topFlowId).maybeSingle(),
+      supabaseAdmin
+        .from('triggers')
+        .select('id')
+        .eq('flow_id', topFlowId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ])
+
+    if (flow && trigger) {
+      topAutomation = {
+        triggerId: (trigger as { id: string }).id,
+        flowName: (flow as { name: string }).name,
+        count: countByFlow.get(topFlowId) ?? 0,
+      }
+    }
+  }
+
+  return { failed: failed ?? 0, staleWaitingReply: stale ?? 0, total, topAutomation }
+}
+
+export interface FailedRun {
+  id: string
+  flowName: string
+  /** Trigger da automação, para o card linkar direto — null se todos os triggers do fluxo sumiram. */
+  triggerId: string | null
+  contactUsername: string | null
+  error: string | null
+  updatedAt: string
+}
+
+/**
+ * "Alguma automação falhou?" — `flow_runs.status = 'failed'` existe desde o
+ * início e nunca apareceu na interface (ver CLAUDE.md/HANDOFF.md). Uma query
+ * com join (limitada a `limit`) traz as falhas mais recentes; a segunda busca
+ * só os triggers dos fluxos envolvidos (poucos, `in flow_id`) para linkar
+ * direto na automação em vez de mandar o dono abrir cada uma na mão.
+ */
+export async function getFailedAutomations(limit = 5): Promise<FailedRun[]> {
+  const { data } = await supabaseAdmin
+    .from('flow_runs')
+    .select('id, error, updated_at, flow_id, flows(name), contacts(username)')
+    .eq('status', 'failed')
+    .order('updated_at', { ascending: false })
+    .limit(limit)
+
+  const rows = (data ?? []) as unknown as Array<{
+    id: string
+    error: string | null
+    updated_at: string
+    flow_id: string
+    flows: { name: string } | null
+    contacts: { username: string | null } | null
+  }>
+  if (rows.length === 0) return []
+
+  const flowIds = [...new Set(rows.map((row) => row.flow_id))]
+  const { data: triggers } = await supabaseAdmin
+    .from('triggers')
+    .select('id, flow_id')
+    .in('flow_id', flowIds)
+
+  const triggerByFlow = new Map<string, string>()
+  for (const trigger of (triggers ?? []) as Array<{ id: string; flow_id: string }>) {
+    if (!triggerByFlow.has(trigger.flow_id)) triggerByFlow.set(trigger.flow_id, trigger.id)
+  }
+
+  return rows.map((row) => ({
+    id: row.id,
+    flowName: row.flows?.name ?? 'fluxo removido',
+    triggerId: triggerByFlow.get(row.flow_id) ?? null,
+    contactUsername: row.contacts?.username ?? null,
+    error: row.error,
+    updatedAt: row.updated_at,
+  }))
+}
+
+export interface CockpitData {
+  leadsTrend: DayTrend
+  leadSources: LeadSource[]
+  stuck: StuckSummary
+  failedRuns: FailedRun[]
+  inboxCounts: Record<InboxFilter, number>
+  riskReport: RiskReport | null
+}
+
+/**
+ * Junta as seis perguntas do cockpit numa chamada só, para a página só
+ * compor. `getLeadSources`, `getInboxCounts` e `getRiskReport` já existiam —
+ * reaproveitados aqui, não reescritos.
+ */
+export async function getCockpitData(): Promise<CockpitData> {
+  const [leadsTrend, leadSources, stuck, failedRuns, inboxCounts, riskReport] = await Promise.all([
+    getLeadsTrend(),
+    getLeadSources(),
+    getStuckSummary(),
+    getFailedAutomations(),
+    getInboxCounts(),
+    getRiskReport(),
+  ])
+
+  return { leadsTrend, leadSources, stuck, failedRuns, inboxCounts, riskReport }
 }
