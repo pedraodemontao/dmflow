@@ -33,6 +33,10 @@ function load(): Env {
     CRON_SECRET: process.env.CRON_SECRET,
     PANEL_PASSWORD: process.env.PANEL_PASSWORD,
     SEND_HOURLY_CAP: process.env.SEND_HOURLY_CAP,
+    // Estava fora da lista: o schema tem `.default(8)`, então o valor era
+    // SEMPRE 8 e definir a variável na Vercel não surtia efeito nenhum.
+    // Configuração que mente em silêncio é pior que configuração inexistente.
+    PUBLIC_REPLY_PER_POST_CAP: process.env.PUBLIC_REPLY_PER_POST_CAP,
     CONVERSION_SECRET: process.env.CONVERSION_SECRET,
   })
 

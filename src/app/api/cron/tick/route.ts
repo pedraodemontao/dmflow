@@ -6,6 +6,7 @@ import { resumeFlow } from '@/lib/flow/engine'
 import { isQuiet } from '@/lib/flow/quiet-hours'
 import { assertUnderSendCap, isUnderPublicReplyCap, logSend } from '@/lib/flow/send-cap'
 import { replyToComment } from '@/lib/instagram/api'
+import { isPermanentError } from '@/lib/instagram/errors'
 import { pollAll } from '@/lib/webhook/poll'
 import { processPending } from '@/lib/webhook/process'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -41,9 +42,34 @@ async function requeueStuckEvents(): Promise<number> {
 }
 
 /**
+ * Espaçamento entre respostas públicas na mesma drenagem. Sem isto o laço
+ * publica as 20 em poucos segundos — o cap limita o VOLUME, não o PADRÃO, e
+ * padrão é o que o filtro de spam lê.
+ */
+const DRAIN_GAP_MS = 4_000
+
+/** Linha da fila de resposta pública. Só os campos que a drenagem usa. */
+interface PendingPublicReply {
+  id: string
+  account_id: string
+  comment_id: string
+  media_id: string | null
+  message: string
+  attempts: number
+}
+
+/** Quantas linhas por tick. Baixo de propósito: ritmo, não vazão. */
+const DRAIN_BATCH = 12
+
+/**
  * Drena a fila de respostas públicas. Todo comentário é respondido — aqui é só
  * o ritmo: sai no teto por post, espaçado, para não virar parede de comentários
  * iguais no mesmo lugar.
+ *
+ * A seleção sorteia a ordem entre posts em vez de puxar sempre os mais
+ * antigos: um post viral com 200 pendências ocupava a janela inteira e
+ * empurrava as 2 pendências de outro post para dias depois. "Nem que demore"
+ * não pode virar "talvez, um dia".
  */
 async function drainPublicReplies(): Promise<number> {
   const { data } = await supabaseAdmin
@@ -52,11 +78,20 @@ async function drainPublicReplies(): Promise<number> {
     .is('sent_at', null)
     .lt('attempts', 5)
     .order('created_at', { ascending: true })
-    .limit(20)
+    .limit(60)
+
+  // Uma por post por rodada, na ordem de chegada dentro de cada post. Assim
+  // um post barulhento não engole a fila dos outros.
+  const porPost = new Map<string, PendingPublicReply>()
+  for (const row of (data ?? []) as PendingPublicReply[]) {
+    const key = row.media_id ?? row.id
+    if (!porPost.has(key)) porPost.set(key, row)
+  }
+  const lote = Array.from(porPost.values()).slice(0, DRAIN_BATCH)
 
   let sent = 0
 
-  for (const row of data ?? []) {
+  for (const row of lote) {
     const { data: account } = await supabaseAdmin
       .from('accounts')
       .select('*')
@@ -68,8 +103,33 @@ async function drainPublicReplies(): Promise<number> {
     if (acc.automations_paused || isQuiet(acc)) continue
     if (row.media_id && !(await isUnderPublicReplyCap(acc.id, row.media_id))) continue
 
+    // Cap global FORA do try, com `continue` igual ao cap por post. Estava
+    // dentro, e `SendCapError` caía no catch que incrementa `attempts` — em
+    // rajada, cinco ticks seguidos com o cap estourado levavam toda a fila a
+    // `attempts = 5` e ela sumia da consulta PARA SEMPRE. Adiar não é falhar:
+    // o comentário volta na próxima rodada, que é a invariante do produto.
     try {
       await assertUnderSendCap(acc.id)
+    } catch {
+      continue
+    }
+
+    // Claim: só publica quem conseguiu marcar a linha. `maxDuration` é 300s e
+    // o cron dispara a cada 60s, então até cinco ticks convivem — dois na fase
+    // de drenagem liam o mesmo topo da fila e respondiam o MESMO comentário
+    // duas vezes. É o incidente de 31/07 pela porta dos fundos: a migration
+    // 0008 protegeu o caminho imediato e deixou a fila descoberta.
+    const { data: claimed } = await supabaseAdmin
+      .from('pending_public_replies')
+      .update({ sent_at: new Date().toISOString() })
+      .eq('id', row.id)
+      .is('sent_at', null)
+      .select('id')
+      .maybeSingle()
+
+    if (!claimed) continue
+
+    try {
       await replyToComment({
         accessToken: acc.access_token,
         commentId: row.comment_id,
@@ -79,14 +139,26 @@ async function drainPublicReplies(): Promise<number> {
 
       await supabaseAdmin
         .from('pending_public_replies')
-        .update({ sent_at: new Date().toISOString(), error: null })
+        .update({ error: null })
         .eq('id', row.id)
       sent += 1
+
+      // Respira entre uma resposta e outra. Vinte comentários iguais no mesmo
+      // segundo é assinatura de robô mesmo estando dentro do cap.
+      if (lote.length > 1) await new Promise((r) => setTimeout(r, DRAIN_GAP_MS))
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
+      // Devolve o claim: quem falhou de verdade volta para a fila.
       await supabaseAdmin
         .from('pending_public_replies')
-        .update({ attempts: row.attempts + 1, error: message })
+        .update({
+          sent_at: null,
+          attempts: row.attempts + 1,
+          error: message,
+          // Permanente não melhora com insistência — queima o orçamento de
+          // uma vez em vez de tentar cinco.
+          ...(isPermanentError(error) ? { attempts: 5 } : {}),
+        })
         .eq('id', row.id)
     }
   }
@@ -116,6 +188,23 @@ async function resumeSleepingRuns(): Promise<number> {
     if ((contact as Contact).automation_paused) continue
     // Pânico ou fora do horário: o fluxo continua dormindo e o cron tenta depois.
     if ((account as Account).automations_paused || isQuiet(account as Account)) continue
+
+    // Claim otimista, o mesmo padrão que `processPending` já usa em
+    // `webhook_events`. `resumeFlow` virava o status sem condição — isso é
+    // atribuição, não reivindicação. Dois ticks sobrepostos percorriam o mesmo
+    // run e mandavam TODAS as mensagens seguintes em duplicata, e aqui não há
+    // rede: são DMs comuns dentro da janela, a Meta aceita as duas. Fica mais
+    // provável justamente em rajada, quando o run dorme por cap de 5 min e os
+    // ticks se atrasam.
+    const { data: claimed } = await supabaseAdmin
+      .from('flow_runs')
+      .update({ status: 'running' })
+      .eq('id', row.id)
+      .eq('status', 'sleeping')
+      .select('id')
+      .maybeSingle()
+
+    if (!claimed) continue
 
     try {
       await resumeFlow({ run: row, account: account as Account, contact: contact as Contact })

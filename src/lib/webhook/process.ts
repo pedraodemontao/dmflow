@@ -18,6 +18,15 @@ import type { Account, Contact, Flow, FlowRun, TriggerType } from '@/types/db'
 const COMMENT_JITTER_MIN_MS = 8_000
 const COMMENT_JITTER_RANGE_MS = 27_000
 
+/**
+ * Espalhamento em milissegundos. Usado tanto na entrada da fila quanto na
+ * reabertura do horário de silêncio — nos dois casos o inimigo é o mesmo:
+ * um monte de envio no mesmo instante.
+ */
+function jitterMs(): number {
+  return COMMENT_JITTER_MIN_MS + Math.random() * COMMENT_JITTER_RANGE_MS
+}
+
 function jitteredProcessAfter(kind: 'messaging' | 'comment'): string {
   if (kind !== 'comment') return new Date().toISOString()
   const delay = COMMENT_JITTER_MIN_MS + Math.random() * COMMENT_JITTER_RANGE_MS
@@ -533,12 +542,18 @@ export async function processPending(limit = 20): Promise<number> {
 
       // Fora do horário de atendimento: adia para a abertura, não descarta.
       if (isQuiet(account)) {
+        // Jitter na abertura, não só na entrada da fila. `nextOpening` zera os
+        // minutos, então TODOS os eventos acumulados na madrugada recebiam
+        // exatamente o mesmo `process_after` e disparavam juntos às 08:00:00.
+        // Quarenta private replies no mesmo segundo, todo dia, é assinatura de
+        // robô — e o cap limita o volume, não o padrão.
+        const abertura = nextOpening(account).getTime()
         await supabaseAdmin
           .from('webhook_events')
           .update({
             status: 'pending',
             attempts: row.attempts,
-            process_after: nextOpening(account).toISOString(),
+            process_after: new Date(abertura + jitterMs()).toISOString(),
           })
           .eq('id', row.id)
         continue
