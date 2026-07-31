@@ -12,15 +12,21 @@ import {
   updateContactTags,
 } from '@/app/actions'
 import { Badge, Button, Input, Label } from '@/components/ui'
+import { useToast } from '@/components/ui/toast'
 
 export function ContactTags({ contactId, tags }: { contactId: string; tags: string[] }) {
   const router = useRouter()
+  const toast = useToast()
   const [pending, start] = useTransition()
   const [draft, setDraft] = useState('')
 
   function commit(next: string[]) {
     start(async () => {
-      await updateContactTags(contactId, next)
+      const result = await updateContactTags(contactId, next)
+      if (!result.ok) {
+        toast.error(result.error ?? 'Não consegui salvar as etiquetas.')
+        return
+      }
       router.refresh()
     })
   }
@@ -75,6 +81,7 @@ export function ContactFields({
   fields: Record<string, unknown>
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [pending, start] = useTransition()
   const [key, setKey] = useState('')
   const [value, setValue] = useState('')
@@ -100,7 +107,11 @@ export function ContactFields({
               title="Apagar campo"
               onClick={() =>
                 start(async () => {
-                  await removeContactField(contactId, name)
+                  const result = await removeContactField(contactId, name)
+                  if (!result.ok) {
+                    toast.error(result.error ?? 'Não consegui apagar o campo.')
+                    return
+                  }
                   router.refresh()
                 })
               }
@@ -118,7 +129,11 @@ export function ContactFields({
           e.preventDefault()
           if (!key.trim()) return
           start(async () => {
-            await saveContactField(contactId, key, value)
+            const result = await saveContactField(contactId, key, value)
+            if (!result.ok) {
+              toast.error(result.error ?? 'Não consegui salvar o campo.')
+              return
+            }
             setKey('')
             setValue('')
             router.refresh()
@@ -137,6 +152,7 @@ export function ContactFields({
 
 export function DeleteContact({ contactId, name }: { contactId: string; name: string }) {
   const router = useRouter()
+  const toast = useToast()
   const [pending, start] = useTransition()
   const [confirming, setConfirming] = useState(false)
 
@@ -162,7 +178,13 @@ export function DeleteContact({ contactId, name }: { contactId: string; name: st
           disabled={pending}
           onClick={() =>
             start(async () => {
-              await deleteContact(contactId)
+              const result = await deleteContact(contactId)
+              if (!result.ok) {
+                toast.error(result.error ?? 'Não consegui apagar o contato.')
+                return
+              }
+              // A tela some junto com o contato — sem o aviso, some sem dizer nada.
+              toast.success(`${name} foi apagado.`)
               router.push('/contatos')
               router.refresh()
             })
@@ -186,6 +208,7 @@ export function SubscriptionToggle({
   subscribed: boolean
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [pending, start] = useTransition()
 
   return (
@@ -199,7 +222,11 @@ export function SubscriptionToggle({
         disabled={pending}
         onClick={() =>
           start(async () => {
-            await setContactSubscribed(contactId, !subscribed)
+            const result = await setContactSubscribed(contactId, !subscribed)
+            if (!result.ok) {
+              toast.error(result.error ?? 'Não consegui mudar a inscrição.')
+              return
+            }
             router.refresh()
           })
         }

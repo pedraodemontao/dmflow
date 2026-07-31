@@ -9,6 +9,7 @@ import { saveAutomation } from '@/app/actions'
 import { FlowBuilder } from '@/components/automacoes/flow-builder'
 import { PostPicker } from '@/components/automacoes/post-picker'
 import { Badge, Button, Card, Input, Label, Select, Textarea } from '@/components/ui'
+import { useToast } from '@/components/ui/toast'
 import type { FlowOption } from '@/lib/data'
 import { emptyDefinition } from '@/lib/flow/transform'
 import type { FlowDefinition } from '@/lib/flow/types'
@@ -44,6 +45,7 @@ type StepId = (typeof STEPS)[number]['id']
 
 export function AutomationEditor({ triggerId, media, mediaError, flowOptions, initial }: Props) {
   const router = useRouter()
+  const toast = useToast()
   const [pending, startTransition] = useTransition()
 
   const [step, setStep] = useState<StepId>('gatilho')
@@ -80,9 +82,17 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
       })
 
       if (!result.ok) {
+        // A faixa fica: erro de salvar aqui é quase sempre algo a corrigir no
+        // fluxo (palavra-chave faltando, texto sem variação), e o texto precisa
+        // continuar na tela enquanto a correção é feita. O toast é o que chama
+        // a atenção quando o olho está no canvas, longe do topo.
         setError(result.error ?? 'Não consegui salvar')
+        toast.error(result.error ?? 'Não consegui salvar a automação.')
         return
       }
+      // A tela troca para a lista — sem o aviso, salvar e não salvar têm o
+      // mesmo efeito visível.
+      toast.success(`“${name}” salva.`)
       router.push('/automacoes')
       router.refresh()
     })

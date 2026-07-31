@@ -14,6 +14,7 @@ import {
 } from '@/app/actions'
 import { CannedReplies } from '@/components/conversas/canned-replies'
 import { Avatar, Badge, Button, Textarea } from '@/components/ui'
+import { useToast } from '@/components/ui/toast'
 import type { InboxFilter, InboxItem, Thread } from '@/lib/data'
 import type { CannedReply } from '@/types/db'
 import { cn } from '@/lib/utils'
@@ -32,6 +33,13 @@ const SNOOZE_OPTIONS = [
   { hours: 4, label: '4 horas' },
   { hours: 24, label: 'Amanhã' },
 ]
+
+/** A conversa sai da fila e some da lista — o aviso é a única prova do que aconteceu. */
+const STATUS_TOAST: Record<'open' | 'done' | 'snoozed', string> = {
+  open: 'Conversa reaberta.',
+  done: 'Conversa resolvida.',
+  snoozed: 'Conversa adiada.',
+}
 
 /** Atualiza a thread aberta sem recarregar a página. */
 const POLL_MS = 15_000
@@ -65,6 +73,7 @@ export function Inbox({
   cannedReplies: CannedReply[]
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [selectedId, setSelectedId] = useState<string | null>(initialThread?.contact.id ?? null)
   const [thread, setThread] = useState<Thread | null>(initialThread)
   const [draft, setDraft] = useState('')
@@ -94,7 +103,12 @@ export function Inbox({
     if (!selectedId) return
     setSnoozeOpen(false)
     startSending(async () => {
-      await setInboxStatus(selectedId, status, hours)
+      const result = await setInboxStatus(selectedId, status, hours)
+      if (!result.ok) {
+        toast.error(result.error ?? 'Não consegui mudar o estado da conversa.')
+        return
+      }
+      toast.success(STATUS_TOAST[status])
       // Sai da lista atual quando o filtro deixa de casar.
       setSelectedId(null)
       setThread(null)
@@ -120,7 +134,11 @@ export function Inbox({
     startSending(async () => {
       const result = await sendManualMessage(selectedId, text)
       if (!result.ok) {
+        // Fica nos dois lugares de propósito: o texto acima do compositor é o
+        // que continua na tela enquanto a pessoa decide o que fazer; o toast é
+        // o que ela vê sem tirar o olho de onde clicou.
         setError(result.error ?? 'Falha no envio')
+        toast.error(result.error ?? 'Falha no envio')
         return
       }
       setDraft('')
@@ -132,7 +150,16 @@ export function Inbox({
   function handleTogglePause(paused: boolean) {
     if (!selectedId) return
     startSending(async () => {
-      await setContactAutomationPaused(selectedId, paused)
+      const result = await setContactAutomationPaused(selectedId, paused)
+      if (!result.ok) {
+        toast.error(result.error ?? 'Não consegui mudar quem responde este contato.')
+        return
+      }
+      toast.success(
+        paused
+          ? 'Você assumiu a conversa — a automação parou para este contato.'
+          : 'Conversa devolvida ao robô.',
+      )
       await loadThread(selectedId)
     })
   }
@@ -337,7 +364,12 @@ export function Inbox({
                     disabled={sending}
                     onClick={() =>
                       startSending(async () => {
-                        await saveContactNotes(thread.contact.id, notes)
+                        const result = await saveContactNotes(thread.contact.id, notes)
+                        if (!result.ok) {
+                          toast.error(result.error ?? 'Não consegui salvar a nota.')
+                          return
+                        }
+                        toast.success('Nota salva.')
                         await loadThread(thread.contact.id)
                       })
                     }

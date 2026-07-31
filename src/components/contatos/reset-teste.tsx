@@ -6,6 +6,7 @@ import { Eraser, Loader2 } from 'lucide-react'
 
 import { resetTestData } from '@/app/actions'
 import { Button, Input } from '@/components/ui'
+import { useToast } from '@/components/ui/toast'
 
 const CONFIRMACAO = 'APAGAR'
 
@@ -15,6 +16,7 @@ const CONFIRMACAO = 'APAGAR'
  */
 export function ResetTeste({ total }: { total: number }) {
   const router = useRouter()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [texto, setTexto] = useState('')
   const [pending, start] = useTransition()
@@ -51,7 +53,14 @@ export function ResetTeste({ total }: { total: number }) {
           disabled={pending || texto.trim().toUpperCase() !== CONFIRMACAO}
           onClick={() =>
             start(async () => {
-              await resetTestData()
+              const result = await resetTestData()
+              if (!result.ok) {
+                toast.error(result.error ?? 'Não consegui limpar os dados de teste.')
+                return
+              }
+              toast.success(
+                `${total} ${total === 1 ? 'contato apagado' : 'contatos apagados'} e fila de eventos limpa.`,
+              )
               setOpen(false)
               setTexto('')
               router.refresh()
