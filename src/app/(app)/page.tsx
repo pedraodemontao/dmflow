@@ -1,52 +1,15 @@
 import Link from 'next/link'
-import {
-  AtSign,
-  ImageOff,
-  MessagesSquare,
-  Play,
-  TriangleAlert,
-  Users,
-  Zap,
-} from 'lucide-react'
+import { AtSign, TriangleAlert, Zap } from 'lucide-react'
 
+import { Cockpit } from '@/components/painel/cockpit'
 import { Operacao } from '@/components/painel/operacao'
-import { Risco } from '@/components/painel/risco'
 import { Button, Card, EmptyState } from '@/components/ui'
-import { getAccount, getAutomations, getLeadSources, getRiskReport, getStats } from '@/lib/data'
+import { getAccount, getAutomations, getCockpitData } from '@/lib/data'
 import { checkAccountHealth } from '@/lib/instagram/health'
 import { hasEnv } from '@/lib/env'
 
 export const dynamic = 'force-dynamic'
 
-function Stat({
-  label,
-  value,
-  hint,
-  icon: Icon,
-}: {
-  label: string
-  value: number
-  /** Linha de contexto — o mesmo número dito de outro jeito, não um dado novo. */
-  hint: string
-  icon: typeof Users
-}) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-start justify-between gap-2">
-        <span className="text-[11px] font-bold uppercase tracking-wider text-muted">{label}</span>
-        {/* Ícone neutro — quatro cards na mesma tela não podem competir pelo
-            mesmo accent que marca a ação principal do cabeçalho. */}
-        <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-surface-2 text-muted">
-          <Icon className="size-3.5" />
-        </div>
-      </div>
-      <p className="mt-2 font-mono text-3xl font-bold tracking-tight text-foreground tabular-nums">
-        {value}
-      </p>
-      <p className="mt-0.5 truncate text-[11px] text-muted">{hint}</p>
-    </Card>
-  )
-}
 
 export default async function Home({
   searchParams,
@@ -72,12 +35,12 @@ export default async function Home({
     )
   }
 
-  const [stats, automations, account, leadSources, riskReport] = await Promise.all([
-    getStats(),
+  // O cockpit já traz risco, conteúdos e filas numa chamada só — não repita
+  // as leituras que ele faz.
+  const [automations, account, cockpit] = await Promise.all([
     getAutomations(),
     getAccount(),
-    getLeadSources(),
-    getRiskReport(),
+    getCockpitData(),
   ])
 
   const health = account ? await checkAccountHealth(account) : null
@@ -168,104 +131,16 @@ export default async function Home({
               </div>
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat
-              label="Contatos"
-              value={stats.contacts}
-              hint="quem já apareceu na base"
-              icon={Users}
+          {/* O cockpit substitui os números de vaidade: mostra o que exige AÇÃO
+              (falha, gente esperando, travados) antes do que é contexto. */}
+          <Cockpit data={cockpit} />
+
+          {account && (
+            <Operacao
+              paused={account.automations_paused}
+              quietFrom={account.quiet_from}
+              quietTo={account.quiet_to}
             />
-            <Stat
-              label="Automações ativas"
-              value={stats.activeAutomations}
-              hint="rodando agora, prontas para disparar"
-              icon={Zap}
-            />
-            <Stat
-              label="Mensagens enviadas"
-              value={stats.messagesSent}
-              hint="total histórico da conta"
-              icon={MessagesSquare}
-            />
-            <Stat
-              label="Fluxos em andamento"
-              value={stats.runsRunning}
-              hint="pessoas no meio de uma sequência"
-              icon={Play}
-            />
-          </div>
-
-          {(account || riskReport) && (
-            <div className="grid gap-4 xl:grid-cols-[1.15fr_1fr]">
-              {account && (
-                <Operacao
-                  paused={account.automations_paused}
-                  quietFrom={account.quiet_from}
-                  quietTo={account.quiet_to}
-                />
-              )}
-              {riskReport && <Risco report={riskReport} />}
-            </div>
-          )}
-
-          {leadSources.length > 0 && (
-            <section>
-              <h2 className="mb-1 text-[11px] font-bold uppercase tracking-wider text-muted">
-                Conteúdos que mais trazem lead
-              </h2>
-              <p className="mb-3 text-xs text-muted">
-                Conta só quem chegou comentando. Vale o post que trouxe a pessoa pela primeira vez.
-              </p>
-
-              <Card className="divide-y divide-border">
-                {leadSources.map((source) => (
-                  <div key={source.mediaId} className="flex items-center gap-3 p-3">
-                    {source.thumbnail ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={source.thumbnail}
-                        alt=""
-                        className="size-10 shrink-0 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-2">
-                        <ImageOff className="size-4 text-muted" />
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs">
-                        {source.caption?.trim() || (
-                          <span className="text-muted">Post fora das últimas 50 mídias</span>
-                        )}
-                      </p>
-                      {source.permalink && (
-                        <a
-                          href={source.permalink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-[11px] text-accent hover:underline"
-                        >
-                          ver no Instagram
-                        </a>
-                      )}
-                    </div>
-
-                    <Link
-                      href={`/contatos?post=${source.mediaId}`}
-                      className="shrink-0 rounded-md text-right transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                    >
-                      <p className="font-mono text-sm font-semibold tabular-nums">
-                        {source.leads}
-                      </p>
-                      <p className="text-[11px] text-muted">
-                        {source.leads === 1 ? 'lead' : 'leads'}
-                      </p>
-                    </Link>
-                  </div>
-                ))}
-              </Card>
-            </section>
           )}
 
           <section>
