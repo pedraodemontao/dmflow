@@ -48,7 +48,9 @@ function readableTexts(definition: AutomationInput['definition']) {
     const textos: Array<{ id: string; label: string; text: string }> = []
 
     if ('text' in node && typeof node.text === 'string') {
-      textos.push({ id, label, text: node.text })
+      // O rótulo carrega o id do bloco: é ele que aparece no card do canvas,
+      // então o dono consegue ir direto no lugar em vez de abrir um por um.
+      textos.push({ id, label: `${label} "${id}" (aba 3, Fluxo da DM)`, text: node.text })
     }
 
     if (node.type === 'bubbles') {
@@ -99,9 +101,15 @@ export async function saveAutomation(raw: unknown): Promise<ActionResult> {
     ].filter((issue): issue is VariationIssue => issue !== null)
 
     if (issues.length > 0) {
-      const first = issues[0]
-      const extra = issues.length > 1 ? ` (e mais ${issues.length - 1})` : ''
-      return { ok: false, error: `${first.where}: ${first.message}${extra}` }
+      // Lista TODAS, e cada uma diz onde clicar.
+      //
+      // A versão anterior mostrava só a primeira e resumia o resto em "(e mais
+      // 3)". O dono ficava caçando: sabia que faltava variação em algum
+      // "Botões", não sabia em qual bloco nem em qual aba. Erro que não diz
+      // onde consertar transfere para o usuário um trabalho que a ferramenta
+      // já tem a informação para fazer.
+      const linhas = issues.map((issue) => `• ${issue.where}: ${issue.message}`)
+      return { ok: false, error: linhas.join('\n') }
     }
   }
 

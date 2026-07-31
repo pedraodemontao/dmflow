@@ -159,9 +159,12 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
       </header>
 
       {error && (
-        <p className="shrink-0 border-b border-danger/40 bg-danger/10 px-6 py-2.5 text-xs text-danger">
-          {error}
-        </p>
+        // `whitespace-pre-line` porque a validação de variação devolve uma
+        // linha por pendência: antes tudo colava numa frase só e o dono não
+        // conseguia distinguir onde terminava um problema e começava o outro.
+        <div className="shrink-0 border-b border-danger/40 bg-danger/10 px-6 py-3">
+          <p className="whitespace-pre-line text-xs leading-relaxed text-danger">{error}</p>
+        </div>
       )}
 
       {step === 'gatilho' && (
