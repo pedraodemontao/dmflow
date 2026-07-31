@@ -1,6 +1,26 @@
 import { MetaSendError, type MetaErrorBody } from '@/lib/instagram/errors'
+import { META_LIMITS, truncateBytes, truncateChars } from '@/lib/flow/types'
 
 const GRAPH = 'https://graph.instagram.com/v23.0'
+
+/**
+ * NOTA DE ARQUIVO — o corte de tamanho espalhado pelas funções abaixo é a
+ * última linha de defesa dos limites da Meta.
+ *
+ * O schema em `flow/types.ts` já valida o template no builder, mas o texto
+ * CRESCE depois: o engine interpola `{{nome}}` na hora do envio e o nome só
+ * existe em tempo de execução — o que o Zod aprovou não é o que sai. O
+ * carrossel tem o mesmo problema: o texto de fallback da private reply é a
+ * junção dos títulos dos 10 cards, montada só no envio.
+ *
+ * Estourar o limite não trunca a mensagem do lado da Meta: ela RECUSA a
+ * mensagem inteira (erro 100), o `flow_run` morre no meio e o contato fica com
+ * meia conversa. Então aqui se corta, não se lança — pelo mesmo motivo que o
+ * título de quick reply já vinha com `slice(0, 20)`. Mensagem cortada é pior
+ * que mensagem inteira e muito melhor que fluxo derrubado; validar de novo e
+ * falhar aqui seria falhar tarde, em produção, que é exatamente o que se quer
+ * evitar.
+ */
 
 export interface QuickReply {
   title: string
@@ -53,12 +73,16 @@ export function sendText(args: {
   text: string
   quickReplies?: QuickReply[]
 }) {
-  const message: Record<string, unknown> = { text: args.text }
+  const message: Record<string, unknown> = {
+    text: truncateBytes(args.text, META_LIMITS.TEXT_BYTES),
+  }
 
   if (args.quickReplies?.length) {
     message.quick_replies = args.quickReplies.slice(0, 13).map((qr) => ({
       content_type: 'text',
-      title: qr.title.slice(0, 20),
+      // `truncateChars` e não `slice`: `slice` corta no meio do par substituto
+      // e o emoji vira UTF-8 quebrado, que a Meta recusa igual.
+      title: truncateChars(qr.title, META_LIMITS.BUTTON_TITLE_CHARS),
       payload: qr.payload,
     }))
   }
@@ -71,13 +95,37 @@ export function sendText(args: {
   })
 }
 
+export type TemplateButton = { title: string; url?: string; payload?: string }
+
+/**
+ * Botões de template: `web_url` e `postback` são os únicos tipos que o
+ * Instagram aceita, no máximo 3. Uma função só para os três lugares que montam
+ * botão (button template, carrossel e private reply) — assim o corte do
+ * payload existe uma vez, e não três.
+ */
+function templateButtons(buttons: TemplateButton[]) {
+  return buttons.slice(0, 3).map((b) => {
+    // O engine roda spintax e interpola o título antes de chegar aqui, então
+    // 20 caracteres validados no builder podem ter virado outra coisa.
+    const title = truncateChars(b.title, META_LIMITS.BUTTON_TITLE_CHARS)
+
+    return b.url
+      ? { type: 'web_url', url: b.url, title }
+      : {
+          type: 'postback',
+          title,
+          payload: truncateChars(b.payload ?? b.title, META_LIMITS.POSTBACK_PAYLOAD_CHARS),
+        }
+  })
+}
+
 /** Card com botões (link ou postback). Máximo 3 botões. */
 export function sendButtons(args: {
   igUserId: string
   accessToken: string
   recipientId: string
   text: string
-  buttons: Array<{ title: string; url?: string; payload?: string }>
+  buttons: TemplateButton[]
 }) {
   return send({
     igUserId: args.igUserId,
@@ -88,12 +136,9 @@ export function sendButtons(args: {
         type: 'template',
         payload: {
           template_type: 'button',
-          text: args.text,
-          buttons: args.buttons.slice(0, 3).map((b) =>
-            b.url
-              ? { type: 'web_url', url: b.url, title: b.title }
-              : { type: 'postback', title: b.title, payload: b.payload ?? b.title },
-          ),
+          // Aqui a Meta conta caracteres (640), não bytes como no texto de DM.
+          text: truncateChars(args.text, META_LIMITS.BUTTON_TEMPLATE_CHARS),
+          buttons: templateButtons(args.buttons),
         },
       },
     },
@@ -104,23 +149,17 @@ export interface CarouselCard {
   title: string
   subtitle?: string
   imageUrl?: string
-  buttons?: Array<{ title: string; url?: string; payload?: string }>
+  buttons?: TemplateButton[]
 }
 
 function carouselElements(cards: CarouselCard[]) {
   return cards.slice(0, 10).map((card) => ({
-    title: card.title,
-    ...(card.subtitle ? { subtitle: card.subtitle } : {}),
-    ...(card.imageUrl ? { image_url: card.imageUrl } : {}),
-    ...(card.buttons?.length
-      ? {
-          buttons: card.buttons.slice(0, 3).map((b) =>
-            b.url
-              ? { type: 'web_url', url: b.url, title: b.title }
-              : { type: 'postback', title: b.title, payload: b.payload ?? b.title },
-          ),
-        }
+    title: truncateChars(card.title, META_LIMITS.CAROUSEL_TITLE_CHARS),
+    ...(card.subtitle
+      ? { subtitle: truncateChars(card.subtitle, META_LIMITS.CAROUSEL_TITLE_CHARS) }
       : {}),
+    ...(card.imageUrl ? { image_url: card.imageUrl } : {}),
+    ...(card.buttons?.length ? { buttons: templateButtons(card.buttons) } : {}),
   }))
 }
 
@@ -128,6 +167,15 @@ function carouselElements(cards: CarouselCard[]) {
  * Carrossel de cards (generic template): até 10, cada um com título, subtítulo,
  * imagem por URL pública e até 3 botões. É o formato que o Instagram herda do
  * template genérico do Messenger — não existe um "carousel" próprio na API.
+ *
+ * NÃO APARECE NO INSTAGRAM WEB: "this feature is currently not available in the
+ * web version". Quem abre o direct pelo navegador não vê o carrossel, e isso
+ * muda a decisão de usar o bloco — se a oferta depende do card, parte do
+ * público não recebe a oferta.
+ *
+ * Cada card exige ao menos uma propriedade além do `title` (subtítulo, imagem
+ * ou botão); só título faz a Meta recusar a mensagem inteira. Quem barra isso
+ * antes do envio é o `carouselCardSchema` em `flow/types.ts`.
  */
 export function sendCarousel(args: {
   igUserId: string
@@ -186,7 +234,7 @@ export async function sendPrivateReply(args: {
   accessToken: string
   commentId: string
   text: string
-  buttons?: Array<{ title: string; url?: string; payload?: string }>
+  buttons?: TemplateButton[]
   quickReplies?: QuickReply[]
   cards?: CarouselCard[]
 }) {
@@ -227,12 +275,8 @@ export async function sendPrivateReply(args: {
             type: 'template',
             payload: {
               template_type: 'button',
-              text: args.text,
-              buttons: args.buttons.slice(0, 3).map((b) =>
-                b.url
-                  ? { type: 'web_url', url: b.url, title: b.title }
-                  : { type: 'postback', title: b.title, payload: b.payload ?? b.title },
-              ),
+              text: truncateChars(args.text, META_LIMITS.BUTTON_TEMPLATE_CHARS),
+              buttons: templateButtons(args.buttons),
             },
           },
         },
@@ -244,11 +288,17 @@ export async function sendPrivateReply(args: {
     }
   }
 
-  const message: Record<string, unknown> = { text: args.text }
+  // O texto que sobra aqui pode ser o fallback do carrossel (títulos dos 10
+  // cards colados), montado no engine e nunca visto pelo schema.
+  const message: Record<string, unknown> = {
+    text: truncateBytes(args.text, META_LIMITS.TEXT_BYTES),
+  }
   if (args.quickReplies?.length) {
     message.quick_replies = args.quickReplies.slice(0, 13).map((qr) => ({
       content_type: 'text',
-      title: qr.title.slice(0, 20),
+      // `truncateChars` e não `slice`: `slice` corta no meio do par substituto
+      // e o emoji vira UTF-8 quebrado, que a Meta recusa igual.
+      title: truncateChars(qr.title, META_LIMITS.BUTTON_TITLE_CHARS),
       payload: qr.payload,
     }))
   }
