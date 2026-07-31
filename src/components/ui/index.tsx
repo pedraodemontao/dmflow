@@ -26,7 +26,7 @@ export function Button({
   return (
     <button
       className={cn(
-        // Monospace em caixa alta espaçada: na direção "Papel" o botão é
+        // Monospace em caixa alta espaçada: nesta direção o botão é
         // rótulo de instrumento, não frase. Raio pequeno — canto duro é parte
         // da gramática (ver globals.css).
         'label inline-flex items-center justify-center gap-2 rounded-md transition-all duration-150',
@@ -67,6 +67,10 @@ export function Input({ className, ...props }: ComponentProps<'input'>) {
     <input
       className={cn(
         'h-10 w-full rounded-md border border-border bg-surface-2 px-3 text-sm text-foreground transition-colors duration-150',
+        // Desabilitado precisa de sinal próprio: o compositor do inbox desliga
+        // sozinho quando a janela de 24h fecha, e sem isto ele fica idêntico a
+        // um campo vazio esperando digitação.
+        'disabled:cursor-not-allowed disabled:border-border/60 disabled:bg-surface disabled:text-muted',
         'placeholder:text-muted hover:border-muted',
         FOCUS_RING,
         'focus-visible:border-foreground',
@@ -82,6 +86,10 @@ export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
     <textarea
       className={cn(
         'w-full resize-y rounded-md border border-border bg-surface-2 p-3 text-sm text-foreground transition-colors duration-150',
+        // Desabilitado precisa de sinal próprio: o compositor do inbox desliga
+        // sozinho quando a janela de 24h fecha, e sem isto ele fica idêntico a
+        // um campo vazio esperando digitação.
+        'disabled:cursor-not-allowed disabled:border-border/60 disabled:bg-surface disabled:text-muted',
         'placeholder:text-muted hover:border-muted',
         FOCUS_RING,
         'focus-visible:border-foreground',
@@ -97,6 +105,10 @@ export function Select({ className, ...props }: ComponentProps<'select'>) {
     <select
       className={cn(
         'h-10 w-full rounded-md border border-border bg-surface-2 px-3 text-sm text-foreground transition-colors duration-150',
+        // Desabilitado precisa de sinal próprio: o compositor do inbox desliga
+        // sozinho quando a janela de 24h fecha, e sem isto ele fica idêntico a
+        // um campo vazio esperando digitação.
+        'disabled:cursor-not-allowed disabled:border-border/60 disabled:bg-surface disabled:text-muted',
         'hover:border-muted',
         FOCUS_RING,
         'focus-visible:border-foreground',

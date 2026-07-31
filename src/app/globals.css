@@ -14,41 +14,52 @@
  *      em cada arquivo.
  *
  * ---------------------------------------------------------------------------
- * DIREÇÃO "PAPEL" (revisão 4 — a escolhida pelo dono)
+ * DIREÇÃO "MARCADOR" (revisão 5 — a vigente)
  * ---------------------------------------------------------------------------
- * As três revisões anteriores ficaram presas na mesma silhueta — preto, um
- * accent laranja saturado, card arredondado com sombra difusa. Isso é o
- * template visual de qualquer produto de IA dos últimos dois anos, que é
- * exatamente o que o dono não queria. Refinar dentro dela não resolvia: o
- * problema era a escolha de base, não o acabamento.
+ * Histórico, para ninguém repetir o caminho. As revisões 1 a 3 refinaram
+ * dentro da silhueta preto + accent laranja saturado + card arredondado com
+ * sombra difusa: o template de qualquer produto de IA dos últimos dois anos,
+ * exatamente o que o dono não queria. A revisão 4 acertou a gramática e errou
+ * a base — virou papel off-white, tirado do Koyeb, quando as duas outras
+ * referências (Unkey, Profound) são pretas. Foi revertida.
  *
- * Esta revisão inverte cinco coisas, todas tiradas das referências que ele
- * mandou (Koyeb, Unkey, Profound — os três foram abertos e lidos):
+ * A 5 mantém tudo que a 4 acertou e troca só a base:
  *
- *   a) BASE DE PAPEL. Off-white morno com grão no lugar do preto. Tinta quase
- *      preta por cima. É o oposto do que a categoria inteira faz.
- *   b) TIPOGRAFIA COM TRÊS VOZES, não uma. Display condensada e pesada em
- *      caixa alta (título de tela, número grande), monospace em caixa alta
- *      espaçada (rótulo, botão, navegação) e grotesca neutra só para texto
- *      corrido. Antes tudo era a mesma grotesca em 11–13px, e por isso a tela
- *      inteira lia como um cinza uniforme.
- *   c) UMA COR VIVA, DECORATIVA. A menta preenche — sombra de botão, quadrado
- *      de chip, marca de seleção. Nunca carrega texto: em fundo claro ela não
- *      passa em contraste. Onde o verde precisa significar algo escrito, o
- *      token é `--accent-ink` (menta escura, AA sobre papel).
- *   d) CANTO DURO E FIO DE CABELO. Raio pequeno, sombra deslocada sem
- *      desfoque, divisor de 1px. Nada de card flutuando com brilho.
+ *   a) BASE PRETA, quase sem tom. O que afasta do template de IA não é o
+ *      fundo claro — é não ter accent saturado espalhado, não ter card
+ *      arredondado flutuando e não ter a tela inteira no mesmo cinza de 12px.
+ *   b) TIPOGRAFIA COM TRÊS VOZES, não uma. `.display` (Anton, condensada,
+ *      caixa alta) para título de tela e número grande; `.label` (monospace,
+ *      caixa alta, espaçada) para rótulo, botão, aba e navegação; grotesca
+ *      neutra só para texto corrido. Antes tudo era a mesma grotesca em
+ *      11–13px, e é por isso que a tela lia como um cinza uniforme. Esse era
+ *      o problema principal, não a cor.
+ *   c) UMA COR VIVA SÓ: verde-limão, usada como CANETA MARCA-TEXTO (Unkey).
+ *      Sobre preto ela chega a ~15:1, então PODE carregar texto e ícone — a
+ *      proibição da revisão 4 existia por causa do fundo claro. O que
+ *      continua valendo é a parcimônia: botão primário é branco sólido, badge
+ *      e borda de card são neutros, e o limão fica para seleção, aba ativa e
+ *      link. Estado (sucesso, alerta, perigo) continua colorido porque é
+ *      informação, não decoração.
+ *   d) CANTO DURO E FIO DE CABELO. Raio pequeno, divisor de 1px, sombra
+ *      deslocada sem desfoque. Nada de card flutuando com brilho.
  *   e) VIDRO MORREU. `.chrome-panel` e `.pop-panel` (antes `.glass-*`) são
- *      papel opaco com fio e sombra dura. Desfoque era decoração; papel é
- *      material.
+ *      superfície opaca com fio e sombra dura. Desfoque era decoração.
  *
  * Contraste: todo par texto/fundo abaixo passa WCAG AA (4.5:1 texto normal,
- * 3:1 UI). Os tokens de estado (`--success`, `--warning`, `--danger`) são
- * versões ESCURAS de propósito — o verde/amarelo/vermelho vivos que serviam
- * sobre preto ficam ilegíveis sobre papel. Exceção documentada: `--border`
- * contra as superfícies fica abaixo de 3:1 — é traço decorativo, não o único
- * jeito de identificar o limite de um Input (que tem preenchimento distinto
- * do fundo E anel de foco ≥3:1).
+ * 3:1 UI). Exceção documentada: `--border` contra as superfícies fica em
+ * ~1.3:1 — é traço decorativo, não o único jeito de identificar o limite de um
+ * Input (que tem preenchimento distinto do fundo E anel de foco ≥3:1). Onde o
+ * fio É o limite do componente, como no balão vazado do inbox, o token certo
+ * é `--muted` (6.4:1), não `--border`.
+ *
+ * ARMADILHA DO TAILWIND 4, descoberta na revisão 5: as classes de material
+ * abaixo (`.surface-panel`, `.chrome-panel`, `.pop-panel`) são regras SEM
+ * camada, e todo utilitário do Tailwind vive em `@layer utilities` — regra sem
+ * camada vence regra em camada por definição. Consequência: `bg-*` ou
+ * `hover:border-*` aplicado por cima de um `<Card>` não pinta nada. Quem
+ * precisa sobrescrever usa `bg-surface border-border` direto, sem a classe de
+ * material.
  */
 
 :root {
@@ -275,14 +286,17 @@ body {
 
 /* Canvas do React Flow sobre preto */
 .react-flow { background: var(--background); }
-.react-flow__edge-path { stroke: var(--line-700); stroke-width: 2; }
+/* `--muted`, não `--border`: a aresta é o ÚNICO indicador de que dois blocos
+   estão ligados, então é elemento de UI e precisa de 3:1. Com o fio de cabelo
+   ela ficava em 1.4:1 sobre o fundo e o fluxo parecia um monte de card solto. */
+.react-flow__edge-path { stroke: var(--muted); stroke-width: 2; }
 .react-flow__edge.selected .react-flow__edge-path { stroke: var(--lime-400); }
 .react-flow__handle {
   width: 10px;
   height: 10px;
   border-radius: 2px;
   background: var(--surface-2);
-  border: 2px solid var(--line-700);
+  border: 2px solid var(--muted);
 }
 .react-flow__handle-connecting { background: var(--lime-400); }
 .react-flow__controls-button {
