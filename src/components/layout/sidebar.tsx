@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 
 import { CommandPaletteTrigger } from '@/components/layout/command-palette'
+import { ToastProvider } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
 const NAV = [
@@ -170,6 +171,14 @@ export function Sidebar({
           </Link>
         )}
       </div>
+
+      {/* A fila de avisos do painel é montada aqui porque a sidebar é o único
+          client component presente em toda tela do grupo `(app)` — e o layout
+          do grupo é Server Component. Não desenha nada neste nó: o toast vai
+          para um portal no `body`, então a posição na árvore é indiferente.
+          Se um dia o provider subir para `(app)/layout.tsx`, remova esta linha
+          — dois montados desenham a mesma fila duas vezes. */}
+      <ToastProvider />
     </aside>
   )
 }

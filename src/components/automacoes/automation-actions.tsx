@@ -6,7 +6,9 @@ import { useState, useTransition } from 'react'
 import { BarChart3, Copy, Loader2, Pause, Play, Trash2 } from 'lucide-react'
 
 import { deleteAutomation, duplicateAutomation, toggleAutomation } from '@/app/actions'
+import type { ActionResult } from '@/app/actions'
 import { Button } from '@/components/ui'
+import { useToast } from '@/components/ui/toast'
 
 export function AutomationActions({
   triggerId,
@@ -18,12 +20,19 @@ export function AutomationActions({
   isActive: boolean
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [pending, startTransition] = useTransition()
   const [confirmingDelete, setConfirmingDelete] = useState(false)
 
-  function run(action: () => Promise<unknown>) {
+  /** `success` só onde a lista não conta a história sozinha. */
+  function run(action: () => Promise<ActionResult>, success?: string) {
     startTransition(async () => {
-      await action()
+      const result = await action()
+      if (!result.ok) {
+        toast.error(result.error ?? 'Não consegui completar a ação.')
+        return
+      }
+      if (success) toast.success(success)
       router.refresh()
     })
   }
@@ -36,7 +45,7 @@ export function AutomationActions({
           size="sm"
           variant="danger"
           disabled={pending}
-          onClick={() => run(() => deleteAutomation(triggerId))}
+          onClick={() => run(() => deleteAutomation(triggerId), `“${name}” foi apagada.`)}
         >
           {pending ? <Loader2 className="size-3.5 animate-spin" /> : 'Apagar'}
         </Button>
@@ -68,7 +77,7 @@ export function AutomationActions({
         variant="ghost"
         title="Duplicar (a cópia nasce pausada)"
         disabled={pending}
-        onClick={() => run(() => duplicateAutomation(triggerId))}
+        onClick={() => run(() => duplicateAutomation(triggerId), 'Cópia criada — ela nasce pausada.')}
       >
         <Copy className="size-4" />
       </Button>

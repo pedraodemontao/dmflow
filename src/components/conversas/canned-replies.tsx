@@ -6,6 +6,7 @@ import { Plus, Trash2, Zap } from 'lucide-react'
 
 import { createCannedReply, deleteCannedReply } from '@/app/actions'
 import { Button, Input, Textarea } from '@/components/ui'
+import { useToast } from '@/components/ui/toast'
 import type { CannedReply } from '@/types/db'
 
 /**
@@ -22,6 +23,7 @@ export function CannedReplies({
   onPick: (text: string) => void
 }) {
   const router = useRouter()
+  const toast = useToast()
   const [open, setOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [title, setTitle] = useState('')
@@ -68,7 +70,13 @@ export function CannedReplies({
                   disabled={pending || !title.trim() || !text.trim()}
                   onClick={() =>
                     start(async () => {
-                      await createCannedReply(title, text)
+                      const result = await createCannedReply(title, text)
+                      if (!result.ok) {
+                        toast.error(result.error ?? 'Não consegui salvar o atalho.')
+                        return
+                      }
+                      // O popover fecha junto: sem aviso, não dá para saber se salvou.
+                      toast.success('Atalho salvo.')
                       close()
                       router.refresh()
                     })
@@ -112,7 +120,11 @@ export function CannedReplies({
                       disabled={pending}
                       onClick={() =>
                         start(async () => {
-                          await deleteCannedReply(reply.id)
+                          const result = await deleteCannedReply(reply.id)
+                          if (!result.ok) {
+                            toast.error(result.error ?? 'Não consegui apagar o atalho.')
+                            return
+                          }
                           router.refresh()
                         })
                       }
