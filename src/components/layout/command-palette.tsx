@@ -205,7 +205,7 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
       type="button"
       onClick={open}
       className={cn(
-        'flex w-full items-center gap-2.5 rounded-xl border border-border/70 bg-surface-2/50 px-3 py-2 text-sm text-muted transition-colors duration-150',
+        'label flex w-full items-center gap-2.5 rounded-md border border-border bg-surface-2 px-3 py-2 text-[10px] text-muted transition-colors duration-150',
         'hover:border-muted/70 hover:text-foreground',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
         className,
@@ -220,7 +220,7 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
 
 function Kbd({ children }: { children: ReactNode }) {
   return (
-    <kbd className="rounded-md border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted">
+    <kbd className="rounded-sm border border-border bg-surface px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted">
       {children}
     </kbd>
   )
@@ -458,9 +458,9 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-label="Paleta de comandos"
         onKeyDown={handleDialogKeyDown}
-        className="command-panel pop-panel flex w-full max-w-xl flex-col overflow-hidden rounded-2xl"
+        className="command-panel pop-panel flex w-full max-w-xl flex-col overflow-hidden rounded-md"
       >
-        <div className="flex items-center gap-3 border-b border-white/[0.06] px-4">
+        <div className="flex items-center gap-3 border-b border-border px-4">
           <Search className="size-4 shrink-0 text-muted" />
           <input
             ref={inputRef}
@@ -495,7 +495,7 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
         >
           {groups.map((group) => (
             <div key={group.label} role="group" aria-label={group.label}>
-              <p className="px-3 pb-1 pt-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+              <p className="label px-3 pb-1.5 pt-3 text-[10px] text-muted">
                 {group.label}
               </p>
 
@@ -514,8 +514,12 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
                     onMouseMove={() => select(index, false)}
                     onClick={() => go(item)}
                     className={cn(
-                      'flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2 transition-colors duration-100',
-                      active ? 'bg-white/[0.07]' : 'hover:bg-surface-2/50',
+                      'flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2 transition-colors duration-100',
+                      // Seleção é o lugar certo do acento: existe uma por vez,
+                      // some quando a paleta fecha, e o texto por cima vira
+                      // escuro (~15:1). Espalhar limão em lista inteira seria
+                      // o excesso que a direção proíbe.
+                      active ? 'bg-accent text-background' : 'hover:bg-surface-2',
                     )}
                   >
                     {item.avatar ? (
@@ -527,7 +531,7 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
                       />
                     ) : (
                       Icon && (
-                        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-muted ring-1 ring-inset ring-white/[0.06]">
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-sm border border-border bg-surface-2 text-muted">
                           <Icon className="size-4" />
                         </span>
                       )
@@ -581,7 +585,7 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
           )}
         </div>
 
-        <div className="flex items-center gap-4 border-t border-white/[0.06] px-4 py-2.5 text-[11px] text-muted">
+        <div className="label flex items-center gap-4 border-t border-border px-4 py-2.5 text-[9px] text-muted">
           <span className="flex items-center gap-1.5">
             <Kbd>↑</Kbd>
             <Kbd>↓</Kbd>
