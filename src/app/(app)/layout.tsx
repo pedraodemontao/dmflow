@@ -1,5 +1,5 @@
 import { CommandPaletteProvider } from '@/components/layout/command-palette'
-import { Sidebar } from '@/components/layout/sidebar'
+import { TopNav } from '@/components/layout/top-nav'
 import { hasEnv } from '@/lib/env'
 import { getAccount } from '@/lib/data'
 import { checkAccountHealth } from '@/lib/instagram/health'
@@ -11,10 +11,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     // A paleta de comandos (⌘K) é montada uma vez aqui: o atalho vale em
-    // qualquer tela do painel, e a sidebar precisa do contexto para abrir.
+    // qualquer tela do painel, e a navegação precisa do contexto para abrir.
     <CommandPaletteProvider>
-      <div className="flex min-h-screen">
-        <Sidebar
+      <div className="flex min-h-screen flex-col">
+        <TopNav
           username={account?.username ?? null}
           tokenValid={health ? health.status !== 'token_invalido' : true}
         />

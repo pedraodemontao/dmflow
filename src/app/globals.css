@@ -153,6 +153,14 @@ body {
   color: var(--black-950);
 }
 
+/*
+ * Faixa que rola no eixo x sem mostrar barra — a navegação do topo, que
+ * precisa poder deslizar em tela estreita mas não pode ganhar um traço de
+ * 10px cortando o chrome.
+ */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--line-700); }
