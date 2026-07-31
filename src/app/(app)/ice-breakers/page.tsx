@@ -1,3 +1,5 @@
+import { TriangleAlert } from 'lucide-react'
+
 import { IceBreakers } from '@/components/painel/ice-breakers'
 import { Card } from '@/components/ui'
 import { getAccount } from '@/lib/data'
@@ -24,22 +26,26 @@ export default async function IceBreakersPage() {
 
   return (
     <>
-      <header className="chrome-panel flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
-        <h1 className="display text-4xl text-foreground">Ice breakers</h1>
+      <header className="chrome-panel flex h-16 shrink-0 items-center border-b border-border px-6">
+        <div className="flex items-baseline gap-3">
+          <h1 className="display text-4xl text-foreground">Ice breakers</h1>
+          <p className="label text-[10px] text-muted">perguntas fixas do direct</p>
+        </div>
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">
         <div className="canon mx-auto w-full max-w-2xl">
           {!account ? (
             <Card className="p-6">
-              <p className="text-sm text-muted">
+              <p className="text-sm leading-relaxed text-muted">
                 Conecte uma conta do Instagram para configurar os ice breakers.
               </p>
             </Card>
           ) : (
             <div className="space-y-3">
               {outOfSync && (
-                <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+                <p className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2.5 text-sm leading-relaxed text-warning">
+                  <TriangleAlert className="mt-0.5 size-4 shrink-0" />
                   O que está publicado na Meta agora é diferente do que está salvo aqui. Salve de
                   novo para sincronizar.
                 </p>

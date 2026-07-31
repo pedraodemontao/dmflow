@@ -2,7 +2,17 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Bot, Check, Clock, Loader2, Send, StickyNote, User, Users } from 'lucide-react'
+import {
+  Bot,
+  Check,
+  Clock,
+  Loader2,
+  Lock,
+  Send,
+  StickyNote,
+  User,
+  Users,
+} from 'lucide-react'
 
 import {
   fetchThread,
@@ -13,6 +23,7 @@ import {
   setInboxStatus,
 } from '@/app/actions'
 import { CannedReplies } from '@/components/conversas/canned-replies'
+import { WindowBadge } from '@/components/shared/window-badge'
 import { Avatar, Badge, Button, Textarea } from '@/components/ui'
 import { useToast } from '@/components/ui/toast'
 import type { InboxFilter, InboxItem, Thread } from '@/lib/data'
@@ -166,22 +177,33 @@ export function Inbox({
 
   return (
     <div className="flex min-h-0 flex-1">
-      <aside className="flex w-72 shrink-0 flex-col border-r border-border">
-        <div className="flex shrink-0 gap-1 border-b border-border p-2">
+      <aside className="flex w-80 shrink-0 flex-col border-r border-border">
+        {/*
+          Grupo de abas no espírito do Unkey: rótulo em monospace caixa alta e
+          fio de 1px como trilho — a aba ativa é marcada pelo traço limão, a
+          caneta marca-texto. O número em cima e o rótulo embaixo resolvem dois
+          problemas de uma vez: cabe "RESOLVIDAS" numa coluna de 80px e a fila
+          vira contador, que é o que se lê de relance antes de escolher.
+        */}
+        <div className="flex shrink-0 border-b border-border">
           {FILTERS.map(({ key, label }) => (
             <button
               key={key}
               type="button"
+              aria-current={key === filter ? 'page' : undefined}
               onClick={() => router.push(key === 'abertas' ? '/conversas' : `/conversas?fila=${key}`)}
               className={cn(
-                'flex-1 rounded-md px-1.5 py-1 text-[10px] font-medium transition-colors',
+                'flex-1 border-b-2 px-1 pt-2.5 pb-2 text-center transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset',
                 key === filter
-                  ? 'bg-accent/15 text-accent'
-                  : 'text-muted hover:bg-surface-2 hover:text-foreground',
+                  ? 'border-b-accent text-foreground'
+                  : 'border-b-transparent text-muted hover:bg-surface-2 hover:text-foreground',
               )}
             >
-              {label}
-              {counts[key] > 0 && <span className="ml-1 tabular-nums">{counts[key]}</span>}
+              <span className="block font-mono text-sm leading-none tabular-nums">
+                {counts[key]}
+              </span>
+              <span className="label mt-1.5 block text-[9px] leading-none">{label}</span>
             </button>
           ))}
         </div>
@@ -196,8 +218,12 @@ export function Inbox({
               onClick={() => openThread(contact.id)}
               className={cn(
                 'flex w-full items-start gap-2.5 border-b border-l-2 border-border px-3.5 py-3 text-left transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset',
+                // A conversa aberta é marcada pelo traço limão na margem — a
+                // caneta marca-texto no lugar de um fundo tingido. O degrau de
+                // superfície faz o resto, sem espalhar cor pela lista.
                 selected
-                  ? 'border-l-accent bg-accent/[0.08]'
+                  ? 'border-l-accent bg-surface-2'
                   : 'border-l-transparent hover:bg-surface-2/60',
               )}
             >
@@ -211,29 +237,32 @@ export function Inbox({
 
               <div className="min-w-0 flex-1">
                 <div className="flex items-baseline gap-2">
-                  <span className="truncate text-xs font-medium text-foreground">
+                  <span className="truncate text-sm font-medium text-foreground">
                     {displayName(contact)}
                   </span>
                   {contact.follower_count != null && (
-                    <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-muted">
+                    <span className="label inline-flex shrink-0 items-center gap-1 text-[9px] text-muted">
                       <Users className="size-2.5" />
-                      {followerFormatter.format(contact.follower_count)}
+                      <span className="tabular-nums">
+                        {followerFormatter.format(contact.follower_count)}
+                      </span>
                     </span>
                   )}
                   {lastMessage && (
-                    <span className="ml-auto shrink-0 text-[10px] text-muted">
+                    <span className="label ml-auto shrink-0 text-[9px] text-muted tabular-nums">
                       {timeAgo(lastMessage.created_at)}
                     </span>
                   )}
                 </div>
-                <div className="mt-0.5 flex items-center gap-1.5">
-                  <p className="min-w-0 flex-1 truncate text-[11px] text-muted">
+                <div className="mt-1 flex items-center gap-2">
+                  <p className="min-w-0 flex-1 truncate text-xs text-muted">
                     {lastMessage?.direction === 'out' && 'Você: '}
                     {lastMessage?.text || 'sem texto'}
                   </p>
                   {contact.unread_count > 0 && (
-                    // Tinta escura sobre o accent — texto branco não bate 4.5:1 (WCAG AA).
-                    <span className="shrink-0 rounded-full bg-accent px-1.5 py-px text-[10px] font-semibold text-background">
+                    // Fundo limão com tinta preta: 16,2:1. É a única marca de
+                    // cor da lista, e é o que a pessoa procura ao abrir a tela.
+                    <span className="label shrink-0 rounded-sm bg-accent px-1.5 py-px text-[9px] text-background tabular-nums">
                       {contact.unread_count}
                     </span>
                   )}
@@ -244,16 +273,14 @@ export function Inbox({
           })}
 
           {items.length === 0 && (
-            <p className="p-4 text-center text-[11px] text-muted">
-              Nada nesta fila.
-            </p>
+            <p className="label p-6 text-center text-[10px] text-muted">Nada nesta fila</p>
           )}
         </div>
       </aside>
 
       <section className="flex min-w-0 flex-1 flex-col">
         {!selectedId ? (
-          <div className="flex flex-1 items-center justify-center px-6 text-center text-sm text-muted">
+          <div className="flex flex-1 items-center justify-center px-6 text-center text-sm leading-relaxed text-muted">
             Escolha uma conversa à esquerda para ler e responder.
           </div>
         ) : !thread ? (
@@ -262,7 +289,7 @@ export function Inbox({
           </div>
         ) : (
           <>
-            <header className="chrome-panel flex h-14 shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5">
+            <header className="chrome-panel flex h-14 shrink-0 items-center gap-2.5 border-b border-border px-5">
               <Avatar
                 src={thread.contact.profile_pic_url}
                 label={displayName(thread.contact)}
@@ -272,17 +299,16 @@ export function Inbox({
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold">{displayName(thread.contact)}</p>
                 {thread.contact.follower_count != null && (
-                  <p className="flex items-center gap-1 text-[10px] text-muted">
+                  <p className="label flex items-center gap-1 text-[9px] text-muted">
                     <Users className="size-2.5" />
-                    {followerFormatter.format(thread.contact.follower_count)} seguidores
+                    <span className="tabular-nums">
+                      {followerFormatter.format(thread.contact.follower_count)}
+                    </span>
+                    seguidores
                   </p>
                 )}
               </div>
-              {thread.contact.windowOpen ? (
-                <Badge tone="success">janela de 24h aberta</Badge>
-              ) : (
-                <Badge tone="warning">janela fechada</Badge>
-              )}
+              <WindowBadge open={thread.contact.windowOpen} />
               {thread.contact.automation_paused && <Badge tone="neutral">automação pausada</Badge>}
               {thread.contact.inbox_status === 'done' && <Badge tone="success">resolvida</Badge>}
 
@@ -313,13 +339,16 @@ export function Inbox({
                 </Button>
 
                 {snoozeOpen && (
-                  <div className="pop-panel absolute right-0 top-9 z-10 w-36 overflow-hidden rounded-2xl">
+                  <div className="pop-panel absolute top-10 right-0 z-10 w-40 overflow-hidden rounded-md">
+                    <p className="label border-b border-border px-3 py-2 text-[9px] text-muted">
+                      Adiar por
+                    </p>
                     {SNOOZE_OPTIONS.map((option) => (
                       <button
                         key={option.hours}
                         type="button"
                         onClick={() => changeStatus('snoozed', option.hours)}
-                        className="block w-full px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+                        className="label block w-full px-3 py-2 text-left text-[10px] transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
                       >
                         {option.label}
                       </button>
@@ -350,11 +379,12 @@ export function Inbox({
             </header>
 
             {showNotes && (
-              <div className="shrink-0 border-b border-border bg-surface-2/50 p-3">
+              <div className="shrink-0 border-b border-border bg-surface p-3">
+                <p className="label mb-1.5 text-[10px] text-muted">Anotações internas</p>
                 <Textarea
                   rows={2}
                   value={notes}
-                  placeholder="Anotações internas — o contato nunca vê isso."
+                  placeholder="O contato nunca vê isto."
                   onChange={(e) => setNotes(e.target.value)}
                 />
                 <div className="mt-2 flex items-center gap-2">
@@ -383,57 +413,76 @@ export function Inbox({
               </div>
             )}
 
+            {/*
+              Gramática dos balões. O laranja da paleta antiga morreu e trocar
+              por limão só mudaria a cor do mesmo erro: mensagem enviada é a
+              maioria da tela, e pintar a maioria de limão acaba com a raridade
+              que faz a cor funcionar.
+
+              Quem falou se lê por TRÊS canais, nenhum deles cor:
+                1. lado — recebida à esquerda, enviada à direita;
+                2. preenchimento — o que chegou é bloco cheio (`surface-2`, um
+                   degrau acima do fundo), o que saiu é vazado, só fio sobre a
+                   página, como texto escrito na folha;
+                3. canto — o vértice duro aponta para o dono da fala.
+
+              A linha de rodapé em monospace nomeia o autor por escrito
+              (VOCÊ / ROBÔ), então nem o ícone é o único sinal.
+
+              O fio do balão vazado é `muted` e não `border`: sem preenchimento,
+              o fio É o limite do componente, e limite precisa de 3:1 (WCAG
+              1.4.11). `muted` sobre o fundo dá 6,4:1; `border` daria 1,3:1 e o
+              balão sumiria. O texto sai em `foreground` nos dois lados —
+              17,4:1 no vazado, 15,5:1 no cheio.
+            */}
             <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
-              {thread.messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn('flex', message.direction === 'in' ? 'justify-start' : 'justify-end')}
-                >
-                  <div
-                    className={cn(
-                      'max-w-[70%] rounded-2xl px-3.5 py-2 shadow-[0_6px_16px_-10px_rgb(0_0_0_/70%)]',
-                      message.direction === 'in'
-                        ? 'bg-surface-2 text-foreground'
-                        : // Tinta escura sobre o accent — texto branco não bate 4.5:1 (WCAG AA);
-                          // esta combinação bate ~6.8:1 (mesma regra do balão em contatos/[id]).
-                          'bg-gradient-to-b from-accent to-accent-soft text-background',
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap text-sm">{message.text || <em>sem texto</em>}</p>
+              {thread.messages.map((message) => {
+                const incoming = message.direction === 'in'
+                return (
+                  <div key={message.id} className={cn('flex', incoming ? 'justify-start' : 'justify-end')}>
                     <div
                       className={cn(
-                        'mt-1 flex items-center gap-1 text-[10px]',
-                        message.direction === 'in' ? 'text-muted' : 'text-background/70',
+                        'max-w-[70%] rounded-md border px-3.5 py-2.5',
+                        incoming
+                          ? 'rounded-tl-none border-border bg-surface-2'
+                          : 'rounded-tr-none border-muted bg-transparent',
                       )}
                     >
-                      {message.direction === 'out' &&
-                        (message.source === 'manual' ? (
-                          <User className="size-3" />
-                        ) : (
-                          <Bot className="size-3" />
-                        ))}
-                      <span>
-                        {new Date(message.created_at).toLocaleString('pt-BR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </span>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                        {message.text || <em className="text-muted">sem texto</em>}
+                      </p>
+                      <div className="label mt-2 flex items-center gap-1.5 text-[9px] text-muted">
+                        {!incoming &&
+                          (message.source === 'manual' ? (
+                            <User className="size-3" />
+                          ) : (
+                            <Bot className="size-3" />
+                          ))}
+                        {!incoming && <span>{message.source === 'manual' ? 'você' : 'robô'}</span>}
+                        <span className="tabular-nums">
+                          {new Date(message.created_at).toLocaleString('pt-BR', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
               <div ref={bottomRef} />
             </div>
 
             <footer className="shrink-0 border-t border-border p-4">
               {!thread.contact.windowOpen && (
-                <p className="mb-2 text-[11px] text-warning">
+                <p className="mb-2 flex items-center gap-1.5 text-xs text-warning">
+                  <Lock className="size-3 shrink-0" />
                   O Instagram só permite responder até 24h depois da última mensagem do contato.
                 </p>
               )}
-              {error && <p className="mb-2 text-[11px] text-danger">{error}</p>}
+              {error && <p className="mb-2 text-xs text-danger">{error}</p>}
 
               <div className="flex items-end gap-2">
                 <CannedReplies
@@ -465,7 +514,7 @@ export function Inbox({
                   {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
                 </Button>
               </div>
-              <p className="mt-2 text-[11px] text-muted">
+              <p className="mt-2 text-xs leading-relaxed text-muted">
                 Responder aqui assume a conversa: a automação para de falar com este contato até
                 você devolver ao robô.
               </p>

@@ -50,9 +50,10 @@ export function CannedReplies({
       </Button>
 
       {open && (
-        <div className="pop-panel absolute bottom-10 left-0 z-20 w-72 overflow-hidden rounded-2xl">
+        <div className="pop-panel absolute bottom-10 left-0 z-20 w-72 overflow-hidden rounded-md">
           {creating ? (
             <div className="space-y-2 p-3">
+              <p className="label text-[10px] text-muted">Novo atalho</p>
               <Input
                 value={title}
                 placeholder="Nome do atalho"
@@ -91,9 +92,13 @@ export function CannedReplies({
             </div>
           ) : (
             <>
+              <p className="label border-b border-border p-2.5 text-[10px] text-muted">
+                Respostas prontas
+              </p>
+
               <div className="max-h-64 overflow-y-auto">
                 {replies.length === 0 && (
-                  <p className="p-3 text-[11px] text-muted">
+                  <p className="p-3 text-xs leading-relaxed text-muted">
                     Nenhum atalho ainda. Escreva uma resposta que você repete sempre e salve aqui.
                   </p>
                 )}
@@ -105,14 +110,14 @@ export function CannedReplies({
                   >
                     <button
                       type="button"
-                      className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      className="min-w-0 flex-1 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                       onClick={() => {
                         onPick(reply.text)
                         close()
                       }}
                     >
-                      <p className="truncate text-xs font-medium">{reply.title}</p>
-                      <p className="truncate text-[11px] text-muted">{reply.text}</p>
+                      <p className="truncate text-sm font-medium">{reply.title}</p>
+                      <p className="truncate text-xs text-muted">{reply.text}</p>
                     </button>
                     <button
                       type="button"
@@ -143,7 +148,7 @@ export function CannedReplies({
                   // O que já está escrito vira o ponto de partida do atalho.
                   setText(draft)
                 }}
-                className="flex w-full items-center gap-1.5 border-t border-border p-2.5 text-[11px] text-accent hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+                className="label flex w-full items-center gap-1.5 border-t border-border p-2.5 text-[10px] text-accent hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
               >
                 <Plus className="size-3.5" />
                 {draft.trim() ? 'Salvar o que escrevi como atalho' : 'Novo atalho'}

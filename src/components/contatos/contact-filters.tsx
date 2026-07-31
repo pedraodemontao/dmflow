@@ -64,17 +64,26 @@ export function ContactFilters({
       </form>
 
       {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="label mr-1 text-[9px] text-muted">Etiquetas</span>
           {tags.map((tag) => (
+            // A etiqueta escolhida é a única coisa marcada com a caneta: uma
+            // por vez, preenchida em limão com tinta preta (16,2:1). As demais
+            // ficam neutras — cor aqui significa "é esta", não "é uma etiqueta".
             <button
               key={tag}
               type="button"
+              aria-pressed={tag === activeTag}
               onClick={() => apply(draft, tag === activeTag ? '' : tag)}
               className={cn(
-                'rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
+                'label rounded-sm border px-2 py-1 text-[9.5px] transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                 tag === activeTag
-                  ? 'border-accent bg-accent/15 text-accent'
-                  : 'border-border text-muted hover:text-foreground',
+                  ? 'border-accent bg-accent text-background'
+                  // Preenchimento próprio (`surface-2`) pelo mesmo motivo do
+                  // `Input`: o fio de cabelo sozinho fica abaixo de 3:1 e não
+                  // pode ser a única coisa que delimita um controle.
+                  : 'border-border bg-surface-2 text-muted hover:border-muted hover:text-foreground',
               )}
             >
               {tag}
