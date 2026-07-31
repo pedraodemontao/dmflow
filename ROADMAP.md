@@ -1,7 +1,8 @@
 # ROADMAP — o que falta para ter o núcleo do ManyChat
 
 > Comparação honesta com o ManyChat para Instagram. Marca o que já existe, o que falta e
-> em que ordem vale construir. Atualizado em 2026-07-30.
+> em que ordem vale construir. Atualizado em 2026-07-30 (noite) — as fases 1, 2 e 3 da
+> "ordem sugerida" já foram construídas; o que sobrou está listado como ❌ abaixo.
 
 Legenda: ✅ pronto · 🟡 parcial · ❌ não existe
 
@@ -33,24 +34,26 @@ Legenda: ✅ pronto · 🟡 parcial · ❌ não existe
 | Marcar e remover tag | ✅ |
 | Chamar webhook externo | ✅ |
 | Esperar resposta | ✅ |
-| **Imagem, vídeo, áudio, arquivo** | ❌ |
+| Imagem por link público | ✅ |
+| Perguntar e validar (e-mail, telefone, número) | ✅ Repergunta e normaliza o valor |
+| Gravar campo personalizado | ✅ Escreve em `contacts.fields` |
+| Sorteio / teste A/B | ✅ 2 a 4 caminhos |
+| Descadastrar o contato | ✅ `startFlow` respeita `subscribed` |
+| **Vídeo, áudio, arquivo** | ❌ |
 | **Carrossel / galeria de cards** | ❌ |
-| **Perguntar e validar** (e-mail, telefone, número) | ❌ Hoje o `wait_reply` aceita qualquer coisa |
-| **Gravar campo personalizado** | ❌ A coluna `contacts.fields` existe e ninguém escreve nela |
 | **Pular para outro fluxo** | ❌ |
-| **Sorteio / teste A/B** | ❌ |
-| **Avisar o admin** (DM, e-mail, webhook) | ❌ |
-| **Descadastrar do contato** | ❌ `contacts.subscribed` existe e não é lido |
+| **Avisar o admin** (DM, e-mail, webhook) | ❌ Dá para resolver com o bloco Webhook |
 
 ## 3. Contatos e público
 
 | Recurso | Estado |
 |---|---|
-| Lista de contatos | 🟡 Lista crua, sem busca nem filtro |
-| Tags | 🟡 O fluxo marca, o painel não deixa ver nem editar |
-| Campos personalizados | ❌ |
-| Busca e segmentos salvos | ❌ |
-| Ficha do contato (histórico, tags, campos, fluxos que rodou) | ❌ |
+| Lista de contatos | ✅ Com busca por @usuário/nome |
+| Tags | ✅ O fluxo marca e o painel edita |
+| Campos personalizados | ✅ Bloco do fluxo grava, ficha edita |
+| Filtro por etiqueta | ✅ |
+| Ficha do contato (histórico, tags, campos, fluxos que rodou) | ✅ |
+| Segmentos salvos | ❌ |
 | Exportar CSV | ❌ |
 
 ## 4. Chat ao vivo
@@ -89,10 +92,11 @@ a janela e o cap**, não uma metralhadora. Recomendo deixar por último e constr
 
 | Recurso | Estado |
 |---|---|
-| Disparos e concluídos por automação | ✅ Números crus |
-| Cliques por botão / taxa por bloco | ❌ |
-| Onde o fluxo perde gente (funil) | ❌ |
-| Gráfico no painel | ❌ |
+| Disparos e concluídos por automação | ✅ |
+| Onde o fluxo perde gente (funil por bloco) | ✅ `/automacoes/[id]/metricas` |
+| Taxa de conclusão | ✅ |
+| Cliques por botão especificamente | ❌ O bloco de botões conta como um só |
+| Gráfico ao longo do tempo | ❌ |
 
 ## 7. Operação
 
@@ -108,11 +112,14 @@ a janela e o cap**, não uma metralhadora. Recomendo deixar por último e constr
 
 ## Ordem sugerida
 
-1. **Blocos que faltam** — imagem, perguntar-e-validar, gravar campo, pular para fluxo,
-   avisar admin. É o que mais aumenta o que dá para montar sem tocar em risco de plataforma.
-2. **Contatos de verdade** — busca, filtro por tag, ficha do contato, campos personalizados.
-   Sem isso os dados que o fluxo coleta não viram nada.
-3. **Métricas por bloco** — saber onde o fluxo perde gente.
-4. **Gatilhos novos** — menção em story, ice breakers, link de referência.
-5. **Chat ao vivo turbinado** — respostas prontas, resolvida/adiar, notas.
-6. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação.
+1. ~~**Blocos que faltam**~~ — ✅ feito: imagem, perguntar-e-validar, gravar campo, sorteio,
+   descadastrar.
+2. ~~**Contatos de verdade**~~ — ✅ feito: busca, filtro por etiqueta, ficha completa,
+   campos personalizados.
+3. ~~**Métricas por bloco**~~ — ✅ feito: funil por bloco e taxa de conclusão.
+4. **Gatilhos novos** — menção em story, ice breakers, link de referência (`ref`). ← próximo
+5. **Chat ao vivo turbinado** — respostas prontas, resolvida/adiar, notas internas, filtros.
+6. **Blocos restantes** — carrossel de cards, vídeo/áudio, pular para outro fluxo.
+7. **Operação** — múltiplas contas, horário de atendimento, botão de pânico.
+8. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação.
+   O Pedro decidiu não priorizar; era exemplo, não pedido.
