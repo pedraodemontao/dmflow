@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server'
 import { env } from '@/lib/env'
 import { refreshLongLivedToken } from '@/lib/instagram/oauth'
 import { resumeFlow } from '@/lib/flow/engine'
+import { isQuiet } from '@/lib/flow/quiet-hours'
 import { pollAll } from '@/lib/webhook/poll'
 import { processPending } from '@/lib/webhook/process'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -47,6 +48,8 @@ async function resumeSleepingRuns(): Promise<number> {
     if (!account || !contact) continue
     // Atendimento humano em curso: não retomar fluxo por cima.
     if ((contact as Contact).automation_paused) continue
+    // Pânico ou fora do horário: o fluxo continua dormindo e o cron tenta depois.
+    if ((account as Account).automations_paused || isQuiet(account as Account)) continue
 
     try {
       await resumeFlow({ run: row, account: account as Account, contact: contact as Contact })

@@ -14,6 +14,11 @@ export interface Account {
   token_expires_at: string
   scopes: string[]
   is_active: boolean
+  /** Botão de pânico: nenhuma automação dispara enquanto true. */
+  automations_paused: boolean
+  /** Silêncio noturno em hora cheia (America/Sao_Paulo). Null = sempre ativo. */
+  quiet_from: number | null
+  quiet_to: number | null
   created_at: string
   updated_at: string
 }

@@ -226,6 +226,46 @@ export async function markThreadRead(contactId: string): Promise<ActionResult> {
   return { ok: true }
 }
 
+/** Botão de pânico: trava tudo sem desativar automação nenhuma. */
+export async function setAutomationsPaused(paused: boolean): Promise<ActionResult> {
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta conectada.' }
+
+  const { error } = await supabaseAdmin
+    .from('accounts')
+    .update({ automations_paused: paused })
+    .eq('id', account.id)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/')
+  return { ok: true }
+}
+
+export async function setQuietHours(from: number | null, to: number | null): Promise<ActionResult> {
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta conectada.' }
+
+  const valid = (hour: number | null) => hour === null || (Number.isInteger(hour) && hour >= 0 && hour <= 23)
+  if (!valid(from) || !valid(to)) return { ok: false, error: 'Horário inválido.' }
+  if ((from === null) !== (to === null)) {
+    return { ok: false, error: 'Defina as duas pontas do horário, ou desligue as duas.' }
+  }
+  if (from !== null && from === to) {
+    return { ok: false, error: 'Início e fim não podem ser a mesma hora.' }
+  }
+
+  const { error } = await supabaseAdmin
+    .from('accounts')
+    .update({ quiet_from: from, quiet_to: to })
+    .eq('id', account.id)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/')
+  return { ok: true }
+}
+
 export async function updateContactTags(
   contactId: string,
   tags: string[],

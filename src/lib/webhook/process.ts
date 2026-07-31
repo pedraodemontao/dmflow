@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin'
 import { fetchContactProfile, replyToComment } from '@/lib/instagram/api'
 import { resumeFlow, startFlow } from '@/lib/flow/engine'
 import { assertUnderSendCap, logSend } from '@/lib/flow/send-cap'
+import { isQuiet, nextOpening } from '@/lib/flow/quiet-hours'
 import { spin } from '@/lib/flow/spintax'
 import { findTrigger } from '@/lib/flow/triggers'
 import type { Account, Contact, Flow, FlowRun } from '@/types/db'
@@ -323,6 +324,35 @@ export async function processPending(limit = 20): Promise<number> {
     try {
       const account = await getAccount(event.igAccountId)
       if (!account) throw new Error(`Conta ${event.igAccountId} não conectada.`)
+
+      // Pânico ligado: o evento volta para a fila e espera ser destravado,
+      // em vez de ser processado ou perdido.
+      if (account.automations_paused) {
+        await supabaseAdmin
+          .from('webhook_events')
+          .update({
+            status: 'pending',
+            // Devolve a tentativa: adiar não é falhar, senão o pânico ligado
+            // por um tempo queimaria o orçamento de retentativas do evento.
+            attempts: row.attempts,
+            process_after: new Date(Date.now() + 60_000).toISOString(),
+          })
+          .eq('id', row.id)
+        continue
+      }
+
+      // Fora do horário de atendimento: adia para a abertura, não descarta.
+      if (isQuiet(account)) {
+        await supabaseAdmin
+          .from('webhook_events')
+          .update({
+            status: 'pending',
+            attempts: row.attempts,
+            process_after: nextOpening(account).toISOString(),
+          })
+          .eq('id', row.id)
+        continue
+      }
 
       if (event.kind === 'messaging') await handleMessaging(account, event.value)
       else await handleComment(account, event.value)

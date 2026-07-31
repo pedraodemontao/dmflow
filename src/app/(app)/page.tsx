@@ -9,6 +9,7 @@ import {
   Zap,
 } from 'lucide-react'
 
+import { Operacao } from '@/components/painel/operacao'
 import { Button, Card, EmptyState } from '@/components/ui'
 import { getAccount, getAutomations, getLeadSources, getStats } from '@/lib/data'
 import { getWebhookSubscriptions } from '@/lib/instagram/api'
@@ -90,6 +91,14 @@ export default async function Home() {
             </div>
           </div>
         )}
+        {account && (
+          <Operacao
+            paused={account.automations_paused}
+            quietFrom={account.quiet_from}
+            quietTo={account.quiet_to}
+          />
+        )}
+
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="Contatos" value={stats.contacts} icon={Users} />
           <Stat label="Automações ativas" value={stats.activeAutomations} icon={Zap} />

@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { Users } from 'lucide-react'
+import { Download, Users } from 'lucide-react'
 
 import { ContactFilters } from '@/components/contatos/contact-filters'
-import { Badge, Card, EmptyState } from '@/components/ui'
+import { Badge, Button, Card, EmptyState } from '@/components/ui'
 import { getAllTags, getContacts } from '@/lib/data'
 
 export const dynamic = 'force-dynamic'
@@ -25,6 +25,22 @@ export default async function ContatosPage({
       <header className="flex h-16 shrink-0 items-center border-b border-border px-6">
         <h1 className="text-sm font-semibold">Contatos</h1>
         <span className="ml-2 text-xs text-muted">({contacts.length})</span>
+
+        {contacts.length > 0 && (
+          <a
+            className="ml-auto"
+            href={`/api/contatos/export?${new URLSearchParams({
+              ...(busca ? { busca } : {}),
+              ...(etiqueta ? { etiqueta } : {}),
+              ...(post ? { post } : {}),
+            })}`}
+          >
+            <Button size="sm" variant="outline">
+              <Download className="size-4" />
+              Exportar CSV
+            </Button>
+          </a>
+        )}
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">
