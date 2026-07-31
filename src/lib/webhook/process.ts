@@ -118,6 +118,7 @@ async function upsertContact(args: {
   igUserId: string
   username?: string | null
   markInbound: boolean
+  source?: { type: 'comment' | 'ref' | 'ad'; id: string }
 }): Promise<Contact> {
   const { data: existing } = await supabaseAdmin
     .from('contacts')
@@ -130,6 +131,13 @@ async function upsertContact(args: {
     const patch: Record<string, unknown> = {}
     if (args.markInbound) patch.last_inbound_at = new Date().toISOString()
     if (args.username && !(existing as Contact).username) patch.username = args.username
+
+    // Primeiro toque manda: só preenche origem se ainda estiver vazia.
+    if (args.source && !(existing as Contact).source_type) {
+      patch.source_type = args.source.type
+      patch.source_id = args.source.id
+      patch.source_at = new Date().toISOString()
+    }
 
     if (Object.keys(patch).length > 0) {
       const { data: updated } = await supabaseAdmin
@@ -159,6 +167,9 @@ async function upsertContact(args: {
       username: profile?.username ?? args.username ?? null,
       name: profile?.name ?? null,
       last_inbound_at: args.markInbound ? new Date().toISOString() : null,
+      source_type: args.source?.type ?? null,
+      source_id: args.source?.id ?? null,
+      source_at: args.source ? new Date().toISOString() : null,
     })
     .select()
     .single()
@@ -255,6 +266,8 @@ async function handleComment(account: Account, value: CommentValue) {
     username: value.from?.username ?? null,
     // Comentário não abre a janela de 24h de DM. Só a private reply passa.
     markInbound: false,
+    // De qual post veio o lead — o dado já chegava aqui e era descartado.
+    ...(value.media?.id ? { source: { type: 'comment' as const, id: value.media.id } } : {}),
   })
 
   if (contact.automation_paused) return

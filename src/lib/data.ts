@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { supabaseAdmin } from '@/lib/supabase/admin'
+import { fetchMedia } from '@/lib/instagram/api'
 import type { Account, Contact, Flow, Trigger } from '@/types/db'
 
 /**
@@ -79,6 +80,62 @@ export async function getAutomation(triggerId: string): Promise<Automation | nul
       done: runs?.filter((r) => r.status === 'done').length ?? 0,
     },
   }
+}
+
+export interface LeadSource {
+  mediaId: string
+  leads: number
+  /** Preenchido quando o post ainda existe na conta. */
+  permalink?: string
+  thumbnail?: string
+  caption?: string
+}
+
+/**
+ * Quais conteúdos mais trazem lead. Cruza a origem gravada no contato com
+ * os posts da conta para mostrar miniatura e legenda em vez do id cru.
+ * Post apagado ou fora das últimas 50 mídias continua listado, só sem enfeite.
+ */
+export async function getLeadSources(limit = 8): Promise<LeadSource[]> {
+  const { data } = await supabaseAdmin
+    .from('contacts')
+    .select('source_id')
+    .eq('source_type', 'comment')
+    .not('source_id', 'is', null)
+
+  const rows = (data ?? []) as Array<{ source_id: string }>
+  if (rows.length === 0) return []
+
+  const counts = new Map<string, number>()
+  for (const row of rows) counts.set(row.source_id, (counts.get(row.source_id) ?? 0) + 1)
+
+  const ranked = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, limit)
+
+  // fetchMedia direto (e não loadMedia) porque lib/media importa daqui —
+  // usar de lá fecharia um ciclo de import.
+  const account = await getAccount()
+  const media = account
+    ? await fetchMedia({
+        igUserId: account.ig_user_id,
+        accessToken: account.access_token,
+        limit: 50,
+      }).catch(() => [])
+    : []
+
+  const byId = new Map(media.map((item) => [item.id, item]))
+
+  return ranked.map(([mediaId, leads]) => {
+    const item = byId.get(mediaId)
+    return {
+      mediaId,
+      leads,
+      permalink: item?.permalink,
+      thumbnail: item?.thumbnail_url ?? item?.media_url,
+      caption: item?.caption,
+    }
+  })
 }
 
 export interface NodeMetric {
@@ -160,9 +217,11 @@ const DM_WINDOW_MS = 24 * 60 * 60 * 1000
 export type ContactRow = Contact & { windowOpen: boolean }
 
 export async function getContacts(
-  options: { search?: string; tag?: string; limit?: number } = {},
+  options: { search?: string; tag?: string; sourceId?: string; limit?: number } = {},
 ): Promise<ContactRow[]> {
   let query = supabaseAdmin.from('contacts').select('*')
+
+  if (options.sourceId) query = query.eq('source_id', options.sourceId)
 
   const search = options.search?.trim()
   if (search) {

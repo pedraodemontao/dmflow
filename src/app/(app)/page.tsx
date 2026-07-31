@@ -1,8 +1,16 @@
 import Link from 'next/link'
-import { AtSign, MessagesSquare, Play, TriangleAlert, Users, Zap } from 'lucide-react'
+import {
+  AtSign,
+  ImageOff,
+  MessagesSquare,
+  Play,
+  TriangleAlert,
+  Users,
+  Zap,
+} from 'lucide-react'
 
 import { Button, Card, EmptyState } from '@/components/ui'
-import { getAccount, getAutomations, getStats } from '@/lib/data'
+import { getAccount, getAutomations, getLeadSources, getStats } from '@/lib/data'
 import { getWebhookSubscriptions } from '@/lib/instagram/api'
 import { hasEnv } from '@/lib/env'
 
@@ -43,10 +51,11 @@ export default async function Home() {
     )
   }
 
-  const [stats, automations, account] = await Promise.all([
+  const [stats, automations, account, leadSources] = await Promise.all([
     getStats(),
     getAutomations(),
     getAccount(),
+    getLeadSources(),
   ])
 
   // Cadastrar a URL do webhook no painel da Meta não basta: sem a conta inscrita
@@ -87,6 +96,62 @@ export default async function Home() {
           <Stat label="Mensagens enviadas" value={stats.messagesSent} icon={MessagesSquare} />
           <Stat label="Fluxos em andamento" value={stats.runsRunning} icon={Play} />
         </div>
+
+        {leadSources.length > 0 && (
+          <section>
+            <h2 className="mb-1 text-sm font-semibold">Conteúdos que mais trazem lead</h2>
+            <p className="mb-3 text-xs text-muted">
+              Conta só quem chegou comentando. Vale o post que trouxe a pessoa pela primeira vez.
+            </p>
+
+            <Card className="divide-y divide-border">
+              {leadSources.map((source) => (
+                <div key={source.mediaId} className="flex items-center gap-3 p-3">
+                  {source.thumbnail ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={source.thumbnail}
+                      alt=""
+                      className="size-10 shrink-0 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-surface-2">
+                      <ImageOff className="size-4 text-muted" />
+                    </div>
+                  )}
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs">
+                      {source.caption?.trim() || (
+                        <span className="text-muted">Post fora das últimas 50 mídias</span>
+                      )}
+                    </p>
+                    {source.permalink && (
+                      <a
+                        href={source.permalink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-[11px] text-accent hover:underline"
+                      >
+                        ver no Instagram
+                      </a>
+                    )}
+                  </div>
+
+                  <Link
+                    href={`/contatos?post=${source.mediaId}`}
+                    className="shrink-0 text-right hover:opacity-80"
+                  >
+                    <p className="text-sm font-semibold tabular-nums">{source.leads}</p>
+                    <p className="text-[11px] text-muted">
+                      {source.leads === 1 ? 'lead' : 'leads'}
+                    </p>
+                  </Link>
+                </div>
+              ))}
+            </Card>
+          </section>
+        )}
 
         <section>
           <h2 className="mb-3 text-sm font-semibold">Suas automações</h2>

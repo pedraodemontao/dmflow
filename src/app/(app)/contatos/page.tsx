@@ -10,15 +10,15 @@ export const dynamic = 'force-dynamic'
 export default async function ContatosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ busca?: string; etiqueta?: string }>
+  searchParams: Promise<{ busca?: string; etiqueta?: string; post?: string }>
 }) {
-  const { busca, etiqueta } = await searchParams
+  const { busca, etiqueta, post } = await searchParams
   const [contacts, tags] = await Promise.all([
-    getContacts({ search: busca, tag: etiqueta }),
+    getContacts({ search: busca, tag: etiqueta, sourceId: post }),
     getAllTags(),
   ])
 
-  const filtering = Boolean(busca || etiqueta)
+  const filtering = Boolean(busca || etiqueta || post)
 
   return (
     <>
@@ -29,6 +29,15 @@ export default async function ContatosPage({
 
       <main className="flex-1 overflow-y-auto p-6">
         <ContactFilters tags={tags} search={busca ?? ''} activeTag={etiqueta ?? ''} />
+
+        {post && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2">
+            <span className="text-xs text-muted">Só quem veio de um post específico</span>
+            <Link href="/contatos" className="ml-auto text-xs text-accent hover:underline">
+              limpar
+            </Link>
+          </div>
+        )}
 
         {contacts.length === 0 ? (
           <EmptyState

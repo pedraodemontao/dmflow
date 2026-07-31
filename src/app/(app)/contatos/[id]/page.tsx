@@ -56,6 +56,31 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
             </Card>
 
             <Card className="p-4">
+              <p className="mb-2 text-xs font-medium text-muted">Origem</p>
+              {contact.source_type === 'comment' && contact.source_id ? (
+                <div className="space-y-1">
+                  <p className="text-xs">Comentou num post</p>
+                  <Link
+                    href={`/contatos?post=${contact.source_id}`}
+                    className="block text-[11px] text-accent hover:underline"
+                  >
+                    ver todos que vieram deste post
+                  </Link>
+                  {contact.source_at && (
+                    <p className="text-[11px] text-muted">
+                      {new Date(contact.source_at).toLocaleString('pt-BR')}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted">
+                  Não registrada. Só quem chega comentando tem origem — e apenas a partir de
+                  30/07/2026, quando passamos a gravar.
+                </p>
+              )}
+            </Card>
+
+            <Card className="p-4">
               <p className="mb-2 text-xs font-medium text-muted">Fluxos que rodou</p>
               {runs.length === 0 ? (
                 <p className="text-[11px] text-muted">Nenhum fluxo ainda.</p>
