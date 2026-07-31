@@ -89,8 +89,9 @@ com sessão em cookie assinado por HMAC. As exceções em `PUBLIC_PATHS` são ob
 e o cron não fazem login — e cada uma tem autenticação própria (HMAC, `state`, `CRON_SECRET`).
 **Não adicione rota nova a `PUBLIC_PATHS` sem uma dessas defesas.**
 
-As páginas do painel vivem em `src/app/(app)/`, que é onde mora a sidebar. `/login` e
-`/privacidade` ficam fora do grupo de propósito.
+As páginas do painel vivem em `src/app/(app)/`, cujo layout monta a navegação do topo
+(`src/components/layout/top-nav.tsx` — a sidebar foi removida na direção visual "Marcador").
+`/login` e `/privacidade` ficam fora do grupo de propósito.
 
 ## Métrica: qual tabela responde o quê
 
