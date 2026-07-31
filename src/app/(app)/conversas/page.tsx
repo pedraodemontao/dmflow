@@ -35,8 +35,8 @@ export default async function ConversasPage({
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center border-b border-border px-6">
-        <h1 className="text-sm font-semibold">Conversas</h1>
+      <header className="flex h-16 shrink-0 items-center border-b border-border bg-surface px-6">
+        <h1 className="text-base font-semibold tracking-tight text-foreground">Conversas</h1>
         <span className="ml-2 text-xs text-muted">
           {counts.abertas} {counts.abertas === 1 ? 'aberta' : 'abertas'}
           {counts['nao-lidas'] > 0 && ` · ${counts['nao-lidas']} não lidas`}

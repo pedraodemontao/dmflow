@@ -19,8 +19,8 @@ export default async function AutomacoesPage() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6">
-        <h1 className="text-sm font-semibold">Automações</h1>
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+        <h1 className="text-base font-semibold tracking-tight text-foreground">Automações</h1>
         <Link href="/automacoes/nova">
           <Button size="sm">
             <Zap className="size-4" />
@@ -46,11 +46,14 @@ export default async function AutomacoesPage() {
             {automations.map(({ trigger, flow, stats }) => (
               <Card
                 key={trigger.id}
-                className="flex items-center gap-4 p-4 transition-colors hover:border-muted"
+                className="flex items-center gap-4 p-4 transition-colors duration-150 hover:border-accent/40"
               >
-                <Link href={`/automacoes/${trigger.id}`} className="min-w-0 flex-1">
+                <Link
+                  href={`/automacoes/${trigger.id}`}
+                  className="min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                >
                   <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium">{flow.name}</p>
+                    <p className="truncate text-sm font-medium text-foreground">{flow.name}</p>
                     <Badge tone={trigger.is_active ? 'success' : 'neutral'}>
                       {trigger.is_active ? 'ativa' : 'pausada'}
                     </Badge>
@@ -64,15 +67,19 @@ export default async function AutomacoesPage() {
 
                 <div className="hidden shrink-0 gap-6 text-center sm:flex">
                   <div>
-                    <p className="text-sm font-semibold tabular-nums">{stats.runs}</p>
+                    <p className="font-mono text-sm font-semibold text-foreground tabular-nums">
+                      {stats.runs}
+                    </p>
                     <p className="text-[11px] text-muted">disparos</p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold tabular-nums">{stats.done}</p>
+                    <p className="font-mono text-sm font-semibold text-foreground tabular-nums">
+                      {stats.done}
+                    </p>
                     <p className="text-[11px] text-muted">concluídos</p>
                   </div>
                   <div>
-                    <p className="text-sm font-semibold tabular-nums">
+                    <p className="font-mono text-sm font-semibold text-foreground tabular-nums">
                       {Object.keys(flow.definition?.nodes ?? {}).length}
                     </p>
                     <p className="text-[11px] text-muted">blocos</p>

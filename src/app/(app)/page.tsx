@@ -28,11 +28,17 @@ function Stat({
 }) {
   return (
     <Card className="p-5">
-      <div className="flex items-center gap-2 text-muted">
-        <Icon className="size-4" />
-        <span className="text-xs">{label}</span>
+      <div className="flex items-center gap-2">
+        <div className="flex size-7 items-center justify-center rounded-md bg-accent/10 text-accent">
+          <Icon className="size-3.5" />
+        </div>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+          {label}
+        </span>
       </div>
-      <p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>
+      <p className="mt-3 font-mono text-3xl font-semibold tracking-tight text-foreground tabular-nums">
+        {value}
+      </p>
     </Card>
   )
 }
@@ -48,10 +54,13 @@ export default async function Home({
     return (
       <main className="p-8">
         <Card className="max-w-xl p-6">
-          <h1 className="text-lg font-semibold">Configuração pendente</h1>
+          <h1 className="text-lg font-semibold tracking-tight text-foreground">
+            Configuração pendente
+          </h1>
           <p className="mt-2 text-sm text-muted">
-            Faltam variáveis de ambiente. Copie <code>.env.example</code> para{' '}
-            <code>.env.local</code> e preencha. O passo a passo está no <code>README.md</code>.
+            Faltam variáveis de ambiente. Copie <code className="font-mono text-accent">.env.example</code> para{' '}
+            <code className="font-mono text-accent">.env.local</code> e preencha. O passo a passo
+            está no <code className="font-mono text-accent">README.md</code>.
           </p>
         </Card>
       </main>
@@ -69,8 +78,8 @@ export default async function Home({
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6">
-        <h1 className="text-sm font-semibold">Painel</h1>
+      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+        <h1 className="text-base font-semibold tracking-tight text-foreground">Painel</h1>
         <Link href="/automacoes/nova">
           <Button size="sm">
             <Zap className="size-4" />
@@ -79,7 +88,7 @@ export default async function Home({
         </Link>
       </header>
 
-      <main className="flex-1 space-y-6 overflow-y-auto p-6">
+      <main className="flex-1 space-y-8 overflow-y-auto p-6">
         {/* O callback do OAuth volta para cá com ?erro= ou ?conectado=. Sem
             mostrar, uma reconexão que falhou parece ter dado certo. */}
         {erro && (
@@ -167,7 +176,9 @@ export default async function Home({
 
         {leadSources.length > 0 && (
           <section>
-            <h2 className="mb-1 text-sm font-semibold">Conteúdos que mais trazem lead</h2>
+            <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted">
+              Conteúdos que mais trazem lead
+            </h2>
             <p className="mb-3 text-xs text-muted">
               Conta só quem chegou comentando. Vale o post que trouxe a pessoa pela primeira vez.
             </p>
@@ -208,9 +219,11 @@ export default async function Home({
 
                   <Link
                     href={`/contatos?post=${source.mediaId}`}
-                    className="shrink-0 text-right hover:opacity-80"
+                    className="shrink-0 rounded-md text-right transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
                   >
-                    <p className="text-sm font-semibold tabular-nums">{source.leads}</p>
+                    <p className="font-mono text-sm font-semibold tabular-nums">
+                      {source.leads}
+                    </p>
                     <p className="text-[11px] text-muted">
                       {source.leads === 1 ? 'lead' : 'leads'}
                     </p>
@@ -222,7 +235,9 @@ export default async function Home({
         )}
 
         <section>
-          <h2 className="mb-3 text-sm font-semibold">Suas automações</h2>
+          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted">
+            Suas automações
+          </h2>
 
           {automations.length === 0 ? (
             <EmptyState
@@ -241,11 +256,17 @@ export default async function Home({
           ) : (
             <div className="grid gap-3 lg:grid-cols-2">
               {automations.map(({ trigger, flow, stats: s }) => (
-                <Link key={trigger.id} href={`/automacoes/${trigger.id}`}>
-                  <Card className="p-4 transition-colors hover:border-muted">
+                <Link
+                  key={trigger.id}
+                  href={`/automacoes/${trigger.id}`}
+                  className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                >
+                  <Card className="p-4 transition-colors duration-150 hover:border-accent/40">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium">{flow.name}</p>
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {flow.name}
+                        </p>
                         <p className="mt-0.5 truncate text-xs text-muted">
                           {trigger.keywords.join(', ') || 'qualquer texto'}
                         </p>
@@ -253,14 +274,14 @@ export default async function Home({
                       <span
                         className={
                           trigger.is_active
-                            ? 'shrink-0 text-[11px] text-success'
+                            ? 'shrink-0 text-[11px] font-medium text-success'
                             : 'shrink-0 text-[11px] text-muted'
                         }
                       >
                         {trigger.is_active ? 'ativa' : 'pausada'}
                       </span>
                     </div>
-                    <div className="mt-3 flex gap-4 text-[11px] text-muted">
+                    <div className="mt-3 flex gap-4 font-mono text-[11px] text-muted">
                       <span>{s.runs} disparos</span>
                       <span>{s.done} concluídos</span>
                     </div>

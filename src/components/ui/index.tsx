@@ -2,6 +2,10 @@ import type { ComponentProps, ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
 
+/** Anel de foco padrão do design system — visível em qualquer superfície escura. */
+const FOCUS_RING =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -14,14 +18,19 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors',
+        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150',
         'disabled:cursor-not-allowed disabled:opacity-50',
+        FOCUS_RING,
         size === 'sm' ? 'h-8 px-3 text-xs' : 'h-10 px-4 text-sm',
-        variant === 'primary' && 'bg-accent text-white hover:bg-accent-soft',
+        // Primário: tinta escura sobre gradiente laranja-cobre — contraste maior que
+        // texto branco sobre a mesma cor (AA falha em ~4.46:1, isto passa em ~6.8:1).
+        variant === 'primary' &&
+          'bg-gradient-to-b from-accent to-accent-soft font-semibold text-background shadow-sm shadow-accent/20 hover:brightness-110 active:brightness-95',
         variant === 'outline' &&
-          'border border-border bg-surface text-foreground hover:bg-surface-2',
+          'border border-border bg-surface text-foreground hover:border-muted hover:bg-surface-2',
         variant === 'ghost' && 'text-muted hover:bg-surface-2 hover:text-foreground',
-        variant === 'danger' && 'bg-danger/10 text-danger hover:bg-danger/20',
+        variant === 'danger' &&
+          'border border-danger/20 bg-danger/10 text-danger hover:border-danger/40 hover:bg-danger/20',
         className,
       )}
       {...props}
@@ -32,7 +41,10 @@ export function Button({
 export function Card({ className, ...props }: ComponentProps<'div'>) {
   return (
     <div
-      className={cn('rounded-xl border border-border bg-surface', className)}
+      className={cn(
+        'rounded-xl border border-border bg-surface shadow-sm shadow-black/20',
+        className,
+      )}
       {...props}
     />
   )
@@ -42,8 +54,10 @@ export function Input({ className, ...props }: ComponentProps<'input'>) {
   return (
     <input
       className={cn(
-        'h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground',
-        'placeholder:text-muted focus:border-accent focus:outline-none',
+        'h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground transition-colors duration-150',
+        'placeholder:text-muted hover:border-muted/80',
+        FOCUS_RING,
+        'focus-visible:border-accent',
         className,
       )}
       {...props}
@@ -55,8 +69,10 @@ export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
   return (
     <textarea
       className={cn(
-        'w-full resize-y rounded-lg border border-border bg-surface-2 p-3 text-sm text-foreground',
-        'placeholder:text-muted focus:border-accent focus:outline-none',
+        'w-full resize-y rounded-lg border border-border bg-surface-2 p-3 text-sm text-foreground transition-colors duration-150',
+        'placeholder:text-muted hover:border-muted/80',
+        FOCUS_RING,
+        'focus-visible:border-accent',
         className,
       )}
       {...props}
@@ -68,8 +84,10 @@ export function Select({ className, ...props }: ComponentProps<'select'>) {
   return (
     <select
       className={cn(
-        'h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground',
-        'focus:border-accent focus:outline-none',
+        'h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground transition-colors duration-150',
+        'hover:border-muted/80',
+        FOCUS_RING,
+        'focus-visible:border-accent',
         className,
       )}
       {...props}
@@ -80,7 +98,10 @@ export function Select({ className, ...props }: ComponentProps<'select'>) {
 export function Label({ className, ...props }: ComponentProps<'label'>) {
   return (
     <label
-      className={cn('mb-1.5 block text-xs font-medium text-muted', className)}
+      className={cn(
+        'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted',
+        className,
+      )}
       {...props}
     />
   )
@@ -96,13 +117,22 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
-        tone === 'neutral' && 'bg-surface-2 text-muted',
-        tone === 'success' && 'bg-success/15 text-success',
-        tone === 'warning' && 'bg-warning/15 text-warning',
-        tone === 'accent' && 'bg-accent/15 text-accent',
+        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset',
+        tone === 'neutral' && 'bg-surface-2 text-muted ring-border',
+        tone === 'success' && 'bg-success/15 text-success ring-success/25',
+        tone === 'warning' && 'bg-warning/15 text-warning ring-warning/25',
+        tone === 'accent' && 'bg-accent/15 text-accent ring-accent/25',
       )}
     >
+      <span
+        className={cn(
+          'size-1.5 shrink-0 rounded-full',
+          tone === 'neutral' && 'bg-muted',
+          tone === 'success' && 'bg-success',
+          tone === 'warning' && 'bg-warning',
+          tone === 'accent' && 'bg-accent',
+        )}
+      />
       {children}
     </span>
   )
@@ -120,11 +150,15 @@ export function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 py-16 text-center">
-      {icon && <div className="mb-3 text-muted">{icon}</div>}
-      <h3 className="text-sm font-semibold">{title}</h3>
-      <p className="mt-1 max-w-sm text-sm text-muted">{description}</p>
-      {action && <div className="mt-5">{action}</div>}
+    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface/40 px-6 py-16 text-center">
+      {icon && (
+        <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-surface-2 text-muted">
+          {icon}
+        </div>
+      )}
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <p className="mt-1.5 max-w-sm text-sm text-muted">{description}</p>
+      {action && <div className="mt-6">{action}</div>}
     </div>
   )
 }

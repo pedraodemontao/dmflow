@@ -35,13 +35,15 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border px-6">
+      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-surface px-6">
         <Link href={`/automacoes/${id}`}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="size-4" />
           </Button>
         </Link>
-        <h1 className="text-sm font-semibold">Métricas · {automation.flow.name}</h1>
+        <h1 className="text-base font-semibold tracking-tight text-foreground">
+          Métricas · {automation.flow.name}
+        </h1>
         <Badge tone={automation.trigger.is_active ? 'success' : 'neutral'}>
           {automation.trigger.is_active ? 'ativa' : 'pausada'}
         </Badge>
@@ -50,15 +52,19 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
       <main className="flex-1 overflow-y-auto p-6">
         <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Card className="p-4">
-            <p className="text-2xl font-semibold tabular-nums">{automation.stats.runs}</p>
+            <p className="font-mono text-2xl font-semibold text-foreground tabular-nums">
+              {automation.stats.runs}
+            </p>
             <p className="text-[11px] text-muted">disparos</p>
           </Card>
           <Card className="p-4">
-            <p className="text-2xl font-semibold tabular-nums">{automation.stats.done}</p>
+            <p className="font-mono text-2xl font-semibold text-foreground tabular-nums">
+              {automation.stats.done}
+            </p>
             <p className="text-[11px] text-muted">chegaram ao fim</p>
           </Card>
           <Card className="p-4">
-            <p className="text-2xl font-semibold tabular-nums">
+            <p className="font-mono text-2xl font-semibold text-foreground tabular-nums">
               {automation.stats.runs > 0
                 ? Math.round((automation.stats.done / automation.stats.runs) * 100)
                 : 0}
@@ -79,12 +85,12 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
             {metrics.map((metric) => (
               <div key={metric.nodeId} className="p-4">
                 <div className="mb-2 flex items-baseline gap-2">
-                  <span className="text-xs font-medium">
+                  <span className="text-xs font-medium text-foreground">
                     {NODE_LABEL[metric.nodeType] ?? metric.nodeType}
                   </span>
-                  <span className="text-[11px] text-muted">{metric.nodeId}</span>
+                  <span className="font-mono text-[11px] text-muted">{metric.nodeId}</span>
                   {metric.nodeId === entryId && <Badge tone="accent">início</Badge>}
-                  <span className="ml-auto text-sm font-semibold tabular-nums">
+                  <span className="ml-auto font-mono text-sm font-semibold text-foreground tabular-nums">
                     {metric.people}
                   </span>
                   <span className="text-[11px] text-muted">
@@ -92,7 +98,10 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
                   </span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
-                  <div className="h-full rounded-full bg-accent" style={{ width: `${metric.share}%` }} />
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-accent-soft to-accent"
+                    style={{ width: `${metric.share}%` }}
+                  />
                 </div>
               </div>
             ))}
