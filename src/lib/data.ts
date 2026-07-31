@@ -1,7 +1,10 @@
 import 'server-only'
 
-import { supabaseAdmin } from '@/lib/supabase/admin'
+import { env } from '@/lib/env'
 import { fetchMedia } from '@/lib/instagram/api'
+import { assessRisk } from '@/lib/risk/assess'
+import type { RiskReport } from '@/lib/risk/types'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { Account, CannedReply, Contact, Flow, Trigger } from '@/types/db'
 
 /**
@@ -457,4 +460,64 @@ export async function getRecentMessages(limit = 60): Promise<ConversationRow[]> 
       contacts: { username: string | null; ig_user_id: string } | null
     }
   >).map(({ contacts, ...rest }) => ({ ...rest, contact: contacts }))
+}
+
+const HOUR_MS = 60 * 60 * 1000
+const RISK_LOOKBACK_MS = 24 * HOUR_MS
+/** Quantas mensagens de saída da automação entram na conta de similaridade. */
+const SIMILARITY_SAMPLE = 40
+
+/**
+ * Monitor de risco de flag: junta volume, similaridade de texto, concentração
+ * no tempo, proporção de resposta pública e envios de madrugada num semáforo
+ * só. A lógica de corte mora em `src/lib/risk` — pura, testada, sem I/O; esta
+ * função só lê o banco e alimenta ela. Sem conta conectada não tem o que medir.
+ */
+export async function getRiskReport(): Promise<RiskReport | null> {
+  const account = await getAccount()
+  if (!account) return null
+
+  const since24h = new Date(Date.now() - RISK_LOOKBACK_MS).toISOString()
+  const since1h = new Date(Date.now() - HOUR_MS).toISOString()
+
+  const [{ data: sends }, { data: outgoing }] = await Promise.all([
+    supabaseAdmin
+      .from('send_log')
+      .select('kind, created_at')
+      .eq('account_id', account.id)
+      .gte('created_at', since24h),
+    // source = 'flow': o que a automação mandou, não resposta manual de
+    // atendente — o risco de flag é sobre repetição do bot, não de gente.
+    supabaseAdmin
+      .from('messages')
+      .select('text')
+      .eq('account_id', account.id)
+      .eq('direction', 'out')
+      .eq('source', 'flow')
+      .order('created_at', { ascending: false })
+      .limit(SIMILARITY_SAMPLE),
+  ])
+
+  const sendRows = (sends ?? []) as Array<{ kind: string; created_at: string }>
+  const hourlyRows = sendRows.filter((row) => row.created_at >= since1h)
+
+  const recentSendCounts = {
+    dm: sendRows.filter((row) => row.kind === 'dm').length,
+    privateReply: sendRows.filter((row) => row.kind === 'private_reply').length,
+    publicReply: sendRows.filter((row) => row.kind === 'public_reply').length,
+  }
+
+  const recentOutgoingTexts = ((outgoing ?? []) as Array<{ text: string | null }>)
+    .map((row) => row.text ?? '')
+    .filter((text) => text.length > 0)
+
+  return assessRisk({
+    cap: env.SEND_HOURLY_CAP,
+    sendsLastHour: hourlyRows.length,
+    hourlySendTimestamps: hourlyRows.map((row) => new Date(row.created_at)),
+    recentOutgoingTexts,
+    recentSendCounts,
+    recentSendTimestamps: sendRows.map((row) => new Date(row.created_at)),
+    account: { quiet_from: account.quiet_from, quiet_to: account.quiet_to },
+  })
 }

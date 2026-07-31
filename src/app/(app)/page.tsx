@@ -10,8 +10,9 @@ import {
 } from 'lucide-react'
 
 import { Operacao } from '@/components/painel/operacao'
+import { Risco } from '@/components/painel/risco'
 import { Button, Card, EmptyState } from '@/components/ui'
-import { getAccount, getAutomations, getLeadSources, getStats } from '@/lib/data'
+import { getAccount, getAutomations, getLeadSources, getRiskReport, getStats } from '@/lib/data'
 import { checkAccountHealth } from '@/lib/instagram/health'
 import { hasEnv } from '@/lib/env'
 
@@ -58,11 +59,12 @@ export default async function Home({
     )
   }
 
-  const [stats, automations, account, leadSources] = await Promise.all([
+  const [stats, automations, account, leadSources, riskReport] = await Promise.all([
     getStats(),
     getAutomations(),
     getAccount(),
     getLeadSources(),
+    getRiskReport(),
   ])
 
   const health = account ? await checkAccountHealth(account) : null
@@ -157,6 +159,8 @@ export default async function Home({
             quietTo={account.quiet_to}
           />
         )}
+
+        {riskReport && <Risco report={riskReport} />}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Stat label="Contatos" value={stats.contacts} icon={Users} />
