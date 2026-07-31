@@ -25,7 +25,7 @@ export default async function IceBreakersPage() {
   return (
     <>
       <header className="chrome-panel flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Ice breakers</h1>
+        <h1 className="display text-4xl text-foreground">Ice breakers</h1>
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">

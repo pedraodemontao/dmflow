@@ -1,19 +1,18 @@
-import { Gauge } from 'lucide-react'
-
-import { Badge, Card } from '@/components/ui'
+import { Card } from '@/components/ui'
+import { Meter } from '@/components/ui/chart'
 import type { RiskLevel, RiskReport } from '@/lib/risk/types'
 import { cn } from '@/lib/utils'
 
 /**
- * Semáforo de risco de flag: o diferencial da ferramenta — ManyChat não avisa
- * quando o comportamento está ficando arriscado. Só mostra o que já veio
- * pronto em `assessRisk` (src/lib/risk); esta camada é só apresentação.
+ * Semáforo de risco de flag: o diferencial da ferramenta — o ManyChat não
+ * avisa quando o comportamento está ficando arriscado. Só apresenta o que já
+ * veio pronto de `assessRisk` (src/lib/risk); nenhuma conta acontece aqui.
  *
- * Nota de composição: o Badge do design system ainda não tem um tom
- * "vermelho" (só success/warning/neutral/accent). Para o nível vermelho, o
- * pill cai em "neutral" e a ênfase vem do próprio card (borda/fundo) e do
- * texto, reaproveitando as classes `text-danger`/`bg-danger`/`border-danger`
- * que o restante do painel já usa (ver os alertas em `src/app/(app)/page.tsx`).
+ * Cada `RiskSignal` traz `value`, uma fração de 0 a 1 que a versão anterior
+ * jogava fora: mostrava só a palavra "Baixo"/"Atenção" no canto da linha. O
+ * dado estava calculado e nunca era desenhado, então não dava para ver QUAL
+ * sinal está estourando nem QUANTO — que é a única pergunta que este card
+ * existe para responder. Agora cada sinal é uma barra.
  */
 
 const LEVEL_LABEL: Record<RiskLevel, string> = {
@@ -22,58 +21,55 @@ const LEVEL_LABEL: Record<RiskLevel, string> = {
   vermelho: 'Alto',
 }
 
-const LEVEL_BADGE_TONE: Record<RiskLevel, 'success' | 'warning' | 'neutral'> = {
-  verde: 'success',
+/** Tom da barra. `ink` no verde de propósito: risco baixo não é conquista, é o normal. */
+const LEVEL_TONE: Record<RiskLevel, 'ink' | 'warning' | 'danger'> = {
+  verde: 'ink',
   amarelo: 'warning',
-  vermelho: 'neutral',
+  vermelho: 'danger',
 }
 
-const LEVEL_TEXT_CLASS: Record<RiskLevel, string> = {
-  verde: 'text-success',
+const LEVEL_TEXT: Record<RiskLevel, string> = {
+  verde: 'text-muted',
   amarelo: 'text-warning',
   vermelho: 'text-danger',
 }
 
-const CARD_ACCENT_CLASS: Record<RiskLevel, string> = {
-  verde: '',
-  amarelo: 'border-warning/30 bg-warning/5',
-  vermelho: 'border-danger/40 bg-danger/5',
-}
-
 export function Risco({ report }: { report: RiskReport }) {
   return (
-    <Card className={cn('p-4', CARD_ACCENT_CLASS[report.level])}>
-      <div className="flex items-start gap-3">
-        <Gauge className={cn('mt-0.5 size-4 shrink-0', LEVEL_TEXT_CLASS[report.level])} />
-
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-sm font-medium">Risco de flag</p>
-            <Badge tone={LEVEL_BADGE_TONE[report.level]}>{LEVEL_LABEL[report.level]}</Badge>
-          </div>
-
-          <p className={cn('mt-2 text-xs', LEVEL_TEXT_CLASS[report.level])}>{report.recommendation}</p>
-
-          <ul className="mt-3 space-y-2.5 border-t border-border pt-3">
-            {report.signals.map((signal) => (
-              <li key={signal.id}>
-                <div className="flex items-baseline justify-between gap-3">
-                  <span className="text-xs font-medium">{signal.label}</span>
-                  <span
-                    className={cn(
-                      'shrink-0 text-[11px] font-medium tabular-nums',
-                      LEVEL_TEXT_CLASS[signal.level],
-                    )}
-                  >
-                    {LEVEL_LABEL[signal.level]}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-[11px] text-muted">{signal.detail}</p>
-              </li>
-            ))}
-          </ul>
+    <Card>
+      <div className="flex items-baseline justify-between gap-4 border-b border-border p-4">
+        <div>
+          <p className="label text-[10px] text-muted">Risco de flag</p>
+          <p className={cn('display mt-1.5 text-3xl', LEVEL_TEXT[report.level])}>
+            {LEVEL_LABEL[report.level]}
+          </p>
         </div>
+        <p className="max-w-md text-right text-xs leading-relaxed text-muted">
+          {report.recommendation}
+        </p>
       </div>
+
+      <ul className="divide-y divide-border">
+        {report.signals.map((signal) => (
+          <li key={signal.id} className="p-4">
+            <div className="mb-2 flex items-baseline justify-between gap-3">
+              <span className="text-xs font-medium">{signal.label}</span>
+              <span className={cn('label shrink-0 text-[10px]', LEVEL_TEXT[signal.level])}>
+                {LEVEL_LABEL[signal.level]}
+              </span>
+            </div>
+
+            <Meter
+              value={signal.value}
+              tone={LEVEL_TONE[signal.level]}
+              aria-label={`${signal.label}: ${Math.round(signal.value * 100)}%`}
+              className="h-1.5"
+            />
+
+            <p className="mt-2 text-[11px] leading-relaxed text-muted">{signal.detail}</p>
+          </li>
+        ))}
+      </ul>
     </Card>
   )
 }

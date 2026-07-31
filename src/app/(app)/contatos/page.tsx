@@ -26,7 +26,7 @@ export default async function ContatosPage({
   return (
     <>
       <header className="chrome-panel flex h-16 shrink-0 items-center border-b border-white/[0.06] px-6">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Contatos</h1>
+        <h1 className="display text-4xl text-foreground">Contatos</h1>
         <span className="ml-2 font-mono text-xs text-muted">({contacts.length})</span>
 
         <div className="ml-auto flex items-center gap-2">

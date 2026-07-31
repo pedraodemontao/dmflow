@@ -48,7 +48,7 @@ export default async function Home({
   return (
     <>
       <header className="chrome-panel flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">Painel</h1>
+        <h1 className="display text-4xl text-foreground">Painel</h1>
         <Link href="/automacoes/nova">
           <Button size="sm" className="cta-signature">
             <Zap className="size-4" />
@@ -144,7 +144,7 @@ export default async function Home({
           )}
 
           <section>
-            <h2 className="mb-3 text-[11px] font-bold uppercase tracking-wider text-muted">
+            <h2 className="mb-3 label text-[10px] text-muted">
               Suas automações
             </h2>
 

@@ -44,7 +44,7 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
         <Avatar src={contact.profile_pic_url} label={label} verified={contact.is_verified} size="sm" />
 
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="truncate display text-4xl text-foreground">
             {label}
           </h1>
           {(contact.name || contact.follower_count != null) && (

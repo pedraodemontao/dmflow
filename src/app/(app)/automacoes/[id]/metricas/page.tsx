@@ -41,7 +41,7 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
             <ArrowLeft className="size-4" />
           </Button>
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+        <h1 className="display text-4xl text-foreground">
           Métricas · {automation.flow.name}
         </h1>
         <Badge tone={automation.trigger.is_active ? 'success' : 'neutral'}>

@@ -16,6 +16,7 @@ import {
 import { FailedRuns } from '@/components/painel/failed-runs'
 import { Risco } from '@/components/painel/risco'
 import { Badge, Card, EmptyState } from '@/components/ui'
+import { RankBars } from '@/components/ui/chart'
 import type { CockpitData } from '@/lib/data'
 import type { RiskLevel } from '@/lib/risk/types'
 import { cn } from '@/lib/utils'
@@ -58,37 +59,36 @@ function ActionCard({
   children?: ReactNode
 }) {
   return (
-    <div
-      className={cn(
-        'flex items-start gap-3 rounded-2xl border p-4',
-        tone === 'danger' && 'border-danger/40 bg-danger/10',
-        tone === 'warning' && 'border-warning/30 bg-warning/10',
-        tone === 'accent' && 'border-accent/30 bg-accent/10',
-      )}
-    >
+    <div className="surface-panel relative overflow-hidden rounded-md p-4 pl-5">
+      {/* O tom vira uma barra sólida na lateral em vez de tingir card e texto.
+          Tingir era herança da base clara e sempre custava contraste: texto
+          colorido sobre fundo da mesma cor. Assim o título fica em branco
+          cheio e a cor continua identificando a urgência de relance. */}
       <span
         className={cn(
-          'mt-0.5 shrink-0',
-          tone === 'danger' && 'text-danger',
-          tone === 'warning' && 'text-warning',
-          tone === 'accent' && 'text-accent',
+          'absolute inset-y-0 left-0 w-1',
+          tone === 'danger' && 'bg-danger',
+          tone === 'warning' && 'bg-warning',
+          tone === 'accent' && 'bg-accent',
         )}
-      >
-        {icon}
-      </span>
-      <div className="min-w-0 flex-1">
-        <p
+      />
+
+      <div className="flex items-start gap-2.5">
+        <span
           className={cn(
-            'text-sm font-medium',
+            'mt-0.5 shrink-0',
             tone === 'danger' && 'text-danger',
             tone === 'warning' && 'text-warning',
             tone === 'accent' && 'text-accent',
           )}
         >
-          {title}
-        </p>
-        <p className="mt-1 text-xs text-muted">{description}</p>
-        {children}
+          {icon}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-foreground">{title}</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted">{description}</p>
+          {children}
+        </div>
       </div>
     </div>
   )
@@ -202,20 +202,14 @@ export function Cockpit({ data }: { data: CockpitData }) {
 
         <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
           <Card className="p-4">
-            <div className="flex items-start justify-between gap-2">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
-                Leads hoje
-              </span>
-              <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent">
-                <TrendingUp className="size-3.5" />
-              </div>
+            <div className="mb-1 flex items-start justify-between gap-2">
+              <span className="label text-[10px] text-muted">Leads hoje</span>
+              <TrendingUp className="size-3.5 shrink-0 text-muted" />
             </div>
 
-            <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-foreground tabular-nums">
-              {leadsTrend.today}
-            </p>
+            <p className="display text-6xl tabular-nums">{leadsTrend.today}</p>
 
-            <div className="mt-2 flex flex-wrap items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <TrendBadge delta={leadsTrend.delta} deltaPercent={leadsTrend.deltaPercent} />
               <span className="text-[11px] text-muted">ontem: {leadsTrend.yesterday}</span>
             </div>
@@ -242,54 +236,46 @@ export function Cockpit({ data }: { data: CockpitData }) {
                 />
               </div>
             ) : (
-              <div className="divide-y divide-border">
-                {leadSources.map((source, index) => (
-                  <div key={source.mediaId} className="flex items-center gap-3 p-3">
-                    <span className="w-4 shrink-0 text-center font-mono text-[11px] text-muted">
-                      {index + 1}
-                    </span>
-
-                    {source.thumbnail ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={source.thumbnail}
-                        alt=""
-                        className="size-12 shrink-0 rounded-lg object-cover"
-                      />
-                    ) : (
-                      <div className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-surface-2">
-                        <ImageOff className="size-4 text-muted" />
-                      </div>
-                    )}
-
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs">
-                        {source.caption?.trim() || (
-                          <span className="text-muted">Post fora das últimas 50 mídias</span>
-                        )}
-                      </p>
+              <RankBars
+                className="px-4"
+                items={leadSources.map((source) => ({
+                  id: source.mediaId,
+                  value: source.leads,
+                  valueLabel: `${source.leads} ${source.leads === 1 ? 'lead' : 'leads'}`,
+                  leading: source.thumbnail ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={source.thumbnail}
+                      alt=""
+                      className="size-11 shrink-0 rounded-sm object-cover"
+                    />
+                  ) : (
+                    <div className="flex size-11 shrink-0 items-center justify-center rounded-sm border border-border bg-surface-2">
+                      <ImageOff className="size-4 text-muted" />
+                    </div>
+                  ),
+                  label: (
+                    <span className="flex items-baseline gap-2">
+                      <Link
+                        href={`/contatos?post=${source.mediaId}`}
+                        className="truncate rounded-sm hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      >
+                        {source.caption?.trim() || 'Post fora das últimas 50 mídias'}
+                      </Link>
                       {source.permalink && (
                         <a
                           href={source.permalink}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[11px] text-accent hover:underline"
+                          className="label shrink-0 text-[9px] text-muted hover:text-accent"
                         >
-                          ver no Instagram
+                          Instagram ↗
                         </a>
                       )}
-                    </div>
-
-                    <Link
-                      href={`/contatos?post=${source.mediaId}`}
-                      className="shrink-0 rounded-md text-right transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-                    >
-                      <p className="font-mono text-sm font-semibold tabular-nums">{source.leads}</p>
-                      <p className="text-[11px] text-muted">{source.leads === 1 ? 'lead' : 'leads'}</p>
-                    </Link>
-                  </div>
-                ))}
-              </div>
+                    </span>
+                  ),
+                }))}
+              />
             )}
           </Card>
         </div>
