@@ -222,7 +222,15 @@ describe('bloco carousel', () => {
   it('usa private reply quando o fluxo nasceu de um comentário', async () => {
     flows['flow-a'].definition = {
       entry: 'inicio',
-      nodes: { inicio: { type: 'carousel', cards: [{ title: 'Produto 1' }], next: null } },
+      // Card precisa de algo além do título, senão a Meta recusa a mensagem
+      // inteira — o schema barra antes (ver `types.test.ts`).
+      nodes: {
+        inicio: {
+          type: 'carousel',
+          cards: [{ title: 'Produto 1', subtitle: 'Descrição' }],
+          next: null,
+        },
+      },
     }
 
     await startFlow({
@@ -240,7 +248,15 @@ describe('bloco carousel', () => {
   it('recusa enviar fora da janela de 24h sem ser origem de comentário', async () => {
     flows['flow-a'].definition = {
       entry: 'inicio',
-      nodes: { inicio: { type: 'carousel', cards: [{ title: 'Produto 1' }], next: null } },
+      // Card precisa de algo além do título, senão a Meta recusa a mensagem
+      // inteira — o schema barra antes (ver `types.test.ts`).
+      nodes: {
+        inicio: {
+          type: 'carousel',
+          cards: [{ title: 'Produto 1', subtitle: 'Descrição' }],
+          next: null,
+        },
+      },
     }
 
     await expect(
