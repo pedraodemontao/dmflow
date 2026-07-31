@@ -1,7 +1,11 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { fetchContactProfile, replyToComment } from '@/lib/instagram/api'
 import { isPermanentError } from '@/lib/instagram/errors'
-import { resolveButtonSource, type FlowDefinitionRow } from '@/lib/flow/button-source'
+import {
+  payloadForTitle,
+  resolveButtonSource,
+  type FlowDefinitionRow,
+} from '@/lib/flow/button-source'
 import { resumeFlow, startFlow } from '@/lib/flow/engine'
 import { assertUnderSendCap, isUnderPublicReplyCap, logSend } from '@/lib/flow/send-cap'
 import { isQuiet, nextOpening } from '@/lib/flow/quiet-hours'
@@ -316,8 +320,19 @@ export async function handleMessaging(account: Account, value: MessagingValue) {
   const senderId: string | undefined = value.sender?.id
   if (!senderId || senderId === account.ig_user_id) return
 
-  const text: string =
+  const rawText: string =
     value.message?.quick_reply?.payload ?? value.postback?.payload ?? value.message?.text ?? ''
+
+  // Toque em botão chega diferente conforme o canal: pelo webhook vem o
+  // `payload`, pelo polling vem o TÍTULO (o toque aparece como mensagem comum
+  // em `/me/conversations`). Como o webhook nunca entregou nada aqui, na
+  // prática o fluxo nunca via o payload — e uma condição escrita contra ele
+  // pegava o caminho errado em silêncio. A tradução iguala os dois canais.
+  const traduzido =
+    value.message?.quick_reply?.payload || value.postback?.payload
+      ? null
+      : await payloadForText(account, rawText)
+  const text = traduzido ?? rawText
 
   const triggerType = detectMessagingTriggerType(value)
   const isStoryMention = triggerType === 'story_mention'
@@ -340,7 +355,7 @@ export async function handleMessaging(account: Account, value: MessagingValue) {
   // Vale mesmo para o contato em atendimento humano e para o payload que não
   // casa gatilho nenhum — apertar o botão é o fato, e ele aconteceu.
   const clickedPayload: string | undefined =
-    value.message?.quick_reply?.payload ?? value.postback?.payload
+    value.message?.quick_reply?.payload ?? value.postback?.payload ?? traduzido ?? undefined
   if (clickedPayload) {
     void recordButtonClick({
       account,
@@ -459,6 +474,25 @@ async function handleComment(
   }
 
   await startFlow({ account, flow, contact, commentId, input: text })
+}
+
+/**
+ * Título de botão → payload declarado, lendo os fluxos da conta.
+ *
+ * Separado em função com acesso ao banco porque `payloadForTitle` é puro (e
+ * testado como tal). Falha de leitura devolve nulo: o texto original segue seu
+ * caminho, que é o comportamento de antes desta tradução existir.
+ */
+async function payloadForText(account: Account, text: string): Promise<string | null> {
+  if (!text.trim()) return null
+
+  const { data, error } = await supabaseAdmin
+    .from('flows')
+    .select('id, definition')
+    .eq('account_id', account.id)
+
+  if (error || !data) return null
+  return payloadForTitle(data as FlowDefinitionRow[], text)
 }
 
 /**

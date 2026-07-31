@@ -139,8 +139,19 @@ const MEDIA_LABEL: Record<MediaKind, string> = {
  * não aceita legenda no anexo), só troca o `type`. Uma função só evita
  * repetir o bloco de 4 vezes (uma por tipo de mídia) no `executeNode`.
  */
+/**
+ * Marca, dentro do próprio `vars`, que a legenda de um nó de mídia já saiu.
+ *
+ * Fica em `vars` e não num campo próprio do `FlowContext` porque o contexto é
+ * persistido como JSON e `vars` já viaja inteiro — um campo novo exigiria
+ * mexer no schema por causa de um detalhe de execução. O prefixo `__` é
+ * reservado: nenhum bloco de fluxo escreve variável com esse nome.
+ */
+const captionKey = (nodeId: string) => `__legenda_${nodeId}`
+
 async function deliverMedia(
   mediaType: MediaKind,
+  nodeId: string,
   node: { url: string; caption?: string; next?: string | null },
   account: Account,
   contact: Contact,
@@ -155,9 +166,30 @@ async function deliverMedia(
   // sem `pendingCommentId`, cai no caminho de DM comum e explode fora da janela.
   const isCommentOrigin = Boolean(ctx.pendingCommentId)
 
-  // Private reply não aceita anexo: manda a legenda por ela e o anexo em seguida.
+  // ANEXO NÃO CABE EM PRIVATE REPLY, e a janela de 24h não abre só porque a
+  // pessoa comentou (invariante do CLAUDE.md: comentário não seta
+  // `last_inbound_at`). Antes daqui o código mandava a legenda pela private
+  // reply e em seguida tentava o anexo como DM comum — que a Meta recusa com
+  // "outside of allowed window". Resultado: TODO bloco de mídia alcançado a
+  // partir de comentário matava o fluxo, e a pessoa recebia só a legenda.
+  //
+  // Agora o fluxo ESPERA: a legenda sai pela private reply (com o que o autor
+  // escreveu, que é onde entra o convite para responder ou tocar no botão) e o
+  // run para em `waiting_reply` NESTE nó. Quando a pessoa responde ou toca num
+  // postback, a janela abre, `resumeFlow` volta exatamente aqui e o anexo sai.
+  if (isCommentOrigin && !canSendDm(contact)) {
+    if (node.caption) {
+      await deliver(account, contact, ctx, { text: node.caption })
+      // Marca para a retomada não repetir a legenda.
+      ctx.vars[captionKey(nodeId)] = '1'
+    }
+    return { next: nodeId, halt: { status: 'waiting_reply' } }
+  }
+
+  // Private reply com janela já aberta: legenda por ela, anexo em seguida.
   if (isCommentOrigin && node.caption) {
     await deliver(account, contact, ctx, { text: node.caption })
+    ctx.vars[captionKey(nodeId)] = '1'
     await assertUnderSendCap(account.id)
   }
 
@@ -178,9 +210,13 @@ async function deliverMedia(
     payload: { [mediaType]: node.url },
   })
 
-  if (node.caption && !isCommentOrigin) {
+  if (node.caption && !isCommentOrigin && !ctx.vars[captionKey(nodeId)]) {
     await deliver(account, contact, ctx, { text: node.caption })
   }
+  // A marca só serve enquanto o nó está em execução; deixá-la suja poluiria a
+  // ficha do contato se um dia `vars` for exposto na interface.
+  delete ctx.vars[captionKey(nodeId)]
+
   return { next: node.next ?? null }
 }
 
@@ -278,16 +314,16 @@ async function executeNode(
       return { next: null, gotoFlow: { flowId: node.flowId } }
 
     case 'image':
-      return deliverMedia('image', node, account, contact, ctx)
+      return deliverMedia('image', nodeId, node, account, contact, ctx)
 
     case 'video':
-      return deliverMedia('video', node, account, contact, ctx)
+      return deliverMedia('video', nodeId, node, account, contact, ctx)
 
     case 'audio':
-      return deliverMedia('audio', node, account, contact, ctx)
+      return deliverMedia('audio', nodeId, node, account, contact, ctx)
 
     case 'file':
-      return deliverMedia('file', node, account, contact, ctx)
+      return deliverMedia('file', nodeId, node, account, contact, ctx)
 
     case 'ask':
       await deliver(account, contact, ctx, { text: node.text })
@@ -379,7 +415,18 @@ async function executeNode(
             : undefined,
       })
 
-      if (node.saveAs) ctx.vars[node.saveAs] = (await res.text()).slice(0, 2000)
+      const corpo = (await res.text()).slice(0, 2000)
+
+      // `fetch` só rejeita em falha de REDE — 4xx e 5xx voltam como resposta
+      // normal. Sem esta checagem, um webhook externo devolvendo 500 fazia o
+      // fluxo seguir como se tivesse dado certo, e `saveAs` guardava o corpo do
+      // ERRO como se fosse a resposta. O contato então recebia a mensagem
+      // seguinte com o texto do erro interpolado dentro.
+      if (!res.ok) {
+        throw new Error(`Webhook ${node.url} respondeu ${res.status}: ${corpo.slice(0, 200)}`)
+      }
+
+      if (node.saveAs) ctx.vars[node.saveAs] = corpo
       return { next: node.next ?? null }
     }
 

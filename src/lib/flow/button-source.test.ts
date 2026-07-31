@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { listButtonNodes, resolveButtonSource } from '@/lib/flow/button-source'
+import { listButtonNodes, resolveButtonSource, payloadForTitle } from '@/lib/flow/button-source'
 import { flowDefinitionSchema } from '@/lib/flow/types'
 
 /**
@@ -200,5 +200,75 @@ describe('listButtonNodes', () => {
     })
 
     expect(listButtonNodes(definition)).toEqual([])
+  })
+})
+
+describe('payloadForTitle', () => {
+  const flows = [
+    {
+      id: 'flow-a',
+      definition: {
+        entry: 'inicio',
+        nodes: {
+          inicio: {
+            type: 'message',
+            text: 'Quer o checklist?',
+            quickReplies: [
+              { title: 'Quero sim', payload: 'SIM' },
+              { title: 'Agora não', payload: 'NAO' },
+            ],
+            next: null,
+          },
+        },
+      },
+    },
+  ]
+
+  it('traduz o título que o polling entrega para o payload declarado', () => {
+    // O toque em quick reply chega como mensagem comum com o TÍTULO; sem esta
+    // tradução, uma condição escrita contra "SIM" nunca casaria.
+    expect(payloadForTitle(flows as never, 'Quero sim')).toBe('SIM')
+    expect(payloadForTitle(flows as never, 'Agora não')).toBe('NAO')
+  })
+
+  it('ignora espaço em volta', () => {
+    expect(payloadForTitle(flows as never, '  Quero sim  ')).toBe('SIM')
+  })
+
+  it('devolve nulo para texto que a pessoa digitou', () => {
+    expect(payloadForTitle(flows as never, 'quero o checklist por favor')).toBeNull()
+  })
+
+  it('não traduz quando a caixa não bate', () => {
+    // Igualdade exata de propósito: o título volta como saiu. Afrouxar aqui
+    // traduziria por engano frase digitada pela pessoa.
+    expect(payloadForTitle(flows as never, 'QUERO SIM')).toBeNull()
+  })
+
+  it('devolve nulo quando o mesmo título aponta para payloads diferentes', () => {
+    const ambiguos = [
+      flows[0],
+      {
+        id: 'flow-b',
+        definition: {
+          entry: 'inicio',
+          nodes: {
+            inicio: {
+              type: 'message',
+              text: 'Outro fluxo',
+              quickReplies: [{ title: 'Quero sim', payload: 'OUTRO' }],
+              next: null,
+            },
+          },
+        },
+      },
+    ]
+
+    // Chutar aqui mandaria a pessoa para o galho errado do fluxo.
+    expect(payloadForTitle(ambiguos as never, 'Quero sim')).toBeNull()
+  })
+
+  it('devolve nulo para texto vazio', () => {
+    expect(payloadForTitle(flows as never, '   ')).toBeNull()
   })
 })

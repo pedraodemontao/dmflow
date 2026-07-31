@@ -302,7 +302,11 @@ describe.each([
     expect(sent.some((s) => s.kind === mediaKind)).toBe(true)
   })
 
-  it('manda a legenda como mensagem separada antes do anexo, via private reply', async () => {
+  it('nascido de comentário: manda a legenda e ESPERA a janela abrir para o anexo', async () => {
+    // Anexo não cabe em private reply, e comentar não abre a janela de 24h
+    // (invariante do CLAUDE.md). Mandar o anexo como DM comum aqui faz a Meta
+    // recusar com "outside of allowed window" e o fluxo inteiro morre — era o
+    // que este teste garantia antes, codificando o bug.
     flows['flow-a'].definition = {
       entry: 'inicio',
       nodes: {
@@ -318,13 +322,49 @@ describe.each([
     await startFlow({
       account: account as never,
       flow: flows['flow-a'] as never,
-      // Janela fechada de propósito: só a private reply consegue entregar.
       contact: contact({ last_inbound_at: null }) as never,
       commentId: 'comment-1',
     })
 
     expect(sent.some((s) => s.kind === 'private_reply' && s.text === 'Segue o material')).toBe(true)
+    // O anexo NÃO sai agora: sairia fora da janela e derrubaria o fluxo.
+    expect(sent.some((s) => s.kind === mediaKind)).toBe(false)
+    // E o run fica parado no próprio nó, esperando a pessoa responder.
+    // O mock só guarda os updates de `flow_runs`; o último é o do halt.
+    const parada = runUpdates.find((u) => u.status === 'waiting_reply')
+    expect(parada).toBeDefined()
+    expect(parada?.current_node).toBe('inicio')
+  })
+
+  it('nascido de comentário com a janela já aberta: manda legenda e anexo', async () => {
+    flows['flow-a'].definition = {
+      entry: 'inicio',
+      nodes: {
+        inicio: {
+          type: nodeType,
+          url: 'https://exemplo.com/arquivo',
+          caption: 'Segue o material',
+          next: null,
+        },
+      },
+    }
+
+    await startFlow({
+      account: account as never,
+      flow: flows['flow-a'] as never,
+      // Já mandou DM antes: a janela está aberta, o anexo passa.
+      contact: contact() as never,
+      commentId: 'comment-1',
+    })
+
+    expect(sent.some((s) => s.kind === 'private_reply' && s.text === 'Segue o material')).toBe(true)
     expect(sent.some((s) => s.kind === mediaKind)).toBe(true)
+    // Legenda uma vez só: a marca em `vars` impede o caminho de saída repetir.
+    // (O mock registra a mesma entrega em mais de uma linha, por isso conta-se
+    // só a private reply, que é o canal por onde a legenda saiu.)
+    expect(
+      sent.filter((s) => s.kind === 'private_reply' && s.text === 'Segue o material'),
+    ).toHaveLength(1)
   })
 
   it('recusa enviar fora da janela de 24h sem ser origem de comentário', async () => {

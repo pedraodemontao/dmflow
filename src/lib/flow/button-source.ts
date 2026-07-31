@@ -161,3 +161,45 @@ export function listButtonNodes(definition: FlowDefinition): ButtonNode[] {
 
   return nodes
 }
+
+/**
+ * Traduz o TÍTULO de um botão de volta para o `payload` declarado.
+ *
+ * Existe porque a entrega por polling e a por webhook não são equivalentes. O
+ * webhook manda `postback.payload` / `quick_reply.payload`; o polling lê
+ * `/me/conversations`, onde o toque aparece como mensagem comum e o texto é o
+ * TÍTULO do botão. Como o webhook nunca entregou nada neste projeto, na
+ * prática o fluxo nunca vê o payload.
+ *
+ * Consequência sem esta função: quem escreve um botão com título "Quero sim" e
+ * payload "SIM" e depois monta uma condição contra "SIM" pega o caminho errado
+ * em silêncio — o fluxo compara "SIM" com "Quero sim" e cai no `senão`. As duas
+ * automações em produção escapavam por acaso, porque o título continha o valor
+ * procurado.
+ *
+ * Comparação sem diferenciar maiúscula e acento não entra aqui de propósito: o
+ * título é declarado pelo próprio dono e chega de volta exatamente como saiu.
+ * Igualdade exata evita traduzir por engano uma frase que a pessoa digitou.
+ */
+export function payloadForTitle(flows: FlowDefinitionRow[], text: string): string | null {
+  const alvo = text.trim()
+  if (!alvo) return null
+
+  const encontrados = new Set<string>()
+
+  for (const flow of flows) {
+    const parsed = flowDefinitionSchema.safeParse(flow.definition)
+    if (!parsed.success) continue
+
+    for (const { buttons } of listButtonNodes(parsed.data)) {
+      for (const botao of buttons) {
+        if (botao.title === alvo) encontrados.add(botao.payload)
+      }
+    }
+  }
+
+  // Título repetido apontando para payloads diferentes: traduzir seria chutar,
+  // e chutar aqui manda a pessoa para o galho errado do fluxo. Devolve nulo e
+  // o texto original segue como veio.
+  return encontrados.size === 1 ? [...encontrados][0] : null
+}
