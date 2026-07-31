@@ -3,7 +3,9 @@
 -- teto de envios por hora. Regras no CLAUDE.md (invariantes).
 
 -- Evento de comentário só é processado depois de process_after
--- (30–120s de jitter — resposta instantânea é assinatura de bot).
+-- (jitter no evento de comentário — resposta instantânea é assinatura de bot.
+--  A faixa nasceu 30–120s e hoje é 8–35s; o valor vive em `src/lib/webhook/process.ts`,
+--  não aqui. Este arquivo já foi aplicado: só o comentário mudou, nenhuma DDL.)
 alter table public.webhook_events
   add column process_after timestamptz not null default now();
 

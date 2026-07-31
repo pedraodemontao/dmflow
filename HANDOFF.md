@@ -351,7 +351,11 @@ que "a Meta aceitou o payload".
 - **Ice breakers.** A tela publica via `POST /messenger_profile` e o toque cai no matcher de
   palavra-chave (payload = palavra-chave com `match_mode: exact`). Não achei confirmação de que
   a publicação foi aceita pela Meta em produção.
-- **Cliques por botão.** Código e migration 0013 escritos em 31/07. `getButtonClicks` devolve
+- **Cliques por botão.** Código e migration 0013 escritos em 31/07. A migration **foi aplicada e
+  verificada em produção** no mesmo dia (tabela responde, as oito colunas existem, escrita testada
+  com `flow_id` nulo). O contador segue em zero por um motivo de plataforma, não por bug: os
+  botões dos fluxos atuais são de LINK, e link abre o navegador sem devolver sinal nenhum à Meta.
+  Só botão de postback registra clique. `getButtonClicks` devolve
   lista vazia e `recordButtonClick` só loga quando a tabela não existe, justamente porque a
   migration é aplicada à mão — **não consegui confirmar se ela já foi rodada no banco de
   produção.** Confira antes de acreditar na tela.
@@ -446,7 +450,8 @@ vercel env ls --cwd ~/projects/dm-flow
    configurações do login da empresa na Meta. Só importa para reconectar a conta.
 
 3. **Confirmar quais migrations estão aplicadas no banco.** São 13 arquivos e o processo é manual
-   (seção do README). Pelo menos a 0013 (`button_clicks`) foi escrita como "ainda não aplicada"
+   (seção do README). A 0013 (`button_clicks`) **está aplicada** — conferida contra o banco em
+   31/07. A **0014 (`biblioteca`) está escrita e NÃO aplicada**: é a única pendente
    na mensagem de commit, e não achei registro posterior de aplicação.
 
 4. **Backlog de produto** está no `ROADMAP.md`. Em resumo: múltiplas contas (o schema já isola
@@ -480,5 +485,5 @@ src/lib/instagram/api.ts    envio, corte de tamanho, ice breakers, assinatura de
 src/lib/instagram/errors.ts permanente × transitório
 src/lib/risk/               cinco sinais + veredito, todos puros e testados
 src/lib/data.ts             leitura para o painel (server-only)
-supabase/migrations/        0001..0013, aplicadas à mão no SQL Editor
+supabase/migrations/        0001..0013 aplicadas à mão no SQL Editor; 0014 escrita e pendente
 ```
