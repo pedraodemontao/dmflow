@@ -1,12 +1,18 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { Activity, ArrowLeft } from 'lucide-react'
 
 import { ButtonClicks } from '@/components/automacoes/button-clicks'
 import { FlowFunnel } from '@/components/automacoes/flow-funnel'
-import { Badge, Button, Card } from '@/components/ui'
-import { BigNumber, Meter, TimeSeries } from '@/components/ui/chart'
-import { getAutomation, getAutomationSeries, getButtonClicks, getFlowMetrics } from '@/lib/data'
+import { Badge, Button, Card, EmptyState } from '@/components/ui'
+import { BigNumber, LineSeries, Meter, TimeSeries } from '@/components/ui/chart'
+import {
+  getAutomation,
+  getAutomationConversionSeries,
+  getAutomationSeries,
+  getButtonClicks,
+  getFlowMetrics,
+} from '@/lib/data'
 import { flowDefinitionSchema } from '@/lib/flow/types'
 
 export const dynamic = 'force-dynamic'
@@ -16,15 +22,23 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
   const automation = await getAutomation(id)
   if (!automation) notFound()
 
-  const [metrics, series, buttonClicks] = await Promise.all([
+  const [metrics, series, conversion, buttonClicks] = await Promise.all([
     getFlowMetrics(automation.flow.id),
     getAutomationSeries(automation.flow.id),
+    getAutomationConversionSeries(automation.flow.id),
     getButtonClicks(automation.flow.id),
   ])
   const parsed = flowDefinitionSchema.safeParse(automation.flow.definition)
 
   const { runs, done } = automation.stats
   const rate = runs > 0 ? done / runs : 0
+
+  // Mês inteiro em zero desenha duas linhas coladas na base — parece gráfico
+  // quebrado, não "não aconteceu nada". Melhor dizer com todas as letras, e
+  // separar "nunca rodou" de "rodou e parou": são problemas diferentes.
+  const hasConversion = [...conversion.started, ...conversion.done].some(
+    (point) => point.value > 0,
+  )
 
   return (
     <>
@@ -75,6 +89,45 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
               </div>
             </Card>
           </div>
+
+          {/* Logo abaixo da taxa, porque é a pergunta que a taxa não responde:
+              ela é um número só do período inteiro e não diz se a conversão
+              caiu depois da última mexida no fluxo. Duas linhas na mesma
+              régua — a DISTÂNCIA entre elas é a perda, e é isso que se lê de
+              relance. Régua separada faria as duas mentirem lado a lado. */}
+          <Card className="p-5">
+            <div className="mb-4">
+              <span className="label text-[10px] text-muted">
+                Iniciados × concluídos por dia · 30 dias
+              </span>
+              <p className="mt-1 text-xs leading-relaxed text-muted">
+                A folga entre as duas linhas é quem entrou e não terminou. Leia a tendência, não o
+                dia: quem entra hoje pode concluir amanhã, então as linhas de um mesmo dia não são
+                a mesma turma.
+              </p>
+            </div>
+
+            {hasConversion ? (
+              <LineSeries
+                height={170}
+                aria-label="Disparos iniciados e concluídos por dia nos últimos 30 dias"
+                series={[
+                  { id: 'started', label: 'Iniciados', tone: 'ink', points: conversion.started },
+                  { id: 'done', label: 'Concluídos', tone: 'accent', points: conversion.done },
+                ]}
+              />
+            ) : (
+              <EmptyState
+                icon={<Activity className="size-8" />}
+                title={runs > 0 ? 'Parada há mais de 30 dias' : 'Sem disparo nenhum'}
+                description={
+                  runs > 0
+                    ? `Esta automação já teve ${runs} ${runs === 1 ? 'disparo' : 'disparos'}, mas nenhum começou nem terminou nos últimos 30 dias. A taxa acima é histórica.`
+                    : 'A curva aparece no primeiro disparo. Até lá não há o que comparar entre entrada e conclusão.'
+                }
+              />
+            )}
+          </Card>
 
           {/* A curva de entrada desta automação. O funil diz ONDE perde gente;
               isto diz SE ainda está entrando gente — sem os dois, uma queda de

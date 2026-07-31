@@ -10,6 +10,7 @@ import {
   Inbox,
   Minus,
   OctagonAlert,
+  TrendingDown,
   TrendingUp,
 } from 'lucide-react'
 
@@ -34,6 +35,36 @@ const RISK_LABEL: Record<RiskLevel, string> = {
   verde: 'baixo',
   amarelo: 'atenção',
   vermelho: 'alto',
+}
+
+/**
+ * Tom de cada curva de post, na ordem do ranking. Sem `danger`: coral no
+ * painel significa "algo quebrou", e post que traz lead não é erro.
+ */
+const SOURCE_TONES = ['accent', 'ink', 'warning'] as const
+
+/** Quanto da legenda do post cabe antes de a linha virar sopa de letras. */
+const SOURCE_LABEL_CHARS = 18
+
+/**
+ * Rótulo da série de um post: o NÚMERO do ranking logo acima, e só um naco da
+ * legenda como lembrete.
+ *
+ * A legenda de post tem parágrafos — jogada inteira aqui, as três viram um
+ * bloco de texto e a comparação some. O número resolve as duas coisas de uma
+ * vez: é curto e é o mesmo "01/02/03" que a lista de cima já imprime ao lado
+ * da miniatura, então dá para saber qual linha é qual sem depender de separar
+ * limão de âmbar de cinza.
+ */
+function sourceLabel(rank: number, caption: string | null | undefined) {
+  const numero = String(rank).padStart(2, '0')
+  const texto = caption?.trim().replace(/\s+/g, ' ') ?? ''
+
+  if (!texto) return `${numero} · sem legenda`
+
+  return `${numero} · ${
+    texto.length > SOURCE_LABEL_CHARS ? `${texto.slice(0, SOURCE_LABEL_CHARS)}…` : texto
+  }`
 }
 
 function Eyebrow({ children, hint }: { children: ReactNode; hint?: string }) {
@@ -127,11 +158,33 @@ export function Cockpit({ data }: { data: CockpitData }) {
     leadsSeries,
     sends,
     leadSources,
+    leadSourceSeries,
     stuck,
     failedRuns,
     inboxCounts,
     riskReport,
   } = data
+
+  const sourceCurves = leadSourceSeries.flatMap((series, index) => {
+    const source = leadSources.find((item) => item.mediaId === series.mediaId)
+    if (!source) return []
+
+    return [
+      {
+        id: series.mediaId,
+        label: sourceLabel(index + 1, source.caption),
+        tone: SOURCE_TONES[index] ?? 'ink',
+        points: series.points,
+      },
+    ]
+  })
+
+  // Post no ranking cujo último lead é mais velho que a janela desenha três
+  // linhas coladas na base — o que é a resposta certa ("já deram o que
+  // tinham"), mas lida como gráfico quebrado. Melhor escrever.
+  const hasSourceCurves = sourceCurves.some((curve) =>
+    curve.points.some((point) => point.value > 0),
+  )
 
   const waiting = inboxCounts['nao-lidas']
   const riskElevated = riskReport && riskReport.level !== 'verde'
@@ -316,6 +369,47 @@ export function Cockpit({ data }: { data: CockpitData }) {
             )}
           </Card>
         </div>
+
+        {/* O ranking acima responde "quem trouxe mais no total" e é cego para
+            "quem AINDA está trazendo": o post que estourou há três semanas e
+            morreu aparece do mesmo tamanho que o que está subindo agora. Aqui
+            as três primeiras colocações no tempo, na mesma régua vertical —
+            escala separada por post faria as curvas mentirem lado a lado. */}
+        <Card className="mt-4 p-4">
+          <div className="mb-4">
+            <span className="label text-[10px] text-muted">
+              Leads por dia dos 3 primeiros · 30 dias
+            </span>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
+              Os mesmos 01, 02 e 03 da lista acima. Linha descendo é post que já deu o que tinha;
+              linha subindo é onde vale insistir — o total do ranking não separa os dois.
+            </p>
+          </div>
+
+          {sourceCurves.length === 0 || !hasSourceCurves ? (
+            <EmptyState
+              icon={
+                sourceCurves.length === 0 ? (
+                  <ImageOff className="size-8" />
+                ) : (
+                  <TrendingDown className="size-8" />
+                )
+              }
+              title={sourceCurves.length === 0 ? 'Sem dados ainda' : 'Nada nos últimos 30 dias'}
+              description={
+                sourceCurves.length === 0
+                  ? 'A curva aparece quando o primeiro comentário virar lead. Até lá não há post para comparar no tempo.'
+                  : 'Os posts do ranking trouxeram gente, mas nenhum lead novo entrou por eles nos últimos 30 dias — aquele total é histórico.'
+              }
+            />
+          ) : (
+            <LineSeries
+              height={170}
+              aria-label="Leads por dia dos três posts que mais trouxeram, nos últimos 30 dias"
+              series={sourceCurves}
+            />
+          )}
+        </Card>
 
         {/* Total sozinho não conta a história: "60 envios ontem" e "60 envios,
             sendo 50 resposta pública" são situações diferentes, e a segunda é a

@@ -1,7 +1,7 @@
 import 'server-only'
 
 import { computeDayTrend, dayWindows, type DayTrend } from '@/lib/day-trend'
-import { dailyBuckets, hourlyBuckets, type SeriesBucket } from '@/lib/series'
+import { dailyBuckets, dailyBucketsByKey, hourlyBuckets, type SeriesBucket } from '@/lib/series'
 import { env } from '@/lib/env'
 import { DISMISSED_ERROR_PREFIX } from '@/lib/flow/dismissed'
 import { fetchMedia } from '@/lib/instagram/api'
@@ -191,6 +191,72 @@ export async function getAutomationSeries(
     .limit(SERIES_ROW_LIMIT)
 
   return dailyBuckets((data ?? []).map((row) => (row as { created_at: string }).created_at), days)
+}
+
+export interface ConversionSeries {
+  started: SeriesBucket[]
+  done: SeriesBucket[]
+}
+
+/**
+ * Disparos INICIADOS × CONCLUÍDOS por dia, da mesma automação.
+ *
+ * A taxa de conclusão da página é um número só do período inteiro: diz o
+ * quanto se perde, nunca se a perda está crescendo. Depois de mexer no fluxo é
+ * exatamente essa a pergunta, e nenhum gráfico de lá responde — o de disparos
+ * por dia é volume de entrada, e o funil é a média de todo o histórico
+ * espremida numa foto. Aqui a distância entre as duas linhas é a perda, no
+ * tempo.
+ *
+ * QUAL DATA MARCA O "CONCLUÍDO": `updated_at`. Não existe `finished_at` na
+ * tabela e `created_at` é a ENTRADA no fluxo — usar ele empilharia a conclusão
+ * no dia da entrada e as duas curvas virariam a mesma curva multiplicada por
+ * um fator, sem informação nova. `updated_at` é tocado por trigger a cada
+ * escrita na linha (`flow_runs_touch`, migration 0001) e a última escrita de
+ * um run `done` é justamente a que o marcou concluído: para esse status ele é
+ * o instante da conclusão.
+ *
+ * A IMPRECISÃO QUE ISSO TRAZ: as duas séries não são a mesma coorte. Um run
+ * que entrou no dia 3 e terminou no dia 5 conta como início no 3 e conclusão
+ * no 5, e num fluxo com `wait`/`ask` essa defasagem é de horas ou dias. Então
+ * a leitura válida é de TENDÊNCIA — as linhas se afastando ou se aproximando
+ * ao longo do mês — e não de razão dia a dia: num dia de fila drenando a
+ * conclusão pode passar do início e daria "taxa" acima de 100%. Pelo mesmo
+ * motivo aparece conclusão sem início correspondente perto da borda esquerda,
+ * de run que começou antes da janela.
+ */
+export async function getAutomationConversionSeries(
+  flowId: string,
+  days = AUTOMATION_SERIES_DAYS,
+): Promise<ConversionSeries> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+
+  // Janela cortada por `updated_at`, não por `created_at`. Como `updated_at >=
+  // created_at` sempre, essa condição já contém todo run criado dentro da
+  // janela E o run mais velho que concluiu dentro dela — que é linha do
+  // gráfico e sumiria se o corte fosse pela data de entrada. O que entra pela
+  // borda e não pertence a balde nenhum é descartado sozinho por `dailyBuckets`.
+  const { data } = await supabaseAdmin
+    .from('flow_runs')
+    .select('created_at, updated_at, status')
+    .eq('flow_id', flowId)
+    .gte('updated_at', since)
+    .order('updated_at', { ascending: true })
+    .limit(SERIES_ROW_LIMIT)
+
+  const rows = (data ?? []) as Array<{
+    created_at: string
+    updated_at: string
+    status: string
+  }>
+
+  return {
+    started: dailyBuckets(rows.map((row) => row.created_at), days),
+    done: dailyBuckets(
+      rows.filter((row) => row.status === 'done').map((row) => row.updated_at),
+      days,
+    ),
+  }
 }
 
 export interface NodeMetric {
@@ -778,6 +844,52 @@ export async function getSendsByKindSeries(days = LEADS_SERIES_DAYS): Promise<Ki
   }
 }
 
+export interface SourceSeries {
+  mediaId: string
+  points: SeriesBucket[]
+}
+
+/**
+ * Quantas curvas de post cabem no mesmo par de eixos. Três é teto, não meta:
+ * a quarta linha já cruza as outras em volume baixo e a comparação — que é a
+ * única razão de o gráfico existir — some no emaranhado.
+ */
+const TOP_SOURCES_IN_SERIES = 3
+
+/**
+ * Origem e data de cada lead que veio de comentário na janela. Devolve linha
+ * crua de propósito: quem vira série é a composição em `getCockpitData`, que
+ * precisa saber ANTES quais posts entram — e essa ordem vem de
+ * `getLeadSources`, que também traz legenda e miniatura.
+ *
+ * Separado assim porque encadear "primeiro descubro os três ids, depois busco
+ * os leads deles" seriam duas idas ao banco em série. Buscando os leads de
+ * TODOS os posts da janela (é o mesmo tanto de linha que `getLeadsSeries` já
+ * puxa) as duas leituras cabem no mesmo `Promise.all` e o cruzamento é em
+ * memória.
+ */
+async function fetchCommentLeadRows(
+  days = LEADS_SERIES_DAYS,
+): Promise<Array<{ key: string; at: string }>> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data } = await supabaseAdmin
+    .from('contacts')
+    .select('source_id, source_at')
+    .eq('source_type', 'comment')
+    .not('source_id', 'is', null)
+    .gte('source_at', since)
+    .order('source_at', { ascending: true })
+    .limit(SERIES_ROW_LIMIT)
+
+  // `source_at` é nulo em contato anterior à migration 0005; o `gte` já os
+  // corta (comparação com NULL não é verdadeira), o filtro aqui é só o que
+  // estreita o tipo.
+  return ((data ?? []) as Array<{ source_id: string; source_at: string | null }>)
+    .filter((row): row is { source_id: string; source_at: string } => row.source_at !== null)
+    .map((row) => ({ key: row.source_id, at: row.source_at }))
+}
+
 /** Depois desse tanto sem resposta a janela de 24h já fechou — a conversa não reabre sozinha. */
 const STALE_WAITING_REPLY_MS = 24 * 60 * 60 * 1000
 /**
@@ -1002,6 +1114,11 @@ export interface CockpitData {
   sends: { points: SeriesBucket[]; cap: number }
   leadsTrend: DayTrend
   leadSources: LeadSource[]
+  /**
+   * Leads por dia dos primeiros colocados de `leadSources`, na mesma ordem
+   * deles — o ranking por total é cego para "quem AINDA está trazendo".
+   */
+  leadSourceSeries: SourceSeries[]
   stuck: StuckSummary
   failedRuns: FailedRun[]
   inboxCounts: Record<InboxFilter, number>
@@ -1009,8 +1126,8 @@ export interface CockpitData {
 }
 
 /**
- * Junta as seis perguntas do cockpit numa chamada só, para a página só
- * compor. `getLeadSources`, `getInboxCounts` e `getRiskReport` já existiam —
+ * Junta as perguntas do cockpit numa chamada só, para a página só compor.
+ * `getLeadSources`, `getInboxCounts` e `getRiskReport` já existiam —
  * reaproveitados aqui, não reescritos.
  */
 export async function getCockpitData(): Promise<CockpitData> {
@@ -1022,6 +1139,7 @@ export async function getCockpitData(): Promise<CockpitData> {
     leadsSeries,
     sends,
     leadSources,
+    commentLeadRows,
     stuck,
     failedRuns,
     inboxCounts,
@@ -1034,11 +1152,20 @@ export async function getCockpitData(): Promise<CockpitData> {
     getLeadsSeries(),
     getSendsSeries(),
     getLeadSources(),
+    fetchCommentLeadRows(),
     getStuckSummary(),
     getFailedAutomations(),
     getInboxCounts(),
     getRiskReport(),
   ])
+
+  // Cruzamento em memória, e não uma query encadeada: quais posts entram no
+  // gráfico vem do ranking (`leadSources`), e os leads de todos eles já
+  // vieram em paralelo. `dailyBucketsByKey` garante os mesmos dias nas três
+  // séries — sem isso a régua compartilhada seria mentira.
+  const topIds = leadSources.slice(0, TOP_SOURCES_IN_SERIES).map((source) => source.mediaId)
+  const points = dailyBucketsByKey(commentLeadRows, topIds, LEADS_SERIES_DAYS)
+  const leadSourceSeries = topIds.map((mediaId, index) => ({ mediaId, points: points[index] }))
 
   return {
     leadsTrend,
@@ -1048,6 +1175,7 @@ export async function getCockpitData(): Promise<CockpitData> {
     leadsSeries,
     sends,
     leadSources,
+    leadSourceSeries,
     stuck,
     failedRuns,
     inboxCounts,
