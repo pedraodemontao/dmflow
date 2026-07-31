@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { AtSign, LayoutDashboard, MessagesSquare, Users, Zap } from 'lucide-react'
+import { AtSign, LayoutDashboard, MessagesSquare, RefreshCw, Users, Zap } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -13,7 +13,14 @@ const NAV = [
   { href: '/conversas', label: 'Conversas', icon: MessagesSquare },
 ]
 
-export function Sidebar({ username }: { username: string | null }) {
+export function Sidebar({
+  username,
+  tokenValid = true,
+}: {
+  username: string | null
+  /** Falso quando a Meta recusa o token — a conta existe, mas está muda. */
+  tokenValid?: boolean
+}) {
   const pathname = usePathname()
 
   return (
@@ -48,14 +55,41 @@ export function Sidebar({ username }: { username: string | null }) {
 
       <div className="border-t border-border p-3">
         {username ? (
-          <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
-            <div className="flex size-7 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-amber-400">
-              <AtSign className="size-3.5 text-white" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2.5 rounded-lg px-2 py-1.5">
+              <div
+                className={cn(
+                  'flex size-7 items-center justify-center rounded-full',
+                  tokenValid
+                    ? 'bg-gradient-to-br from-fuchsia-500 to-amber-400'
+                    : 'bg-danger/20',
+                )}
+              >
+                <AtSign
+                  className={cn('size-3.5', tokenValid ? 'text-white' : 'text-danger')}
+                />
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-xs font-medium">@{username}</p>
+                <p className={cn('text-[11px]', tokenValid ? 'text-success' : 'text-danger')}>
+                  {tokenValid ? 'conectado' : 'sessão expirada'}
+                </p>
+              </div>
             </div>
-            <div className="min-w-0">
-              <p className="truncate text-xs font-medium">@{username}</p>
-              <p className="text-[11px] text-success">conectado</p>
-            </div>
+
+            {/* Sempre disponível: quando o token morre, é o único caminho de volta. */}
+            <Link
+              href="/api/auth/instagram"
+              className={cn(
+                'flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors',
+                tokenValid
+                  ? 'text-muted hover:bg-surface-2 hover:text-foreground'
+                  : 'bg-danger/15 font-medium text-danger hover:bg-danger/25',
+              )}
+            >
+              <RefreshCw className="size-3.5" />
+              Reconectar Instagram
+            </Link>
           </div>
         ) : (
           <Link

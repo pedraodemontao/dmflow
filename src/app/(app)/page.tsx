@@ -12,7 +12,7 @@ import {
 import { Operacao } from '@/components/painel/operacao'
 import { Button, Card, EmptyState } from '@/components/ui'
 import { getAccount, getAutomations, getLeadSources, getStats } from '@/lib/data'
-import { getWebhookSubscriptions } from '@/lib/instagram/api'
+import { checkAccountHealth } from '@/lib/instagram/health'
 import { hasEnv } from '@/lib/env'
 
 export const dynamic = 'force-dynamic'
@@ -59,10 +59,7 @@ export default async function Home() {
     getLeadSources(),
   ])
 
-  // Cadastrar a URL do webhook no painel da Meta não basta: sem a conta inscrita
-  // nos campos, nenhum evento é entregue e nada dispara.
-  const subscriptions = account ? await getWebhookSubscriptions(account.access_token) : []
-  const receivingEvents = subscriptions.includes('comments') && subscriptions.includes('messages')
+  const health = account ? await checkAccountHealth(account) : null
 
   return (
     <>
@@ -77,16 +74,47 @@ export default async function Home() {
       </header>
 
       <main className="flex-1 space-y-6 overflow-y-auto p-6">
-        {account && !receivingEvents && (
+        {health?.status === 'token_invalido' && (
+          <div className="flex items-start gap-3 rounded-xl border border-danger/40 bg-danger/10 p-4">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-danger">
+                A sessão do Instagram expirou — a automação está parada
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                Nada entra nem sai: comentário não vira lead e DM não é enviada. Acontece quando
+                a senha da conta muda ou o acesso do app é revogado.
+              </p>
+              <p className="mt-1 text-[11px] text-muted">Resposta da Meta: {health.message}</p>
+              <Link href="/api/auth/instagram" className="mt-3 inline-block">
+                <Button size="sm">Reconectar agora</Button>
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {health?.status === 'sem_webhook' && (
           <div className="flex items-start gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
             <div>
               <p className="text-sm font-medium text-warning">
-                Esta conta não está recebendo eventos do Instagram
+                A conta não está inscrita nos webhooks da Meta
               </p>
               <p className="mt-1 text-xs text-muted">
-                Nenhuma automação vai disparar. Reconecte a conta pelo botão da barra lateral —
-                a inscrição nos webhooks acontece automaticamente ao conectar.
+                As automações continuam funcionando — a entrega é por varredura a cada minuto,
+                não por webhook. Reconectar a conta refaz a inscrição, mas não é urgente.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {health?.status === 'indisponivel' && (
+          <div className="flex items-start gap-3 rounded-xl border border-border bg-surface-2 p-4">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-muted" />
+            <div>
+              <p className="text-sm font-medium">Não consegui falar com o Instagram agora</p>
+              <p className="mt-1 text-xs text-muted">
+                Pode ser instabilidade da Meta. Se persistir, reconecte a conta. ({health.message})
               </p>
             </div>
           </div>
