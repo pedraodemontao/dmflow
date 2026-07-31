@@ -19,6 +19,13 @@ if [ -z "$M" ] || ! "$M" list >/dev/null 2>&1; then
   exit 1
 fi
 
+if ! "$M" floor list >/dev/null 2>&1; then
+  echo "❌ Maestro Mode parece desligado neste terminal."
+  echo "   Criar andar exige Maestro Mode. Ligue no nó deste terminal, na canvas,"
+  echo "   e rode este script de novo — ele é seguro para repetir."
+  exit 1
+fi
+
 echo "=== time atual (não recrutar duplicado) ==="
 "$M" list
 echo
@@ -41,7 +48,9 @@ REGRAS INVIOLÁVEIS DESTE TIME:
 
 Rode `maestri list` para ver seus colegas e com quem falar.'
 
-echo "=== criando papéis ==="
+# Repetir o script não pode quebrar: papel, andar e recruta que já existem
+# apenas reclamam, e seguimos em frente.
+echo "=== criando papéis (o que já existir é mantido) ==="
 
 "$M" role create "dmflow-motor" "$BASE
 
@@ -49,7 +58,7 @@ SEU PAPEL: você constrói os blocos que faltam no builder de fluxo.
 Escopo: src/lib/flow/ (types.ts, engine.ts, transform.ts), src/components/automacoes/ (flow-nodes.tsx, node-inspector.tsx, flow-builder.tsx) e src/lib/instagram/api.ts.
 Tarefas, na ordem do ROADMAP: carrossel de cards, bloco de vídeo/áudio, e bloco \"pular para outro fluxo\".
 Para adicionar um bloco novo é preciso mexer em SEIS lugares — schema Zod em types.ts, execução no engine.ts, blankNode em transform.ts, NODE_META e preview em flow-nodes.tsx, PALETTE em flow-builder.tsx e a UI de edição em node-inspector.tsx. Esquecer um deles quebra em silêncio.
-NÃO mexa em src/app/(app)/ nem em src/components/ui/ — são de outro agente." --scope current
+NÃO mexa em src/app/(app)/ nem em src/components/ui/ — são de outro agente." --scope current || echo "  (papel já existia, mantido)"
 
 "$M" role create "dmflow-ui" "$BASE
 
@@ -57,25 +66,25 @@ SEU PAPEL: você redesenha a interface do painel, sem mudar comportamento.
 Escopo: src/components/ui/index.tsx, src/app/globals.css, src/components/layout/, e o CSS das páginas em src/app/(app)/.
 Objetivo: identidade visual própria, que não pareça o ManyChat. Trabalhe densidade, hierarquia, tipografia, estados de foco e acessibilidade. Mantenha o tema escuro atual como base.
 NÃO altere lógica: nada de mexer em server actions, em src/lib/ ou no que os componentes fazem — só em como se parecem. Se um ajuste visual exigir mudar comportamento, avise em vez de fazer.
-Preserve os nomes dos componentes exportados (Button, Card, Input, Label, Select, Textarea, Badge, EmptyState): o resto do app depende deles." --scope current
+Preserve os nomes dos componentes exportados (Button, Card, Input, Label, Select, Textarea, Badge, EmptyState): o resto do app depende deles." --scope current || echo "  (papel já existia, mantido)"
 
 "$M" role create "dmflow-revisor" "$BASE
 
 SEU PAPEL: você revisa e NUNCA edita arquivo. Sua saída é uma lista de achados, não um diff.
 Revise o que os outros agentes produzirem, com foco em: correção (o código faz o que diz?), as invariantes do CLAUDE.md, risco de flag da Meta (texto repetido, envio sem jitter, envio sem passar pelo cap de envios/hora), vazamento de segredo, e regressão no motor de fluxo.
 Preste atenção especial em: envio de mensagem sem assertUnderSendCap/logSend, resposta automática sem variação de texto (spintax), qualquer coisa que ignore a janela de 24h, e migration que rode fora de ordem.
-Para cada achado escreva: arquivo:linha, o problema em uma frase, e o cenário concreto em que quebra. Sem elogio, sem sugestão de escopo novo." --scope current
+Para cada achado escreva: arquivo:linha, o problema em uma frase, e o cenário concreto em que quebra. Sem elogio, sem sugestão de escopo novo." --scope current || echo "  (papel já existia, mantido)"
 
 echo
 echo "=== criando andares isolados (clone git em branch própria) ==="
-"$M" floor create "Motor" --branch feat/blocos-fluxo
-"$M" floor create "Interface" --branch feat/redesign-ui
+"$M" floor create "Motor" --branch feat/blocos-fluxo || echo "  (andar já existia, mantido)"
+"$M" floor create "Interface" --branch feat/redesign-ui || echo "  (andar já existia, mantido)"
 
 echo
 echo "=== recrutando ==="
-"$M" recruit "Bigorna" --role "dmflow-motor" --floor "Motor"
-"$M" recruit "Prisma" --role "dmflow-ui" --floor "Interface"
-"$M" recruit "Argos" --role "dmflow-revisor"
+"$M" recruit "Bigorna" --role "dmflow-motor" --floor "Motor" || echo "  (recruta já existia, mantido)"
+"$M" recruit "Prisma" --role "dmflow-ui" --floor "Interface" || echo "  (recruta já existia, mantido)"
+"$M" recruit "Argos" --role "dmflow-revisor" || echo "  (recruta já existia, mantido)"
 
 if [ "$BRIEF" = "1" ]; then
   echo
