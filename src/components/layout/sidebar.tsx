@@ -77,14 +77,18 @@ export function Sidebar({
       <div className="flex h-16 items-center gap-2.5 px-5">
         <Logomark className="size-7 shrink-0 drop-shadow-[0_2px_6px_rgb(242_118_46_/35%)]" />
         <span className="flex items-baseline gap-[3px]">
-          <span className="bg-gradient-to-br from-accent to-accent-soft bg-clip-text text-sm font-bold tracking-tight text-transparent">
+          <span className="bg-gradient-to-br from-accent to-accent-soft bg-clip-text text-base font-bold tracking-tight text-transparent">
             dm
           </span>
-          <span className="text-sm font-semibold tracking-tight text-foreground">flow</span>
+          <span className="text-base font-semibold tracking-tight text-foreground">flow</span>
         </span>
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 px-3">
+        {/* Item ativo: neutro (fundo + peso), não accent — o laranja fica
+            reservado para a ação primária de cada tela, e este item está
+            presente em toda tela ao mesmo tempo, então não pode ser "a
+            marcação". Distinção vem de peso e opacidade, não de cor. */}
         {NAV.map(({ href, label, icon: Icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href)
           return (
@@ -92,10 +96,10 @@ export function Sidebar({
               key={href}
               href={href}
               className={cn(
-                'flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition-all duration-150',
+                'flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm transition-all duration-150',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
                 active
-                  ? 'bg-accent/12 font-medium text-accent ring-1 ring-inset ring-accent/20'
+                  ? 'bg-white/[0.07] font-semibold text-foreground'
                   : 'text-muted hover:translate-x-0.5 hover:bg-surface-2/70 hover:text-foreground',
               )}
             >
@@ -110,16 +114,20 @@ export function Sidebar({
         {username ? (
           <div className="space-y-1.5">
             <div className="flex items-center gap-2.5 rounded-xl px-2 py-1.5">
+              {/* Neutro quando tudo funciona — o gradiente accent aqui era
+                  decoração (um avatar não é a ação principal da tela). Some
+                  totalmente quando o token expira: aí vira estado real (erro),
+                  e estado continua colorido. */}
               <div
                 className={cn(
                   'flex size-7 items-center justify-center rounded-full',
                   tokenValid
-                    ? 'bg-gradient-to-br from-accent to-accent-soft'
+                    ? 'bg-surface-2 ring-1 ring-inset ring-white/[0.08]'
                     : 'bg-danger/20 ring-1 ring-inset ring-danger/30',
                 )}
               >
                 <AtSign
-                  className={cn('size-3.5', tokenValid ? 'text-background' : 'text-danger')}
+                  className={cn('size-3.5', tokenValid ? 'text-foreground' : 'text-danger')}
                 />
               </div>
               <div className="min-w-0">

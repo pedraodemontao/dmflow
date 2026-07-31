@@ -37,7 +37,7 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
             <ArrowLeft className="size-4" />
           </Button>
         </Link>
-        <h1 className="text-base font-semibold tracking-tight text-foreground">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">
           {contact.username ? `@${contact.username}` : contact.ig_user_id}
         </h1>
         {contact.name && <span className="text-xs text-muted">{contact.name}</span>}
@@ -48,7 +48,7 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="grid gap-4 lg:grid-cols-[320px_1fr]">
+        <div className="canon mx-auto grid w-full max-w-5xl gap-4 lg:grid-cols-[320px_1fr]">
           <div className="space-y-4">
             <Card className="space-y-4 p-4">
               <SubscriptionToggle contactId={contact.id} subscribed={contact.subscribed} />
@@ -140,9 +140,10 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
                         'max-w-[75%] rounded-2xl px-3 py-1.5',
                         message.direction === 'in'
                           ? 'bg-surface-2 text-foreground'
-                          // Tinta escura sobre o accent — texto branco sobre laranja-cobre
-                          // não bate 4.5:1 de contraste (WCAG AA); esta combinação bate ~6.8:1.
-                          : 'bg-accent text-background',
+                          // Direção da mensagem por inversão neutra (clara sobre
+                          // escura), não por accent — balão não é uma ação, é
+                          // dado (quem falou o quê). Contraste ~17.6:1, folgado.
+                          : 'bg-foreground text-background',
                       )}
                     >
                       <p className="whitespace-pre-wrap text-xs">{message.text || '—'}</p>
