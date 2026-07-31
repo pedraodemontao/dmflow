@@ -6,9 +6,13 @@ import { BadgeCheck } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
-/** Anel de foco padrão do design system — visível em qualquer superfície escura. */
+/**
+ * Anel de foco padrão. Tinta, não menta: sobre papel a menta viva fica em
+ * ~1.6:1 e some. O anel é sinal de acessibilidade, não decoração — tem que
+ * passar 3:1 contra qualquer superfície clara do app.
+ */
 const FOCUS_RING =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background'
 
 export function Button({
   variant = 'primary',
@@ -22,21 +26,22 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-150',
-        'disabled:cursor-not-allowed disabled:opacity-50',
+        // Monospace em caixa alta espaçada: na direção "Papel" o botão é
+        // rótulo de instrumento, não frase. Raio pequeno — canto duro é parte
+        // da gramática (ver globals.css).
+        'label inline-flex items-center justify-center gap-2 rounded-md transition-all duration-150',
+        'disabled:cursor-not-allowed disabled:opacity-45',
         FOCUS_RING,
-        size === 'sm' ? 'h-8 px-3 text-xs' : 'h-10 px-4 text-sm',
-        // Primário: tinta escura sobre gradiente laranja-cobre — contraste maior que
-        // texto branco sobre a mesma cor (AA falha em ~4.46:1, isto passa em ~6.8:1).
-        // Sombra difusa e colorida em vez de sombra dura: o botão lê como material
-        // sólido erguido do fundo, não como retângulo com contorno.
-        variant === 'primary' &&
-          'bg-gradient-to-b from-accent to-accent-soft font-semibold text-background shadow-[0_10px_24px_-10px_rgb(242_118_46_/55%)] hover:brightness-110 hover:shadow-[0_12px_28px_-8px_rgb(242_118_46_/65%)] active:brightness-95',
+        size === 'sm' ? 'h-8 px-3 text-[10px]' : 'h-10 px-4 text-[11px]',
+        // Primário: tinta sólida com papel por cima (~15:1). A menta NUNCA
+        // entra como preenchimento de botão — sobre papel ela não sustenta
+        // texto; ela aparece como sombra dura, via `.cta-signature`.
+        variant === 'primary' && 'bg-foreground text-background hover:bg-ink-hover',
         variant === 'outline' &&
-          'border border-border bg-surface text-foreground hover:border-muted hover:bg-surface-2',
+          'border border-foreground bg-surface text-foreground hover:bg-accent',
         variant === 'ghost' && 'text-muted hover:bg-surface-2 hover:text-foreground',
         variant === 'danger' &&
-          'border border-danger/20 bg-danger/10 text-danger hover:border-danger/40 hover:bg-danger/20',
+          'border border-danger bg-transparent text-danger hover:bg-danger hover:text-background',
         className,
       )}
       {...props}
@@ -45,25 +50,24 @@ export function Button({
 }
 
 /**
- * Superfície de dado padrão — opaca, nunca translúcida. Cards leem estado
- * operacional (métrica, risco, lista); profundidade vem de `.surface-panel`
- * (sombra difusa + fio de luz no topo), não de vidro. Vidro fica reservado
- * para chrome flutuante (sidebar, cabeçalhos, popovers — ver globals.css).
+ * Superfície de dado padrão. Papel elevado delimitado por fio de cabelo —
+ * sem sombra: numa grade, o que separa um card do outro é o traço, não a
+ * profundidade (ver `.surface-panel` em globals.css). Raio pequeno de
+ * propósito; card arredondado com brilho era a silhueta que a revisão 4
+ * abandonou.
  */
 export function Card({ className, ...props }: ComponentProps<'div'>) {
-  return (
-    <div className={cn('surface-panel rounded-2xl border border-border/70', className)} {...props} />
-  )
+  return <div className={cn('surface-panel rounded-md', className)} {...props} />
 }
 
 export function Input({ className, ...props }: ComponentProps<'input'>) {
   return (
     <input
       className={cn(
-        'h-10 w-full rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/5%)] transition-colors duration-150',
-        'placeholder:text-muted hover:border-muted/80',
+        'h-10 w-full rounded-md border border-border bg-surface-2 px-3 text-sm text-foreground transition-colors duration-150',
+        'placeholder:text-muted hover:border-muted',
         FOCUS_RING,
-        'focus-visible:border-accent',
+        'focus-visible:border-foreground',
         className,
       )}
       {...props}
@@ -75,10 +79,10 @@ export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
   return (
     <textarea
       className={cn(
-        'w-full resize-y rounded-xl border border-border bg-surface-2 p-3 text-sm text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/5%)] transition-colors duration-150',
-        'placeholder:text-muted hover:border-muted/80',
+        'w-full resize-y rounded-md border border-border bg-surface-2 p-3 text-sm text-foreground transition-colors duration-150',
+        'placeholder:text-muted hover:border-muted',
         FOCUS_RING,
-        'focus-visible:border-accent',
+        'focus-visible:border-foreground',
         className,
       )}
       {...props}
@@ -90,10 +94,10 @@ export function Select({ className, ...props }: ComponentProps<'select'>) {
   return (
     <select
       className={cn(
-        'h-10 w-full rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/5%)] transition-colors duration-150',
-        'hover:border-muted/80',
+        'h-10 w-full rounded-md border border-border bg-surface-2 px-3 text-sm text-foreground transition-colors duration-150',
+        'hover:border-muted',
         FOCUS_RING,
-        'focus-visible:border-accent',
+        'focus-visible:border-foreground',
         className,
       )}
       {...props}
@@ -105,7 +109,7 @@ export function Label({ className, ...props }: ComponentProps<'label'>) {
   return (
     <label
       className={cn(
-        'mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted',
+        'label mb-1.5 block text-[10px] text-muted',
         className,
       )}
       {...props}
@@ -123,18 +127,18 @@ export function Badge({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ring-1 ring-inset',
-        tone === 'neutral' && 'bg-surface-2 text-muted ring-border',
-        tone === 'success' && 'bg-success/15 text-success ring-success/25',
-        tone === 'warning' && 'bg-warning/15 text-warning ring-warning/25',
-        tone === 'accent' && 'bg-accent/15 text-accent ring-accent/25',
+        // Chip de tinta com quadradinho de cor, no lugar da pílula colorida.
+        // Sobre papel, texto colorido em fundo colorido claro raramente passa
+        // em contraste; tinta sobre papel passa sempre, e a cor vira o
+        // quadrado — que é sinal, não texto.
+        'label inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface-2 px-2 py-1 text-[9.5px] text-foreground',
       )}
     >
       <span
         className={cn(
-          'size-1.5 shrink-0 rounded-full',
+          'size-2 shrink-0 rounded-[2px]',
           tone === 'neutral' && 'bg-muted',
-          tone === 'success' && 'bg-success',
+          tone === 'success' && 'bg-accent',
           tone === 'warning' && 'bg-warning',
           tone === 'accent' && 'bg-accent',
         )}
@@ -156,14 +160,14 @@ export function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/80 bg-surface/40 px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-muted/50 px-6 py-16 text-center">
       {icon && (
-        <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-surface-2 text-muted shadow-[inset_0_1px_0_rgb(255_255_255_/6%)]">
+        <div className="mb-5 flex size-14 items-center justify-center rounded-sm border border-foreground bg-surface text-foreground">
           {icon}
         </div>
       )}
-      <h3 className="text-base font-semibold text-foreground">{title}</h3>
-      <p className="mt-1.5 max-w-sm text-sm text-muted">{description}</p>
+      <h3 className="display text-2xl text-foreground">{title}</h3>
+      <p className="mt-2 max-w-sm text-sm leading-relaxed text-muted">{description}</p>
       {action && <div className="mt-6">{action}</div>}
     </div>
   )
@@ -228,7 +232,7 @@ export function Avatar({
   return (
     <span
       className={cn(
-        'relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-2 font-semibold text-foreground ring-1 ring-inset ring-border',
+        'relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-sm border border-foreground bg-surface-2 font-mono text-foreground',
         AVATAR_SIZE[size],
         className,
       )}
@@ -249,7 +253,7 @@ export function Avatar({
       {verified && (
         <span
           className={cn(
-            'absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-full bg-accent text-background ring-2 ring-surface',
+            'absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-[2px] bg-accent text-foreground ring-2 ring-surface',
             AVATAR_BADGE_SIZE[size],
           )}
           title="Conta verificada"

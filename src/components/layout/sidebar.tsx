@@ -75,7 +75,7 @@ export function Sidebar({
   const pathname = usePathname()
 
   return (
-    <aside className="glass-chrome flex w-60 shrink-0 flex-col border-r border-white/[0.06]">
+    <aside className="chrome-panel flex w-60 shrink-0 flex-col border-r border-white/[0.06]">
       <div className="flex h-16 items-center gap-2.5 px-5">
         <Logomark className="size-7 shrink-0 drop-shadow-[0_2px_6px_rgb(242_118_46_/35%)]" />
         <span className="flex items-baseline gap-[3px]">

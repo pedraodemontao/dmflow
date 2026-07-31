@@ -100,7 +100,7 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <header className="glass-chrome flex h-16 shrink-0 items-center gap-4 border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center gap-4 border-b border-white/[0.06] px-6">
         <Link href="/automacoes" className="text-muted hover:text-foreground" aria-label="Voltar para automações">
           <ArrowLeft className="size-4" />
         </Link>

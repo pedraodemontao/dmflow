@@ -34,7 +34,7 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
 
   return (
     <>
-      <header className="glass-chrome flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] px-6">
         <Link href="/contatos">
           <Button variant="ghost" size="sm" aria-label="Voltar para contatos">
             <ArrowLeft className="size-4" />

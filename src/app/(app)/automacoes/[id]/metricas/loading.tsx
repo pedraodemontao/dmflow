@@ -8,7 +8,7 @@ export default function Loading() {
     <>
       <span className="sr-only">Carregando as métricas</span>
 
-      <header className="glass-chrome flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] px-6">
         <Skeleton className="h-8 w-10 rounded-xl" />
         <Skeleton className="h-7 w-72 max-w-full" />
         <Skeleton className="h-5 w-20 rounded-full" />

@@ -458,7 +458,7 @@ function CommandPalette({ onClose }: { onClose: () => void }) {
         aria-modal="true"
         aria-label="Paleta de comandos"
         onKeyDown={handleDialogKeyDown}
-        className="command-panel glass-pop flex w-full max-w-xl flex-col overflow-hidden rounded-2xl"
+        className="command-panel pop-panel flex w-full max-w-xl flex-col overflow-hidden rounded-2xl"
       >
         <div className="flex items-center gap-3 border-b border-white/[0.06] px-4">
           <Search className="size-4 shrink-0 text-muted" />

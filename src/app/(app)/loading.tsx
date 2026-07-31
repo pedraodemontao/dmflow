@@ -12,7 +12,7 @@ export default function Loading() {
     <>
       <span className="sr-only">Carregando o painel</span>
 
-      <header className="glass-chrome flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
         <Skeleton className="h-7 w-28" />
         <Skeleton className="h-8 w-40 rounded-xl" />
       </header>

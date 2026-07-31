@@ -196,7 +196,7 @@ function ToastCard({ toast }: { toast: Toast }) {
   return (
     <div
       className={cn(
-        'dmflow-toast glass-pop pointer-events-auto flex items-start gap-2.5 rounded-2xl px-3.5 py-3',
+        'dmflow-toast pop-panel pointer-events-auto flex items-start gap-2.5 rounded-2xl px-3.5 py-3',
         isError && 'ring-1 ring-inset ring-danger/30',
       )}
       // Erro interrompe o leitor de tela; sucesso espera a vez.

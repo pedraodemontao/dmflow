@@ -15,7 +15,7 @@ export function EditorSkeleton() {
     <div className="flex flex-1 flex-col overflow-hidden">
       <span className="sr-only">Carregando a automação</span>
 
-      <header className="glass-chrome flex h-16 shrink-0 items-center gap-4 border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center gap-4 border-b border-white/[0.06] px-6">
         <Skeleton className="size-4 shrink-0 rounded-md" />
         <Skeleton className="h-4 w-56 max-w-full flex-1" />
 

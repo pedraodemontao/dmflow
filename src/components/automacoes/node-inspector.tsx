@@ -43,7 +43,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
   }
 
   return (
-    <div className="glass-chrome flex w-96 shrink-0 flex-col border-l border-white/[0.06]">
+    <div className="chrome-panel flex w-96 shrink-0 flex-col border-l border-white/[0.06]">
       <div className="flex h-16 items-center gap-3 border-b border-white/[0.06] px-5">
         <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg border', meta.chip)}>
           <Icon className={cn('size-4', meta.color)} />

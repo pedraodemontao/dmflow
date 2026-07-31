@@ -11,7 +11,7 @@ export default function Loading() {
     <>
       <span className="sr-only">Carregando as conversas</span>
 
-      <header className="glass-chrome flex h-16 shrink-0 items-center border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center border-b border-white/[0.06] px-6">
         <Skeleton className="h-7 w-40" />
         <Skeleton className="ml-2 h-4 w-28" />
       </header>
@@ -44,7 +44,7 @@ export default function Loading() {
         </aside>
 
         <section className="flex min-w-0 flex-1 flex-col">
-          <div className="glass-chrome flex h-14 shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5">
+          <div className="chrome-panel flex h-14 shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5">
             <Skeleton className="size-8 shrink-0 rounded-full" />
             <div className="min-w-0 space-y-1.5">
               <Skeleton className="h-4 w-36" />

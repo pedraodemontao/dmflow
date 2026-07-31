@@ -50,7 +50,7 @@ export function CannedReplies({
       </Button>
 
       {open && (
-        <div className="glass-pop absolute bottom-10 left-0 z-20 w-72 overflow-hidden rounded-2xl">
+        <div className="pop-panel absolute bottom-10 left-0 z-20 w-72 overflow-hidden rounded-2xl">
           {creating ? (
             <div className="space-y-2 p-3">
               <Input

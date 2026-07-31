@@ -8,7 +8,7 @@ export default function Loading() {
     <>
       <span className="sr-only">Carregando o contato</span>
 
-      <header className="glass-chrome flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] px-6">
         <Skeleton className="h-8 w-10 rounded-xl" />
         <Skeleton className="size-8 shrink-0 rounded-full" />
         <div className="min-w-0 space-y-1.5">

@@ -205,7 +205,7 @@ function Canvas({
           </Button>
 
           {paletteOpen && (
-            <div className="glass-pop mt-2 w-72 max-h-[75vh] overflow-y-auto rounded-2xl py-1.5">
+            <div className="pop-panel mt-2 w-72 max-h-[75vh] overflow-y-auto rounded-2xl py-1.5">
               {CATEGORY_ORDER.map((category) => {
                 const types = PALETTE.filter((type) => NODE_META[type].category === category)
                 if (types.length === 0) return null

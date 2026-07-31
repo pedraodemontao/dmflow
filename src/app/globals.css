@@ -6,110 +6,98 @@
  *   1. Primitivos  — a rampa de cor crua, sem significado.
  *   2. Semânticos  — os nomes que o app inteiro consome (bg-surface,
  *      text-muted, bg-accent...). Os NOMES não mudam — só o valor por trás.
- *   3. Material    — desfoque, saturação, opacidade e refração de borda.
- *      Tão parte do design system quanto a cor: é o que faz uma superfície
- *      parecer vidro ou parecer chapa. Só duas classes usam de fato
- *      `backdrop-filter` (.glass-chrome e .glass-pop) — ver nota de uso
- *      logo abaixo, antes delas.
+ *   3. Material    — sombra, fio e grão. Tão parte do design system quanto a
+ *      cor: é o que faz uma superfície parecer papel ou parecer chapa.
  *   4. Componente  — expressos como classes Tailwind compostas a partir dos
- *      semânticos (ex.: `bg-accent text-background` no Button). As três
- *      classes de material são a única exceção: multi-layer box-shadow +
- *      backdrop-filter não cabem em utilitário Tailwind sem repetir a mesma
- *      string gigante em cada arquivo, então viram classe CSS de verdade,
- *      igual a qualquer outro token de componente compartilhado.
+ *      semânticos. As classes de material abaixo são a exceção: box-shadow
+ *      multicamada não cabe em utilitário sem repetir a mesma string gigante
+ *      em cada arquivo.
  *
- * Direção (revisão 3 — diagnóstico completo na descrição do commit):
- * o problema das duas tentativas anteriores não era material nem paleta —
- * era excesso de cor e timidez tipográfica. Esta revisão muda três coisas:
+ * ---------------------------------------------------------------------------
+ * DIREÇÃO "PAPEL" (revisão 4 — a escolhida pelo dono)
+ * ---------------------------------------------------------------------------
+ * As três revisões anteriores ficaram presas na mesma silhueta — preto, um
+ * accent laranja saturado, card arredondado com sombra difusa. Isso é o
+ * template visual de qualquer produto de IA dos últimos dois anos, que é
+ * exatamente o que o dono não queria. Refinar dentro dela não resolvia: o
+ * problema era a escolha de base, não o acabamento.
  *
- *   a) Preto quase real como base (antes: grafite). As superfícies emergem
- *      por um degrau sutil de luminância + `.surface-panel`/`.glass-*`
- *      (sombra e fio de luz), não por borda de 1px em todo canto. `--border`
- *      continua existindo (Input, Select, outline do Button, divisores de
- *      lista) mas de propósito discreto — decoração de limite, não a fonte
- *      da hierarquia visual.
- *   b) Parcimônia radical de cor: o accent (laranja-cobre) fica reservado
- *      para UMA coisa — o Button `primary`, que é sempre a ação principal da
- *      tela — e para link de texto (convenção universal de "isto é
- *      clicável"). Badge, ícone decorativo, borda de card e barra de
- *      progresso viram neutros com peso/opacidade variando. Estado (sucesso,
- *      alerta, perigo) continua colorido porque é informação, não decoração
- *      — isso não mudou.
- *   c) Tipografia com mais confiança: títulos de página maiores, mais
- *      pesados, tracking mais fechado (aplicado nas próprias páginas, ver
- *      `src/app/(app)/**`), e a assinatura tátil do botão principal
- *      (`.cta-signature` abaixo) — sombra dura deslocada, não difusa.
+ * Esta revisão inverte cinco coisas, todas tiradas das referências que ele
+ * mandou (Koyeb, Unkey, Profound — os três foram abertos e lidos):
  *
- * Todo par texto/fundo abaixo foi checado para WCAG AA (4.5:1 texto normal,
- * 3:1 UI) — contas na descrição do commit. Exceção documentada: `--border`
- * contra as superfícies fica abaixo de 3:1 de propósito (era assim antes
- * desta revisão também) — é um traço decorativo, não o único jeito de
- * identificar o limite de Input/Select/Button (que têm preenchimento
- * distinto do fundo E anel de foco colorido, esse sim ≥3:1).
+ *   a) BASE DE PAPEL. Off-white morno com grão no lugar do preto. Tinta quase
+ *      preta por cima. É o oposto do que a categoria inteira faz.
+ *   b) TIPOGRAFIA COM TRÊS VOZES, não uma. Display condensada e pesada em
+ *      caixa alta (título de tela, número grande), monospace em caixa alta
+ *      espaçada (rótulo, botão, navegação) e grotesca neutra só para texto
+ *      corrido. Antes tudo era a mesma grotesca em 11–13px, e por isso a tela
+ *      inteira lia como um cinza uniforme.
+ *   c) UMA COR VIVA, DECORATIVA. A menta preenche — sombra de botão, quadrado
+ *      de chip, marca de seleção. Nunca carrega texto: em fundo claro ela não
+ *      passa em contraste. Onde o verde precisa significar algo escrito, o
+ *      token é `--accent-ink` (menta escura, AA sobre papel).
+ *   d) CANTO DURO E FIO DE CABELO. Raio pequeno, sombra deslocada sem
+ *      desfoque, divisor de 1px. Nada de card flutuando com brilho.
+ *   e) VIDRO MORREU. `.chrome-panel` e `.pop-panel` (antes `.glass-*`) são
+ *      papel opaco com fio e sombra dura. Desfoque era decoração; papel é
+ *      material.
  *
- * Vidro é seletivo, não decorativo (decisão registrada no commit): só onde a
- * função é flutuar sobre conteúdo — sidebar, cabeçalho de página, o inspetor
- * de bloco do builder (mesmo papel estrutural da sidebar) e popovers (menu de
- * adiar, atalhos de resposta, paleta de blocos). Superfície de DADO — card de
- * métrica, linha de lista, balão de mensagem, card de risco — continua
- * opaca: a leitura de estado operacional não pode depender de quanto contraste
- * sobrou depois do desfoque. Profundidade ali vem de sombra difusa e de um
- * fio de luz sutil na borda (`.surface-panel`), nunca de transparência.
+ * Contraste: todo par texto/fundo abaixo passa WCAG AA (4.5:1 texto normal,
+ * 3:1 UI). Os tokens de estado (`--success`, `--warning`, `--danger`) são
+ * versões ESCURAS de propósito — o verde/amarelo/vermelho vivos que serviam
+ * sobre preto ficam ilegíveis sobre papel. Exceção documentada: `--border`
+ * contra as superfícies fica abaixo de 3:1 — é traço decorativo, não o único
+ * jeito de identificar o limite de um Input (que tem preenchimento distinto
+ * do fundo E anel de foco ≥3:1).
  */
 
 :root {
   /* ---------- 1. Primitivos ---------- */
-  --gray-950: #050403; /* preto quase real, leve tom quente residual */
-  --gray-900: #110e0b;
-  --gray-850: #1d1812;
-  --gray-700: #352d24;
-  --gray-400: #9c948b;
-  --gray-100: #f0edeb;
+  --paper-50: #f6f4ee;  /* superfície elevada — card, painel */
+  --paper-100: #ece9e1; /* fundo da página */
+  --paper-200: #dedad0; /* superfície recuada — input, trilho de aba */
+  --paper-300: #c7c2b4; /* fio de cabelo */
 
-  --ember-600: #dc5a0e; /* laranja-cobre, tom "pressionado" */
-  --ember-500: #f2762e; /* laranja-cobre, tom base */
+  --ink-900: #14120f;   /* tinta — texto e traço estrutural */
+  --ink-700: #302b23;   /* tinta pressionada — hover do botão primário */
+  --ink-500: #5b564c;   /* texto secundário */
 
-  --green-500: #22c55e;
-  --yellow-500: #eab308;
-  --red-500: #ef4444;
+  --mint-400: #6fdca6;  /* menta viva — só preenchimento decorativo */
+  --mint-900: #0d6b41;  /* menta escura — quando o verde precisa ser lido */
+
+  --amber-900: #85560a;
+  --brick-900: #a3341d;
 
   /* ---------- 2. Semânticos (nomes usados em todo o app) ---------- */
-  --background: var(--gray-950);
-  --surface: var(--gray-900);
-  --surface-2: var(--gray-850);
-  --border: var(--gray-700);
-  --foreground: var(--gray-100);
-  --muted: var(--gray-400);
-  --accent: var(--ember-500);
-  --accent-soft: var(--ember-600);
-  --success: var(--green-500);
-  --warning: var(--yellow-500);
-  --danger: var(--red-500);
+  --background: var(--paper-100);
+  --surface: var(--paper-50);
+  --surface-2: var(--paper-200);
+  --border: var(--paper-300);
+  --foreground: var(--ink-900);
+  --muted: var(--ink-500);
+  --ink-hover: var(--ink-700);
+  --accent: var(--mint-400);
+  --accent-soft: var(--mint-400);
+  /* O único verde que pode carregar texto ou ícone sobre papel. */
+  --accent-ink: var(--mint-900);
+  --success: var(--mint-900);
+  --warning: var(--amber-900);
+  --danger: var(--brick-900);
 
-  /* ---------- 3. Material — vidro (chrome flutuante) ---------- */
-  /* Preenchimento "vidro fumê": a própria cor de superfície, translúcida —
-     não vidro branco. Um branco a 6-10% sobre conteúdo claro (ex. thumbnail
-     de post) explode em contraste; a cor de superfície a 74-88% nunca fica
-     mais clara que o token original, então todo par já validado como AA
-     continua AA — o desfoque só acrescenta o material, não muda a luminância
-     de base. Opacidade um pouco mais alta que na revisão anterior porque o
-     fundo agora é quase plano (sem a malha multicolor de antes) e precisa de
-     mais preenchimento próprio para não ler como "cinza lavado". */
-  --glass-fill: rgb(17 14 11 / 74%); /* sidebar, cabeçalhos, inspetor */
-  --glass-fill-pop: rgb(17 14 11 / 88%); /* popovers — flutuam sobre conteúdo variável */
-  --glass-edge-light: rgb(255 255 255 / 14%); /* refração: luz batendo em cima */
-  --glass-edge-dark: rgb(0 0 0 / 46%); /* refração: sombra acumulada embaixo */
-  --glass-blur: 22px;
-  --glass-saturate: 1.55;
+  /* ---------- 3. Material — papel ---------- */
+  /* Grão: pontinho de 1px numa malha de 3px, opacidade baixíssima. É o que
+     separa "fundo bege" de "papel". Fica no body, não nos cards, senão a
+     textura se acumula e vira ruído. */
+  --grain: radial-gradient(rgb(20 18 15 / 6%) 1px, transparent 1px);
+  --grain-size: 3px 3px;
 
-  /* ---------- 3. Material — superfície de dado (opaca, sem blur) ---------- */
-  --surface-edge-light: rgb(255 255 255 / 6%);
-  --surface-shadow:
-    0 1px 2px 0 rgb(0 0 0 / 30%),
-    0 16px 32px -20px rgb(0 0 0 / 65%);
+  /* Sombra dura deslocada — sem desfoque, de propósito. É a assinatura tátil
+     da direção: o objeto parece recortado e colado, não flutuando. */
+  --shadow-hard: 3px 3px 0 0 var(--ink-900);
+  --shadow-hard-accent: 3px 3px 0 0 var(--mint-400);
 
   /* ---------- 3. Material — guia estrutural (cânone da página) ---------- */
-  --canon-guide: rgb(255 255 255 / 8%);
+  --canon-guide: rgb(20 18 15 / 14%);
 }
 
 @theme inline {
@@ -119,93 +107,101 @@
   --color-border: var(--border);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
+  --color-ink-hover: var(--ink-hover);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-danger: var(--danger);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-anton);
 }
 
-/*
- * Fundo quase plano — de propósito. As três versões anteriores usavam uma
- * malha de três orbes coloridos (laranja + verde-azulado + rosa) atrás de
- * tudo; isso é exatamente o clichê visual de "template de SaaS de IA" que o
- * dono apontou. Um único glow, na mesma cor do accent, bem discreto, dá ao
- * vidro do chrome algo mínimo para refratar sem pintar a tela inteira.
- * `background-attachment: fixed` mantém o glow parado quando o `main` de
- * cada página rola por baixo do cabeçalho.
- */
 body {
-  background:
-    radial-gradient(1100px 620px at 50% -14%, rgb(242 118 46 / 5%), transparent 62%),
-    var(--background);
+  background-color: var(--background);
+  background-image: var(--grain);
+  background-size: var(--grain-size);
   background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * .display — a voz de título. Condensada, pesada, caixa alta. Usada em título
+ * de tela e em número grande de métrica, nunca em texto corrido: Anton não tem
+ * peso variável nem itálico, e em corpo pequeno vira mancha.
+ */
+.display {
+  font-family: var(--font-anton), Impact, 'Arial Narrow Bold', sans-serif;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.005em;
+  line-height: 0.9;
+}
+
+/*
+ * .label — a voz de rótulo. Monospace em caixa alta espaçada: eyebrow, rótulo
+ * de campo, texto de botão secundário, item de navegação. É o que dá o ar de
+ * instrumento em vez de painel de marketing.
+ */
+.label {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+}
+
 ::selection {
-  background: rgb(242 118 46 / 30%);
-  color: var(--foreground);
+  background: var(--mint-400);
+  color: var(--ink-900);
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
-::-webkit-scrollbar-thumb:hover { background: #4a4030; }
+::-webkit-scrollbar-thumb { background: var(--paper-300); }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-500); }
 
 /*
- * .glass-chrome — vidro estrutural: sidebar, cabeçalho de página, inspetor de
- * bloco do builder. Elementos fixos/dockados que não sobrepõem conteúdo (são
- * vizinhos dele no layout), então o que refratam é o fundo por trás.
+ * .chrome-panel — chrome estrutural: barra de navegação, cabeçalho de página,
+ * inspetor de bloco do builder. Nome herdado de `.glass-chrome`: virou papel
+ * opaco na revisão 4, porque desfoque era decoração e papel é material.
+ * Separa-se do conteúdo por fio de tinta, não por transparência.
  */
-.glass-chrome {
-  background: linear-gradient(180deg, var(--glass-fill), rgb(17 14 11 / 62%));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
-  box-shadow:
-    inset 0 1px 0 var(--glass-edge-light),
-    inset 0 -1px 0 var(--glass-edge-dark);
+.chrome-panel {
+  background: var(--paper-50);
+  border-color: var(--ink-900);
 }
 
 /*
- * .glass-pop — vidro flutuante: menu de adiar, atalhos de resposta, paleta
- * de blocos. Sobrepõe conteúdo de verdade (lista de mensagens, canvas), por
- * isso o preenchimento é mais opaco — legibilidade em primeiro lugar mesmo
- * flutuando sobre o que for.
+ * .pop-panel — o que flutua sobre conteúdo: paleta de comandos, menu de
+ * adiar, atalhos de resposta, paleta de blocos. Papel opaco com fio de tinta
+ * e sombra dura — legibilidade em primeiro lugar sobre qualquer fundo.
  */
-.glass-pop {
-  background: var(--glass-fill-pop);
-  backdrop-filter: blur(26px) saturate(var(--glass-saturate));
-  -webkit-backdrop-filter: blur(26px) saturate(var(--glass-saturate));
-  box-shadow:
-    inset 0 1px 0 var(--glass-edge-light),
-    inset 0 -1px 0 var(--glass-edge-dark),
-    0 24px 48px -16px rgb(0 0 0 / 60%);
+.pop-panel {
+  background: var(--paper-50);
+  border: 1px solid var(--ink-900);
+  box-shadow: var(--shadow-hard);
 }
 
 /*
  * .surface-panel — a superfície de dado padrão (Card e o card de bloco do
- * builder). Opaca, sem backdrop-filter: profundidade vem só de sombra difusa
- * e de um fio de luz de 1px no topo, nunca de transparência.
+ * builder). Papel elevado com fio de cabelo. Sem sombra: em composição de
+ * grade, o que separa um card do outro é o fio, não a profundidade.
  */
 .surface-panel {
   background: var(--surface);
-  box-shadow: inset 0 1px 0 var(--surface-edge-light), var(--surface-shadow);
+  border: 1px solid var(--border);
 }
 
 /*
- * .canon — guias verticais tracejadas que delimitam o cânone da página
- * (espírito Profound: "isto é engenharia com régua, não um template solto").
- * Não define largura nem margem — cada página combina `canon` com as
- * próprias classes Tailwind de `max-w-*`/`mx-auto`, senão a regra abaixo
- * (que vem depois do `@import "tailwindcss"` no arquivo, logo vence no
- * empate de especificidade) atropelaria o `max-w-*` de cada tela. As linhas
- * ficam na borda externa do container — o padding interno de cada página
- * abre o respiro entre a guia e o conteúdo de verdade.
+ * .canon — guias verticais tracejadas que delimitam o cânone da página. Vem
+ * do Profound, onde a régua aparece na página inteira e é o que faz a coisa
+ * parecer medida em vez de solta. Não define largura nem margem: cada página
+ * combina `canon` com as próprias classes `max-w-*`/`mx-auto`, senão esta
+ * regra (posterior ao `@import "tailwindcss"`, logo vencedora no empate de
+ * especificidade) atropelaria o `max-w-*` de cada tela.
  */
 .canon {
   position: relative;
@@ -224,28 +220,24 @@ body {
 .canon::after { right: 0; }
 
 /*
- * .cta-signature — a assinatura tátil do botão principal (espírito Koyeb):
- * sombra dura deslocada em vez da sombra difusa colorida que o `Button`
- * `primary` já tem por padrão (definido em `components/ui/index.tsx`, fora
- * do escopo desta revisão). Aplicada via `className` só na ação primária de
- * cada tela — nunca em toda ocorrência de botão — porque o ponto é ser rara.
- * O `!important` aqui é deliberado: sem ele, a sombra difusa do componente
- * (mesma especificidade, gerada depois no `@theme`) venceria no empate.
+ * .cta-signature — a assinatura tátil da ação principal. Sombra dura
+ * deslocada em menta; ao passar o mouse o objeto sobe e a sombra cresce, como
+ * papel levantado da mesa. Aplicada só na ação primária de cada tela — o
+ * ponto é ser rara.
  */
 .cta-signature {
-  box-shadow: 3px 3px 0 0 var(--accent-soft) !important;
+  box-shadow: var(--shadow-hard-accent) !important;
   transition:
     transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1),
-    filter 150ms ease;
+    box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 .cta-signature:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 0 var(--accent-soft) !important;
+  box-shadow: 5px 5px 0 0 var(--mint-400) !important;
 }
 .cta-signature:active {
   transform: translate(0, 0);
-  box-shadow: 1px 1px 0 0 var(--accent-soft) !important;
+  box-shadow: 1px 1px 0 0 var(--mint-400) !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .cta-signature:hover,
@@ -253,16 +245,15 @@ body {
 }
 
 /*
- * Paleta de comandos (⌘K). Entrada curta e de cima para baixo: o painel cai
- * alguns pixels e assenta, o véu só aparece. Movimento curto de propósito —
- * é chrome que abre dezenas de vezes por dia, e animação longa em coisa
- * frequente vira atraso percebido. A regra global de `prefers-reduced-motion`
- * logo abaixo só desliga `transition`, não `animation`, por isso o corte
- * explícito aqui.
+ * Paleta de comandos (⌘K). Entrada curta e de cima para baixo. Movimento
+ * curto de propósito — é chrome que abre dezenas de vezes por dia, e animação
+ * longa em coisa frequente vira atraso percebido. A regra global de
+ * `prefers-reduced-motion` lá embaixo só desliga `transition`, não
+ * `animation`, por isso o corte explícito aqui.
  */
 @keyframes command-panel-in {
-  from { opacity: 0; transform: translateY(-8px) scale(0.985); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 @keyframes command-veil-in {
   from { opacity: 0; }
@@ -279,21 +270,22 @@ body {
   * { transition-duration: 0.01ms !important; }
 }
 
-/* Canvas do React Flow no tema escuro */
+/* Canvas do React Flow sobre papel */
 .react-flow { background: var(--background); }
-.react-flow__edge-path { stroke: #4a433c; stroke-width: 2; }
-.react-flow__edge.selected .react-flow__edge-path { stroke: var(--accent); }
+.react-flow__edge-path { stroke: var(--ink-500); stroke-width: 2; }
+.react-flow__edge.selected .react-flow__edge-path { stroke: var(--ink-900); }
 .react-flow__handle {
   width: 10px;
   height: 10px;
-  background: var(--surface-2);
-  border: 2px solid #4a433c;
+  border-radius: 2px;
+  background: var(--paper-50);
+  border: 2px solid var(--ink-900);
 }
-.react-flow__handle-connecting { background: var(--accent); }
+.react-flow__handle-connecting { background: var(--mint-400); }
 .react-flow__controls-button {
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--border);
-  fill: var(--foreground);
+  background: var(--paper-50);
+  border-bottom: 1px solid var(--ink-900);
+  fill: var(--ink-900);
 }
-.react-flow__controls-button:hover { background: var(--border); }
+.react-flow__controls-button:hover { background: var(--mint-400); }
 .react-flow__attribution { display: none; }

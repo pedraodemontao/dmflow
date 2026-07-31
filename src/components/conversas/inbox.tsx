@@ -262,7 +262,7 @@ export function Inbox({
           </div>
         ) : (
           <>
-            <header className="glass-chrome flex h-14 shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5">
+            <header className="chrome-panel flex h-14 shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5">
               <Avatar
                 src={thread.contact.profile_pic_url}
                 label={displayName(thread.contact)}
@@ -313,7 +313,7 @@ export function Inbox({
                 </Button>
 
                 {snoozeOpen && (
-                  <div className="glass-pop absolute right-0 top-9 z-10 w-36 overflow-hidden rounded-2xl">
+                  <div className="pop-panel absolute right-0 top-9 z-10 w-36 overflow-hidden rounded-2xl">
                     {SNOOZE_OPTIONS.map((option) => (
                       <button
                         key={option.hours}

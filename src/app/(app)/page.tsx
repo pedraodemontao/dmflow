@@ -47,7 +47,7 @@ export default async function Home({
 
   return (
     <>
-      <header className="glass-chrome flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">Painel</h1>
         <Link href="/automacoes/nova">
           <Button size="sm" className="cta-signature">
