@@ -2,7 +2,7 @@ import { concentrationSignal } from '@/lib/risk/concentration'
 import { nightSendSignal } from '@/lib/risk/night-sends'
 import { publicReplyShareSignal, type SendCounts } from '@/lib/risk/public-reply-share'
 import { similaritySignal } from '@/lib/risk/similarity'
-import type { RiskLevel, RiskReport, RiskSignal } from '@/lib/risk/types'
+import type { RiskLevel, RiskReport, RiskSignal, RiskSignalId } from '@/lib/risk/types'
 import { volumeSignal } from '@/lib/risk/volume'
 
 export interface RiskInput {
@@ -24,10 +24,38 @@ export interface RiskInput {
 const SEVERITY: Record<RiskLevel, number> = { vermelho: 0, amarelo: 1, verde: 2 }
 
 /**
+ * Sinais que sozinhos já justificam vermelho geral: foram os que causaram a
+ * restrição real de 30/07/2026 (texto repetido, em volume). Um sinal
+ * secundário vermelho sozinho (concentração, resposta pública ou madrugada)
+ * não é raro o bastante para "pare e olhe agora" — mas dois ou mais juntos,
+ * ainda que secundários, sim.
+ */
+const HIGH_PRIORITY_IDS: RiskSignalId[] = ['similaridade', 'volume']
+
+/**
+ * O nível geral não é simplesmente o pior sinal — senão um único sinal
+ * ruidoso (ex.: madrugada com pouco volume) pintaria o painel inteiro de
+ * vermelho e o dono aprenderia a ignorar o alerta, que é o pior desfecho
+ * possível pra um monitor. Vermelho geral exige um sinal de alta prioridade
+ * vermelho, ou dois ou mais sinais vermelhos (de qualquer tipo).
+ */
+function overallLevel(signals: RiskSignal[]): RiskLevel {
+  const redSignals = signals.filter((s) => s.level === 'vermelho')
+  const hasHighPriorityRed = redSignals.some((s) => HIGH_PRIORITY_IDS.includes(s.id))
+
+  if (hasHighPriorityRed || redSignals.length >= 2) return 'vermelho'
+  if (redSignals.length === 1) return 'amarelo'
+
+  return signals.some((s) => s.level === 'amarelo') ? 'amarelo' : 'verde'
+}
+
+/**
  * Junta os cinco sinais num veredito só. A ordem de entrada já é a ordem de
  * prioridade — similaridade primeiro, é o sinal mais importante (repetição de
  * texto foi a causa direta da restrição de 30/07/2026) — e `Array#sort` é
  * estável, então empate de nível mantém essa prioridade em vez de embaralhar.
+ * A recomendação aponta sempre para o sinal individualmente mais crítico,
+ * mesmo quando ele sozinho não basta para acender o vermelho geral.
  */
 export function assessRisk(input: RiskInput): RiskReport {
   const signals: RiskSignal[] = [
@@ -40,7 +68,7 @@ export function assessRisk(input: RiskInput): RiskReport {
 
   const sorted = [...signals].sort((a, b) => SEVERITY[a.level] - SEVERITY[b.level])
   const worst = sorted[0]
-  const level: RiskLevel = worst?.level ?? 'verde'
+  const level = overallLevel(signals)
 
   const recommendation =
     !worst || worst.level === 'verde'

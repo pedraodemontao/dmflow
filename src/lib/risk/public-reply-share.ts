@@ -14,6 +14,12 @@ export interface SendCounts {
 }
 
 const THRESHOLDS = { amarelo: 0.2, vermelho: 0.4 }
+/**
+ * Abaixo disso, mesmo 100% de resposta pública não vira vermelho — denominador
+ * pequeno demais pra confirmar padrão (2 de 4 é 50% e não quer dizer nada).
+ * O sinal fica no máximo amarelo até o volume confirmar.
+ */
+const MIN_TOTAL_FOR_RED = 15
 
 export function publicReplyShareSignal(counts: SendCounts): RiskSignal {
   const total = counts.dm + counts.privateReply + counts.publicReply
@@ -24,14 +30,18 @@ export function publicReplyShareSignal(counts: SendCounts): RiskSignal {
   }
 
   const ratio = counts.publicReply / total
-  const level = levelFromRatio(ratio, THRESHOLDS)
+  const rawLevel = levelFromRatio(ratio, THRESHOLDS)
+  const cappedByVolume = rawLevel === 'vermelho' && total < MIN_TOTAL_FOR_RED
+  const level = cappedByVolume ? 'amarelo' : rawLevel
   const pct = formatPercent(ratio)
 
   const detail =
     level === 'vermelho'
       ? `${pct} dos envios recentes (${counts.publicReply} de ${total}) foram respostas públicas em comentário — prefira a DM quando a janela permitir.`
       : level === 'amarelo'
-        ? `${pct} dos envios recentes (${counts.publicReply} de ${total}) foram respostas públicas — é o formato mais visível, vale acompanhar.`
+        ? cappedByVolume
+          ? `${pct} dos envios recentes (${counts.publicReply} de ${total}) foram respostas públicas — proporção alta, mas ainda é pouco volume (< ${MIN_TOTAL_FOR_RED}) para confirmar um padrão.`
+          : `${pct} dos envios recentes (${counts.publicReply} de ${total}) foram respostas públicas — é o formato mais visível, vale acompanhar.`
         : `${pct} dos envios recentes (${counts.publicReply} de ${total}) foram respostas públicas.`
 
   return { id: 'resposta_publica', label, level, value: ratio, detail }

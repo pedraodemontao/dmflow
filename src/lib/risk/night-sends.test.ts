@@ -62,4 +62,30 @@ describe('nightSendSignal', () => {
     const calm = nightSendSignal(Array(20).fill(midday), account)
     expect(calm.level).toBe('verde')
   })
+
+  describe('piso de volume para vermelho', () => {
+    it('6 de 6 (100%) é o cenário real que motivou o ajuste: fica amarelo, não vermelho', () => {
+      const signal = nightSendSignal(timestamps(6, 0), NO_QUIET_HOURS)
+      expect(signal.level).toBe('amarelo')
+      expect(signal.detail).toContain('pouco volume')
+    })
+
+    it('amarelo logo antes do piso de volume (14 de 14 = 100%)', () => {
+      const signal = nightSendSignal(timestamps(14, 0), NO_QUIET_HOURS)
+      expect(signal.level).toBe('amarelo')
+    })
+
+    it('o piso de volume é inclusivo: com 15 envios, 100% já vira vermelho', () => {
+      const signal = nightSendSignal(timestamps(15, 0), NO_QUIET_HOURS)
+      expect(signal.level).toBe('vermelho')
+      expect(signal.detail).not.toContain('pouco volume')
+    })
+
+    it('o piso só rebaixa vermelho: um amarelo de verdade continua amarelo com amostra pequena', () => {
+      // 1 de 6 ≈ 17%, já cai no corte amarelo por conta própria (>= 15%) —
+      // o piso de volume não entra em jogo porque o nível bruto nem é vermelho.
+      const signal = nightSendSignal(timestamps(1, 5), NO_QUIET_HOURS)
+      expect(signal.level).toBe('amarelo')
+    })
+  })
 })
