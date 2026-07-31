@@ -3,9 +3,19 @@
 import { Plus, Trash2, X } from 'lucide-react'
 
 import { Button, Input, Label, Select, Textarea } from '@/components/ui'
-import { NODE_META } from '@/components/automacoes/flow-nodes'
+import { CATEGORY_LABEL, NODE_META } from '@/components/automacoes/flow-nodes'
+import { cn } from '@/lib/utils'
 import type { FlowOption } from '@/lib/data'
 import type { FlowNode } from '@/lib/flow/types'
+
+/** Wrapper dos mini-cards de item de lista (botão, card, caminho...) — o
+ *  mesmo visual em toda a edição de arrays, só um pouco mais "levantado" que
+ *  um campo comum, pra marcar onde um item termina e o outro começa. */
+const ITEM_CARD =
+  'rounded-xl border border-border/70 bg-surface-2/40 p-3 shadow-[inset_0_1px_0_rgb(255_255_255_/4%)]'
+
+/** Wrapper dos avisos informativos (bloco sem opção, aviso de descadastro...). */
+const INFO_BOX = 'rounded-xl border border-border/70 bg-surface-2/60 p-3 text-[11px] leading-relaxed text-muted'
 
 const MEDIA_LABEL: Record<'video' | 'audio' | 'file', string> = {
   video: 'vídeo',
@@ -33,21 +43,29 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
   }
 
   return (
-    <div className="glass-chrome flex w-80 shrink-0 flex-col border-l border-white/[0.06]">
-      <div className="flex h-14 items-center gap-2 border-b border-white/[0.06] px-4">
-        <Icon className={`size-4 ${meta.color}`} />
-        <span className="text-sm font-semibold">{meta.label}</span>
+    <div className="glass-chrome flex w-96 shrink-0 flex-col border-l border-white/[0.06]">
+      <div className="flex h-16 items-center gap-3 border-b border-white/[0.06] px-5">
+        <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg border', meta.chip)}>
+          <Icon className={cn('size-4', meta.color)} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
+            {CATEGORY_LABEL[meta.category]}
+          </p>
+          <p className="truncate text-sm font-semibold leading-tight">{meta.label}</p>
+        </div>
         <button
           type="button"
           onClick={onClose}
-          className="ml-auto text-muted hover:text-foreground"
+          aria-label="Fechar inspetor"
+          className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
         >
           <X className="size-4" />
         </button>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-4">
-        <p className="text-xs leading-relaxed text-muted">{meta.description}</p>
+      <div className="flex-1 space-y-6 overflow-y-auto p-5">
+        <p className={INFO_BOX}>{meta.description}</p>
 
         {(node.type === 'message' || node.type === 'buttons') && (
           <div>
@@ -127,9 +145,9 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
         {node.type === 'buttons' && (
           <div>
             <Label>Botões (máximo 3)</Label>
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {node.buttons.map((b, i) => (
-                <div key={i} className="rounded-lg border border-border p-2.5">
+                <div key={i} className={ITEM_CARD}>
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-[11px] text-muted">Botão {i + 1}</span>
                     <button
@@ -185,9 +203,9 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
         {node.type === 'carousel' && (
           <div>
             <Label>Cards (máximo 10)</Label>
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {node.cards.map((card, i) => (
-                <div key={i} className="rounded-lg border border-border p-2.5">
+                <div key={i} className={ITEM_CARD}>
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-[11px] text-muted">Card {i + 1}</span>
                     <button
@@ -610,7 +628,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
           <div>
             <Label>Fluxo de destino</Label>
             {flowOptions.length === 0 ? (
-              <p className="rounded-lg border border-border bg-surface-2 p-3 text-[11px] text-muted">
+              <p className={INFO_BOX}>
                 Não há outro fluxo para pular. Crie outra automação primeiro.
               </p>
             ) : (
@@ -637,7 +655,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
         )}
 
         {node.type === 'unsubscribe' && (
-          <p className="rounded-lg border border-border bg-surface-2 p-3 text-[11px] text-muted">
+          <p className={INFO_BOX}>
             Marca o contato como descadastrado. Nenhum fluxo dispara mais para ele — nem por
             comentário, nem por DM. Use depois de uma pergunta do tipo “quer parar de receber?”.
           </p>
@@ -723,9 +741,9 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
         {node.type === 'condition' && (
           <div>
             <Label>Caminhos</Label>
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {node.cases.map((branch, i) => (
-                <div key={i} className="rounded-lg border border-border p-2.5">
+                <div key={i} className={ITEM_CARD}>
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-[11px] text-muted">Caminho {i + 1}</span>
                     <button
@@ -821,7 +839,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
         )}
       </div>
 
-      <div className="border-t border-white/[0.06] p-4">
+      <div className="border-t border-white/[0.06] p-5">
         <Button
           variant="danger"
           size="sm"

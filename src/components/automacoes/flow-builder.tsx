@@ -5,7 +5,9 @@ import {
   addEdge,
   Background,
   BackgroundVariant,
+  ConnectionLineType,
   Controls,
+  MarkerType,
   ReactFlow,
   ReactFlowProvider,
   useEdgesState,
@@ -16,13 +18,19 @@ import {
 } from '@xyflow/react'
 import { Plus } from 'lucide-react'
 
-import { NODE_META, nodeTypes } from '@/components/automacoes/flow-nodes'
+import { CATEGORY_LABEL, CATEGORY_ORDER, NODE_META, nodeTypes } from '@/components/automacoes/flow-nodes'
 import { NodeInspector } from '@/components/automacoes/node-inspector'
 import { Button } from '@/components/ui'
 import type { FlowOption } from '@/lib/data'
 import { blankNode, definitionToGraph, graphToDefinition } from '@/lib/flow/transform'
 import type { FlowDefinition, FlowNode } from '@/lib/flow/types'
 import { cn } from '@/lib/utils'
+
+/** Mesmo cinza-grafite de `.react-flow__edge-path` (globals.css) — arestas e a
+ *  seta que marca o destino precisam nascer da mesma cor, e esse token não é
+ *  semântico (é um ajuste local só para o canvas), então repete o literal em
+ *  vez de inventar uma variável nova para um único uso. */
+const EDGE_COLOR = '#4a433c'
 
 const PALETTE: FlowNode['type'][] = [
   'message',
@@ -178,7 +186,13 @@ function Canvas({
           nodeTypes={nodeTypes}
           fitView
           proOptions={{ hideAttribution: true }}
-          defaultEdgeOptions={{ animated: true }}
+          defaultEdgeOptions={{
+            animated: true,
+            style: { stroke: EDGE_COLOR, strokeWidth: 2 },
+            markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: EDGE_COLOR },
+          }}
+          connectionLineType={ConnectionLineType.Bezier}
+          connectionLineStyle={{ stroke: 'var(--accent)', strokeWidth: 2.5 }}
         >
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#3a332c" />
           <Controls className="!bottom-4 !left-4" showInteractive={false} />
@@ -191,23 +205,43 @@ function Canvas({
           </Button>
 
           {paletteOpen && (
-            <div className="glass-pop mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-2xl">
-              {PALETTE.map((type) => {
-                const meta = NODE_META[type]
-                const Icon = meta.icon
+            <div className="glass-pop mt-2 w-72 max-h-[75vh] overflow-y-auto rounded-2xl py-1.5">
+              {CATEGORY_ORDER.map((category) => {
+                const types = PALETTE.filter((type) => NODE_META[type].category === category)
+                if (types.length === 0) return null
                 return (
-                  <button
-                    key={type}
-                    type="button"
-                    onClick={() => addNode(type)}
-                    className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
-                  >
-                    <Icon className={cn('mt-0.5 size-4 shrink-0', meta.color)} />
-                    <div>
-                      <p className="text-xs font-medium">{meta.label}</p>
-                      <p className="text-[11px] leading-tight text-muted">{meta.description}</p>
-                    </div>
-                  </button>
+                  <div key={category}>
+                    <p className="sticky top-0 z-10 bg-[var(--glass-fill-pop)] px-3 pb-1.5 pt-2.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                      {CATEGORY_LABEL[category]}
+                    </p>
+                    {types.map((type) => {
+                      const meta = NODE_META[type]
+                      const Icon = meta.icon
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => addNode(type)}
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+                        >
+                          <span
+                            className={cn(
+                              'flex size-7 shrink-0 items-center justify-center rounded-lg border',
+                              meta.chip,
+                            )}
+                          >
+                            <Icon className={cn('size-3.5', meta.color)} />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-medium">{meta.label}</p>
+                            <p className="truncate text-[11px] leading-tight text-muted">
+                              {meta.description}
+                            </p>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
                 )
               })}
             </div>

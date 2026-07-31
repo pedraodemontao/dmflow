@@ -108,9 +108,9 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
               type="button"
               onClick={() => setStep(id)}
               className={cn(
-                'flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition-colors',
+                'flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition-all duration-150',
                 step === id
-                  ? 'bg-surface-2 font-medium text-foreground'
+                  ? 'bg-surface-2 font-medium text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/6%)]'
                   : 'text-muted hover:text-foreground',
               )}
             >
