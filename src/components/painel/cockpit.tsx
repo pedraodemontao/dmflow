@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 
 import { FailedRuns } from '@/components/painel/failed-runs'
+import { Risco } from '@/components/painel/risco'
 import { Badge, Card, EmptyState } from '@/components/ui'
 import type { CockpitData } from '@/lib/data'
 import type { RiskLevel } from '@/lib/risk/types'
@@ -31,12 +32,6 @@ const RISK_LABEL: Record<RiskLevel, string> = {
   verde: 'baixo',
   amarelo: 'atenção',
   vermelho: 'alto',
-}
-
-const RISK_BADGE_TONE: Record<RiskLevel, 'success' | 'warning' | 'neutral'> = {
-  verde: 'success',
-  amarelo: 'warning',
-  vermelho: 'neutral',
 }
 
 function Eyebrow({ children, hint }: { children: ReactNode; hint?: string }) {
@@ -225,12 +220,6 @@ export function Cockpit({ data }: { data: CockpitData }) {
               <span className="text-[11px] text-muted">ontem: {leadsTrend.yesterday}</span>
             </div>
 
-            {riskReport && !riskElevated && (
-              <p className="mt-3 flex items-center gap-1.5 border-t border-border pt-3 text-[11px] text-muted">
-                Risco de flag
-                <Badge tone={RISK_BADGE_TONE[riskReport.level]}>{RISK_LABEL[riskReport.level]}</Badge>
-              </p>
-            )}
           </Card>
 
           <Card className="overflow-hidden">
@@ -304,6 +293,16 @@ export function Cockpit({ data }: { data: CockpitData }) {
             )}
           </Card>
         </div>
+
+        {/* O banner lá em cima só dá o veredito. O detalhamento por sinal é o
+            diferencial real contra o ManyChat — é o que diz POR QUE o risco
+            subiu e o que dá para mudar. Fica aqui embaixo justamente porque é
+            leitura, não ação. */}
+        {riskReport && (
+          <div className="mt-4">
+            <Risco report={riskReport} />
+          </div>
+        )}
       </section>
     </div>
   )
