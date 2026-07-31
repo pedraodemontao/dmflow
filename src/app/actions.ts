@@ -32,13 +32,41 @@ const NODE_LABEL: Record<string, string> = {
   ask: 'Pergunta',
 }
 
-/** Só o texto que a pessoa lê. Bloco de lógica não precisa variar. */
+/**
+ * Todo texto que o contato lê. Bloco de lógica não precisa variar.
+ *
+ * A versão anterior olhava só o campo `text`, e por isso três superfícies
+ * escapavam da trava anti-spam: as bolhas do bloco `bubbles`, a legenda de
+ * mídia e a repergunta do `ask`. Um bloco de 5 bolhas idênticas ativava sem
+ * reclamação — e `bubbles` é justamente o bloco mais "humano", o que mais vai
+ * ser usado em volume. O engine roda `spin()` em todos eles, então a variação
+ * sempre foi suportada; o que faltava era cobrar.
+ */
 function readableTexts(definition: AutomationInput['definition']) {
-  return Object.entries(definition.nodes).flatMap(([id, node]) =>
-    'text' in node && typeof node.text === 'string'
-      ? [{ id, label: NODE_LABEL[node.type] ?? node.type, text: node.text }]
-      : [],
-  )
+  return Object.entries(definition.nodes).flatMap(([id, node]) => {
+    const label = NODE_LABEL[node.type] ?? node.type
+    const textos: Array<{ id: string; label: string; text: string }> = []
+
+    if ('text' in node && typeof node.text === 'string') {
+      textos.push({ id, label, text: node.text })
+    }
+
+    if (node.type === 'bubbles') {
+      node.bubbles.forEach((bubble, index) => {
+        textos.push({ id: `${id}.${index}`, label: `${label} · bolha ${index + 1}`, text: bubble.text })
+      })
+    }
+
+    if (node.type === 'ask' && node.retryText) {
+      textos.push({ id: `${id}.retry`, label: `${label} · repergunta`, text: node.retryText })
+    }
+
+    if ('caption' in node && typeof node.caption === 'string' && node.caption) {
+      textos.push({ id: `${id}.caption`, label: `${label} · legenda`, text: node.caption })
+    }
+
+    return textos
+  })
 }
 
 export interface ActionResult {

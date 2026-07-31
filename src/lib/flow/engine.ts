@@ -80,6 +80,15 @@ async function deliver(
     ...(button.url ? { url: interpolate(button.url, contact, ctx) } : {}),
   }))
 
+  // Resposta rápida ia CRUA para a Meta enquanto o botão ao lado interpolava.
+  // Quem escrevesse `{Quero|Bora}` ou `{{nome}}` numa resposta rápida via o
+  // texto sair literal para o contato, com as chaves. A tela agora ensina a
+  // sintaxe logo acima, então a chance de alguém tentar só aumentou.
+  const quickReplies = payload.quickReplies?.map((quickReply) => ({
+    ...quickReply,
+    title: spin(interpolate(quickReply.title, contact, ctx)),
+  }))
+
   if (ctx.pendingCommentId) {
     const commentId = ctx.pendingCommentId
     delete ctx.pendingCommentId
@@ -91,7 +100,7 @@ async function deliver(
       // Botões e quick replies iam para o lixo aqui: o fluxo nascido de
       // comentário perdia justamente o que abre a janela de 24h.
       buttons,
-      quickReplies: payload.quickReplies,
+      quickReplies,
     })
     await logSend(account.id, 'private_reply')
   } else {
@@ -111,7 +120,7 @@ async function deliver(
         accessToken: account.access_token,
         recipientId: contact.ig_user_id,
         text,
-        quickReplies: payload.quickReplies,
+        quickReplies,
       })
     }
     await logSend(account.id, 'dm')
