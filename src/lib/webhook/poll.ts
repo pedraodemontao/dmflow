@@ -24,9 +24,27 @@ interface RawComment {
   from?: { id?: string; username?: string }
 }
 
-async function fetchJson<T>(url: string, token: string): Promise<T | null> {
+/**
+ * Erro que impede a varredura de acontecer — token morto, conta bloqueada,
+ * Meta fora do ar. Diferente de "varri e não achei nada", que é sucesso.
+ *
+ * Em 30/07 o token foi invalidado e esta função devolvia `null` para tudo:
+ * o tick reportava sucesso por 22 horas com o sistema morto.
+ */
+export class PollError extends Error {
+  constructor(public readonly detail: string) {
+    super(detail)
+  }
+}
+
+async function fetchJson<T>(url: string, token: string): Promise<T> {
   const res = await fetch(url, { headers: { authorization: `Bearer ${token}` }, cache: 'no-store' })
-  if (!res.ok) return null
+
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: { message?: string } }
+    throw new PollError(body.error?.message ?? `HTTP ${res.status} em ${new URL(url).pathname}`)
+  }
+
   return res.json() as Promise<T>
 }
 
@@ -35,7 +53,7 @@ async function pollComments(account: Account): Promise<number> {
     `${GRAPH}/me/media?fields=id&limit=${MEDIA_LIMIT}`,
     account.access_token,
   )
-  if (!media?.data?.length) return 0
+  if (!media.data?.length) return 0
 
   const cutoff = Date.now() - LOOKBACK_MS
   const events: Array<{ dedupKey: string; igAccountId: string; kind: 'comment'; value: CommentValue }> = []
@@ -46,7 +64,7 @@ async function pollComments(account: Account): Promise<number> {
       account.access_token,
     )
 
-    for (const comment of comments?.data ?? []) {
+    for (const comment of comments.data ?? []) {
       if (comment.timestamp && new Date(comment.timestamp).getTime() < cutoff) continue
 
       const fromId = comment.from?.id
@@ -90,7 +108,7 @@ async function pollMessages(account: Account): Promise<number> {
     `${GRAPH}/me/conversations?fields=messages.limit(5){id,created_time,from,message}&limit=15`,
     account.access_token,
   )
-  if (!conversations?.data?.length) return 0
+  if (!conversations.data?.length) return 0
 
   const cutoff = Date.now() - LOOKBACK_MS
   const events: Array<{ dedupKey: string; igAccountId: string; kind: 'messaging'; value: MessagingValue }> = []
@@ -120,6 +138,8 @@ export interface PollResult {
   comments: number
   messages: number
   processed: number
+  /** Contas que não deu nem para varrer. Vazio = varredura saudável. */
+  errors: Array<{ account: string; detail: string }>
 }
 
 export async function pollAll(): Promise<PollResult> {
@@ -128,18 +148,30 @@ export async function pollAll(): Promise<PollResult> {
 
   let comments = 0
   let messages = 0
+  const errors: PollResult['errors'] = []
 
   for (const account of accounts) {
-    comments += await pollComments(account).catch((error) => {
-      console.error('[dm-flow] poll de comentários falhou:', error)
-      return 0
-    })
-    messages += await pollMessages(account).catch((error) => {
-      console.error('[dm-flow] poll de mensagens falhou:', error)
-      return 0
-    })
+    const name = account.username ?? account.ig_user_id
+
+    try {
+      comments += await pollComments(account)
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      console.error('[dm-flow] poll de comentários falhou:', name, detail)
+      errors.push({ account: name, detail })
+    }
+
+    try {
+      messages += await pollMessages(account)
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error)
+      console.error('[dm-flow] poll de mensagens falhou:', name, detail)
+      errors.push({ account: name, detail })
+    }
   }
 
-  const processed = comments + messages > 0 ? await processPending(50) : 0
-  return { comments, messages, processed }
+  // A fila é varrida mesmo sem novidade: pode haver evento adiado por
+  // silêncio, por pânico ou por cap que já venceu.
+  const processed = await processPending(50)
+  return { comments, messages, processed, errors }
 }

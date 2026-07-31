@@ -109,5 +109,19 @@ export async function GET(request: NextRequest) {
   const resumed = await resumeSleepingRuns()
   const refreshed = await refreshExpiringTokens()
 
-  return Response.json({ polled, requeued, processed, resumed, refreshed })
+  const body = { polled, requeued, processed, resumed, refreshed }
+
+  // Não conseguir varrer NENHUMA conta é o sistema parado, não um tick
+  // tranquilo. Em 30/07 isso durou 22h reportando 200 e "succeeded" no
+  // pg_cron. Responder 503 faz o job aparecer como falho no histórico,
+  // que é o único lugar onde alguém olharia.
+  if (polled.errors.length > 0) {
+    console.error('[dm-flow] varredura falhou:', JSON.stringify(polled.errors))
+    return Response.json(
+      { ...body, ok: false, error: 'nao foi possivel varrer a conta no Instagram' },
+      { status: 503 },
+    )
+  }
+
+  return Response.json({ ...body, ok: true })
 }

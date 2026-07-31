@@ -54,6 +54,13 @@ export function NodeInspector({ node, isEntry, onChange, onDelete, onClose }: Pr
               <code className="text-accent">{'{{username}}'}</code> para personalizar, e{' '}
               <code className="text-accent">{'{opção1|opção2}'}</code> para variar o texto a cada
               envio — mensagem idêntica em volume dispara o filtro de spam.
+              {node.type === 'buttons' && (
+                <>
+                  {' '}
+                  No link do botão, <code className="text-accent">{'{{contact_id}}'}</code> permite
+                  a sua página avisar quem converteu.
+                </>
+              )}
             </p>
           </div>
         )}
@@ -144,6 +151,10 @@ export function NodeInspector({ node, isEntry, onChange, onDelete, onClose }: Pr
                       patch({ buttons: next })
                     }}
                   />
+                  <p className="mt-1 text-[11px] text-muted">
+                    Com link, o botão abre a página. Sem link, ele vira resposta — e o clique
+                    abre a janela de 24h, liberando as próximas mensagens.
+                  </p>
                 </div>
               ))}
               {node.buttons.length < 3 && (
