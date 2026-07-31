@@ -617,10 +617,34 @@ export async function processPending(limit = 20): Promise<number> {
         await handleMessaging(account, event.value)
       } else {
         await handleComment(account, event.value, row.public_reply_sent, async () => {
-          await supabaseAdmin
-            .from('webhook_events')
-            .update({ public_reply_sent: true })
-            .eq('id', row.id)
+          // A marca é o que impede o retry de republicar o comentário, e
+          // `.update()` não lança: um erro aqui passava batido e o mesmo
+          // comentário podia receber duas respostas públicas. Tenta de novo
+          // uma vez e, falhando, grita — a linha do log é a única pista de que
+          // a próxima tentativa pode duplicar.
+          //
+          // Rede de segurança de última instância: a Meta recusa a segunda
+          // private reply do mesmo comentário com o código 10900, que está
+          // classificado como permanente em `instagram/errors.ts`. Ou seja, a
+          // duplicata falha em vez de sair — mas contar com isso seria contar
+          // com a política de terceiro, então a marca vem primeiro.
+          const marcar = () =>
+            supabaseAdmin
+              .from('webhook_events')
+              .update({ public_reply_sent: true })
+              .eq('id', row.id)
+
+          const { error: marcaErro } = await marcar()
+          if (marcaErro) {
+            const { error: segundaTentativa } = await marcar()
+            if (segundaTentativa) {
+              console.error(
+                '[dm-flow] NÃO consegui marcar resposta pública como enviada:',
+                row.dedup_key,
+                segundaTentativa.message,
+              )
+            }
+          }
         })
       }
 
