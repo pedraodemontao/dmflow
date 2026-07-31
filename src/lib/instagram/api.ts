@@ -109,18 +109,56 @@ export function sendImage(args: {
  * Só uma vez por comentário e até 7 dias depois dele.
  * É o que faz o "comenta EU QUERO que eu te mando" funcionar.
  */
-export function sendPrivateReply(args: {
+export async function sendPrivateReply(args: {
   igUserId: string
   accessToken: string
   commentId: string
   text: string
+  buttons?: Array<{ title: string; url?: string; payload?: string }>
+  quickReplies?: QuickReply[]
 }) {
-  return send({
-    igUserId: args.igUserId,
-    accessToken: args.accessToken,
-    recipient: { comment_id: args.commentId },
-    message: { text: args.text },
-  })
+  const recipient = { comment_id: args.commentId }
+  const base = { igUserId: args.igUserId, accessToken: args.accessToken, recipient }
+
+  // Botão na private reply é o que destrava fluxo de comentário: clicar num
+  // botão de postback conta como mensagem da pessoa e ABRE a janela de 24h.
+  // Sem isso, a automação só consegue mandar uma mensagem e morre.
+  if (args.buttons?.length) {
+    try {
+      return await send({
+        ...base,
+        message: {
+          attachment: {
+            type: 'template',
+            payload: {
+              template_type: 'button',
+              text: args.text,
+              buttons: args.buttons.slice(0, 3).map((b) =>
+                b.url
+                  ? { type: 'web_url', url: b.url, title: b.title }
+                  : { type: 'postback', title: b.title, payload: b.payload ?? b.title },
+              ),
+            },
+          },
+        },
+      })
+    } catch (error) {
+      // Se a Meta recusar template nesta private reply, o texto ainda vale
+      // mais que perder o lead.
+      console.error('[dm-flow] private reply com botões falhou, caindo para texto:', error)
+    }
+  }
+
+  const message: Record<string, unknown> = { text: args.text }
+  if (args.quickReplies?.length) {
+    message.quick_replies = args.quickReplies.slice(0, 13).map((qr) => ({
+      content_type: 'text',
+      title: qr.title.slice(0, 20),
+      payload: qr.payload,
+    }))
+  }
+
+  return send({ ...base, message })
 }
 
 /** Resposta pública no próprio comentário. */

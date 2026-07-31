@@ -7,9 +7,14 @@ import { spin } from '@/lib/flow/spintax'
 import { findTrigger } from '@/lib/flow/triggers'
 import type { Account, Contact, Flow, FlowRun } from '@/types/db'
 
-/** Resposta instantânea a comentário é assinatura de bot: segura 30–120s. */
-const COMMENT_JITTER_MIN_MS = 30_000
-const COMMENT_JITTER_RANGE_MS = 90_000
+/**
+ * Resposta instantânea a comentário é assinatura de bot. O que importa para o
+ * filtro é não ser imediato e não ser sempre igual — não que demore muito.
+ * 8–35s dá variação suficiente e mantém a resposta na janela de atenção de
+ * quem acabou de comentar.
+ */
+const COMMENT_JITTER_MIN_MS = 8_000
+const COMMENT_JITTER_RANGE_MS = 27_000
 
 function jitteredProcessAfter(kind: 'messaging' | 'comment'): string {
   if (kind !== 'comment') return new Date().toISOString()
@@ -241,7 +246,13 @@ async function handleMessaging(account: Account, value: MessagingValue) {
   await startFlow({ account, flow, contact, input: text })
 }
 
-async function handleComment(account: Account, value: CommentValue) {
+async function handleComment(
+  account: Account,
+  value: CommentValue,
+  /** Já publicamos resposta para este comentário numa tentativa anterior? */
+  alreadyReplied = false,
+  onPublicReply?: () => Promise<void>,
+) {
   const fromId: string | undefined = value.from?.id
   const commentId: string | undefined = value.id
   const text: string = value.text ?? ''
@@ -273,7 +284,9 @@ async function handleComment(account: Account, value: CommentValue) {
 
   if (contact.automation_paused) return
 
-  if (trigger.public_reply) {
+  // Só publica uma vez por comentário. O retry do evento não pode republicar:
+  // comentário repetido é padrão de spam para o Instagram.
+  if (trigger.public_reply && !alreadyReplied) {
     try {
       await assertUnderSendCap(account.id)
       await replyToComment({
@@ -282,6 +295,8 @@ async function handleComment(account: Account, value: CommentValue) {
         message: spin(trigger.public_reply),
       })
       await logSend(account.id, 'public_reply')
+      // Marca ANTES de seguir: se o fluxo falhar depois, o retry já sabe.
+      await onPublicReply?.()
     } catch (error) {
       // Cap ou API fora: perder a resposta pública é aceitável, a DM não.
       console.error('[dm-flow] resposta pública pulada:', error)
@@ -354,8 +369,16 @@ export async function processPending(limit = 20): Promise<number> {
         continue
       }
 
-      if (event.kind === 'messaging') await handleMessaging(account, event.value)
-      else await handleComment(account, event.value)
+      if (event.kind === 'messaging') {
+        await handleMessaging(account, event.value)
+      } else {
+        await handleComment(account, event.value, row.public_reply_sent, async () => {
+          await supabaseAdmin
+            .from('webhook_events')
+            .update({ public_reply_sent: true })
+            .eq('id', row.id)
+        })
+      }
 
       await supabaseAdmin
         .from('webhook_events')

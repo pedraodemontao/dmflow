@@ -65,6 +65,10 @@ async function deliver(
       accessToken: account.access_token,
       commentId,
       text,
+      // Botões e quick replies iam para o lixo aqui: o fluxo nascido de
+      // comentário perdia justamente o que abre a janela de 24h.
+      buttons: payload.buttons,
+      quickReplies: payload.quickReplies,
     })
     await logSend(account.id, 'private_reply')
   } else {
