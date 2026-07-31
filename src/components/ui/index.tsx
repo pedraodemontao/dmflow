@@ -7,12 +7,12 @@ import { BadgeCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 /**
- * Anel de foco padrão. Tinta, não menta: sobre papel a menta viva fica em
- * ~1.6:1 e some. O anel é sinal de acessibilidade, não decoração — tem que
- * passar 3:1 contra qualquer superfície clara do app.
+ * Anel de foco padrão. Limão: sobre preto ele chega a ~15:1, então aqui a cor
+ * viva serve — diferente da revisão de base clara, onde o anel precisava ser
+ * tinta. É sinal de acessibilidade, não decoração.
  */
 const FOCUS_RING =
-  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground focus-visible:ring-offset-2 focus-visible:ring-offset-background'
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background'
 
 export function Button({
   variant = 'primary',
@@ -33,15 +33,17 @@ export function Button({
         'disabled:cursor-not-allowed disabled:opacity-45',
         FOCUS_RING,
         size === 'sm' ? 'h-8 px-3 text-[10px]' : 'h-10 px-4 text-[11px]',
-        // Primário: tinta sólida com papel por cima (~15:1). A menta NUNCA
-        // entra como preenchimento de botão — sobre papel ela não sustenta
-        // texto; ela aparece como sombra dura, via `.cta-signature`.
+        // Primário: branco sólido com preto por cima (~16:1), como o botão de
+        // ação do Unkey e do Profound. O limão NÃO preenche botão — ele é a
+        // caneta marca-texto da interface, e botão limão em toda tela mataria
+        // a raridade que faz a cor funcionar. Ele aparece como sombra dura,
+        // via `.cta-signature`.
         variant === 'primary' && 'bg-foreground text-background hover:bg-ink-hover',
         variant === 'outline' &&
-          'border border-foreground bg-surface text-foreground hover:bg-accent',
+          'border border-border bg-surface text-foreground hover:border-foreground',
         variant === 'ghost' && 'text-muted hover:bg-surface-2 hover:text-foreground',
         variant === 'danger' &&
-          'border border-danger bg-transparent text-danger hover:bg-danger hover:text-background',
+          'border border-danger/50 bg-transparent text-danger hover:bg-danger hover:text-background',
         className,
       )}
       {...props}
@@ -50,11 +52,11 @@ export function Button({
 }
 
 /**
- * Superfície de dado padrão. Papel elevado delimitado por fio de cabelo —
- * sem sombra: numa grade, o que separa um card do outro é o traço, não a
- * profundidade (ver `.surface-panel` em globals.css). Raio pequeno de
- * propósito; card arredondado com brilho era a silhueta que a revisão 4
- * abandonou.
+ * Superfície de dado padrão. Um degrau de luminância acima do fundo,
+ * delimitado por fio de cabelo — sem sombra: numa grade, o que separa um card
+ * do outro é o traço, não a profundidade (ver `.surface-panel` em
+ * globals.css). Raio pequeno de propósito; card arredondado com brilho era a
+ * silhueta que esta direção abandonou.
  */
 export function Card({ className, ...props }: ComponentProps<'div'>) {
   return <div className={cn('surface-panel rounded-md', className)} {...props} />
@@ -127,10 +129,11 @@ export function Badge({
   return (
     <span
       className={cn(
-        // Chip de tinta com quadradinho de cor, no lugar da pílula colorida.
-        // Sobre papel, texto colorido em fundo colorido claro raramente passa
-        // em contraste; tinta sobre papel passa sempre, e a cor vira o
-        // quadrado — que é sinal, não texto.
+        // Chip neutro com quadradinho de cor, no lugar da pílula colorida.
+        // O texto sai sempre em branco sobre a superfície recuada, então o
+        // contraste independe do tom; a cor vira o quadrado, que é sinal e
+        // não texto. Mantém a parcimônia: badge colorido em toda linha era
+        // parte do que fazia a tela parecer template.
         'label inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface-2 px-2 py-1 text-[9.5px] text-foreground',
       )}
     >
@@ -138,7 +141,7 @@ export function Badge({
         className={cn(
           'size-2 shrink-0 rounded-[2px]',
           tone === 'neutral' && 'bg-muted',
-          tone === 'success' && 'bg-accent',
+          tone === 'success' && 'bg-success',
           tone === 'warning' && 'bg-warning',
           tone === 'accent' && 'bg-accent',
         )}
@@ -160,9 +163,9 @@ export function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-muted/50 px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-md border border-dashed border-border px-6 py-16 text-center">
       {icon && (
-        <div className="mb-5 flex size-14 items-center justify-center rounded-sm border border-foreground bg-surface text-foreground">
+        <div className="mb-5 flex size-14 items-center justify-center rounded-sm border border-border bg-surface-2 text-muted">
           {icon}
         </div>
       )}
@@ -232,7 +235,7 @@ export function Avatar({
   return (
     <span
       className={cn(
-        'relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-sm border border-foreground bg-surface-2 font-mono text-foreground',
+        'relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-sm border border-border bg-surface-2 font-mono text-foreground',
         AVATAR_SIZE[size],
         className,
       )}
@@ -253,7 +256,7 @@ export function Avatar({
       {verified && (
         <span
           className={cn(
-            'absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-[2px] bg-accent text-foreground ring-2 ring-surface',
+            'absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-[2px] bg-accent text-background ring-2 ring-surface',
             AVATAR_BADGE_SIZE[size],
           )}
           title="Conta verificada"

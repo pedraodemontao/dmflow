@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
 /**
- * Primitivos de visualização de dado da direção "Papel".
+ * Primitivos de visualização de dado da direção "Marcador".
  *
  * Existem porque o painel tinha números de sobra e nenhum gráfico: risco com
  * cinco sinais de 0 a 1, funil com % por bloco, ranking de post por lead —
@@ -16,9 +16,10 @@ import { cn } from '@/lib/utils'
  * brigar com o estilo padrão deles daria mais trabalho que desenhar barra com
  * div. O que existe aqui é o que o produto usa; nada especulativo.
  *
- * Regra de cor que vale para os três: a menta preenche, nunca escreve. Todo
- * texto sai em tinta (`foreground`/`muted`) sobre papel, então o contraste
- * independe de qual tom a barra recebeu.
+ * Regra de cor que vale para os três: a barra preenche, o texto não muda de
+ * cor com ela. Todo rótulo sai em `foreground`/`muted`, então o contraste
+ * independe de qual tom a barra recebeu — e trocar a paleta de novo não
+ * quebra legibilidade nenhuma.
  */
 
 type Tone = 'ink' | 'accent' | 'warning' | 'danger'
@@ -72,12 +73,12 @@ export function BigNumber({
 }
 
 /**
- * Barra de 0 a 1 com trilho de tinta. Serve para qualquer fração: sinal de
+ * Barra de 0 a 1 com trilho delimitado por fio. Serve para qualquer fração: sinal de
  * risco, taxa de conclusão, proporção de resposta pública.
  *
- * O trilho tem fio de 1px porque sobre papel um trilho só de preenchimento
- * claro desaparece — e a barra vazia precisa ser tão legível quanto a cheia,
- * senão "risco baixo" vira "componente quebrado" aos olhos de quem lê.
+ * O trilho tem fio de 1px porque um trilho só de preenchimento some contra o
+ * fundo — e a barra vazia precisa ser tão legível quanto a cheia, senão
+ * "risco baixo" vira "componente quebrado" aos olhos de quem lê.
  */
 export function Meter({
   value,
@@ -101,7 +102,7 @@ export function Meter({
       aria-valuemax={100}
       aria-label={ariaLabel}
       className={cn(
-        'h-2.5 w-full overflow-hidden rounded-[2px] border border-foreground bg-surface-2',
+        'h-2.5 w-full overflow-hidden rounded-[2px] border border-border bg-surface-2',
         className,
       )}
     >

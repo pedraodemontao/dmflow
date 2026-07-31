@@ -53,51 +53,49 @@
 
 :root {
   /* ---------- 1. Primitivos ---------- */
-  --paper-50: #f6f4ee;  /* superfície elevada — card, painel */
-  --paper-100: #ece9e1; /* fundo da página */
-  --paper-200: #dedad0; /* superfície recuada — input, trilho de aba */
-  --paper-300: #c7c2b4; /* fio de cabelo */
+  --black-950: #050506; /* fundo da página */
+  --black-900: #0c0d0f; /* superfície elevada — card, painel, chrome */
+  --black-800: #141619; /* superfície recuada — input, trilho de aba */
+  --line-700: #23262b;  /* fio de cabelo */
 
-  --ink-900: #14120f;   /* tinta — texto e traço estrutural */
-  --ink-700: #302b23;   /* tinta pressionada — hover do botão primário */
-  --ink-500: #5b564c;   /* texto secundário */
+  --white-100: #ededee; /* texto principal */
+  --white-300: #cfd0d2; /* hover do botão primário (branco pressionado) */
+  --gray-400: #8d9098;  /* texto secundário — 6.4:1 sobre --black-950 */
 
-  --mint-400: #6fdca6;  /* menta viva — só preenchimento decorativo */
-  --mint-900: #0d6b41;  /* menta escura — quando o verde precisa ser lido */
+  --lime-400: #d6f24a;  /* verde-limão: a caneta marca-texto, ~15:1 sobre preto */
 
-  --amber-900: #85560a;
-  --brick-900: #a3341d;
+  --green-400: #5fd39a;
+  --amber-400: #f0b429;
+  --coral-400: #ff6a52;
 
   /* ---------- 2. Semânticos (nomes usados em todo o app) ---------- */
-  --background: var(--paper-100);
-  --surface: var(--paper-50);
-  --surface-2: var(--paper-200);
-  --border: var(--paper-300);
-  --foreground: var(--ink-900);
-  --muted: var(--ink-500);
-  --ink-hover: var(--ink-700);
-  --accent: var(--mint-400);
-  --accent-soft: var(--mint-400);
-  /* O único verde que pode carregar texto ou ícone sobre papel. */
-  --accent-ink: var(--mint-900);
-  --success: var(--mint-900);
-  --warning: var(--amber-900);
-  --danger: var(--brick-900);
+  --background: var(--black-950);
+  --surface: var(--black-900);
+  --surface-2: var(--black-800);
+  --border: var(--line-700);
+  --foreground: var(--white-100);
+  --muted: var(--gray-400);
+  --ink-hover: var(--white-300);
+  --accent: var(--lime-400);
+  --accent-soft: var(--lime-400);
+  /* Sobre preto o limão já passa de sobra (~15:1), então o token "que pode
+     ser lido" é o mesmo da cor viva. Existe separado porque a revisão 4 (base
+     clara) precisava de dois valores, e manter o nome evita reescrever cada
+     chamada se a base mudar de novo. */
+  --accent-ink: var(--lime-400);
+  --success: var(--green-400);
+  --warning: var(--amber-400);
+  --danger: var(--coral-400);
 
-  /* ---------- 3. Material — papel ---------- */
-  /* Grão: pontinho de 1px numa malha de 3px, opacidade baixíssima. É o que
-     separa "fundo bege" de "papel". Fica no body, não nos cards, senão a
-     textura se acumula e vira ruído. */
-  --grain: radial-gradient(rgb(20 18 15 / 6%) 1px, transparent 1px);
-  --grain-size: 3px 3px;
-
-  /* Sombra dura deslocada — sem desfoque, de propósito. É a assinatura tátil
-     da direção: o objeto parece recortado e colado, não flutuando. */
-  --shadow-hard: 3px 3px 0 0 var(--ink-900);
-  --shadow-hard-accent: 3px 3px 0 0 var(--mint-400);
+  /* ---------- 3. Material ---------- */
+  /* Sombra dura deslocada — sem desfoque, de propósito: o objeto parece
+     recortado e colado, não flutuando. Sobre preto uma sombra preta seria
+     invisível, então a versão neutra usa o fio e a de destaque usa o limão. */
+  --shadow-hard: 3px 3px 0 0 var(--line-700);
+  --shadow-hard-accent: 3px 3px 0 0 var(--lime-400);
 
   /* ---------- 3. Material — guia estrutural (cânone da página) ---------- */
-  --canon-guide: rgb(20 18 15 / 14%);
+  --canon-guide: rgb(255 255 255 / 10%);
 }
 
 @theme inline {
@@ -121,9 +119,6 @@
 
 body {
   background-color: var(--background);
-  background-image: var(--grain);
-  background-size: var(--grain-size);
-  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -154,41 +149,42 @@ body {
 }
 
 ::selection {
-  background: var(--mint-400);
-  color: var(--ink-900);
+  background: var(--lime-400);
+  color: var(--black-950);
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--paper-300); }
-::-webkit-scrollbar-thumb:hover { background: var(--ink-500); }
+::-webkit-scrollbar-thumb { background: var(--line-700); }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
 
 /*
  * .chrome-panel — chrome estrutural: barra de navegação, cabeçalho de página,
- * inspetor de bloco do builder. Nome herdado de `.glass-chrome`: virou papel
- * opaco na revisão 4, porque desfoque era decoração e papel é material.
- * Separa-se do conteúdo por fio de tinta, não por transparência.
+ * inspetor de bloco do builder. Nome herdado de `.glass-chrome`: virou
+ * superfície opaca na revisão 4, porque desfoque era decoração. Separa-se do
+ * conteúdo por fio, não por transparência.
  */
 .chrome-panel {
-  background: var(--paper-50);
-  border-color: var(--ink-900);
+  background: var(--surface);
+  border-color: var(--border);
 }
 
 /*
  * .pop-panel — o que flutua sobre conteúdo: paleta de comandos, menu de
- * adiar, atalhos de resposta, paleta de blocos. Papel opaco com fio de tinta
- * e sombra dura — legibilidade em primeiro lugar sobre qualquer fundo.
+ * adiar, atalhos de resposta, paleta de blocos. Superfície opaca com fio e
+ * sombra dura — legibilidade em primeiro lugar sobre qualquer fundo.
  */
 .pop-panel {
-  background: var(--paper-50);
-  border: 1px solid var(--ink-900);
+  background: var(--surface);
+  border: 1px solid var(--border);
   box-shadow: var(--shadow-hard);
 }
 
 /*
  * .surface-panel — a superfície de dado padrão (Card e o card de bloco do
- * builder). Papel elevado com fio de cabelo. Sem sombra: em composição de
- * grade, o que separa um card do outro é o fio, não a profundidade.
+ * builder). Um degrau de luminância acima do fundo, delimitado por fio de
+ * cabelo. Sem sombra: em composição de grade, o que separa um card do outro é
+ * o fio, não a profundidade.
  */
 .surface-panel {
   background: var(--surface);
@@ -221,9 +217,8 @@ body {
 
 /*
  * .cta-signature — a assinatura tátil da ação principal. Sombra dura
- * deslocada em menta; ao passar o mouse o objeto sobe e a sombra cresce, como
- * papel levantado da mesa. Aplicada só na ação primária de cada tela — o
- * ponto é ser rara.
+ * deslocada em limão; ao passar o mouse o objeto sobe e a sombra cresce.
+ * Aplicada só na ação primária de cada tela — o ponto é ser rara.
  */
 .cta-signature {
   box-shadow: var(--shadow-hard-accent) !important;
@@ -233,11 +228,11 @@ body {
 }
 .cta-signature:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 5px 5px 0 0 var(--mint-400) !important;
+  box-shadow: 5px 5px 0 0 var(--lime-400) !important;
 }
 .cta-signature:active {
   transform: translate(0, 0);
-  box-shadow: 1px 1px 0 0 var(--mint-400) !important;
+  box-shadow: 1px 1px 0 0 var(--lime-400) !important;
 }
 @media (prefers-reduced-motion: reduce) {
   .cta-signature:hover,
@@ -270,22 +265,22 @@ body {
   * { transition-duration: 0.01ms !important; }
 }
 
-/* Canvas do React Flow sobre papel */
+/* Canvas do React Flow sobre preto */
 .react-flow { background: var(--background); }
-.react-flow__edge-path { stroke: var(--ink-500); stroke-width: 2; }
-.react-flow__edge.selected .react-flow__edge-path { stroke: var(--ink-900); }
+.react-flow__edge-path { stroke: var(--line-700); stroke-width: 2; }
+.react-flow__edge.selected .react-flow__edge-path { stroke: var(--lime-400); }
 .react-flow__handle {
   width: 10px;
   height: 10px;
   border-radius: 2px;
-  background: var(--paper-50);
-  border: 2px solid var(--ink-900);
+  background: var(--surface-2);
+  border: 2px solid var(--line-700);
 }
-.react-flow__handle-connecting { background: var(--mint-400); }
+.react-flow__handle-connecting { background: var(--lime-400); }
 .react-flow__controls-button {
-  background: var(--paper-50);
-  border-bottom: 1px solid var(--ink-900);
-  fill: var(--ink-900);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  fill: var(--foreground);
 }
-.react-flow__controls-button:hover { background: var(--mint-400); }
+.react-flow__controls-button:hover { background: var(--lime-400); }
 .react-flow__attribution { display: none; }
