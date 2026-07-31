@@ -220,6 +220,71 @@ export async function setContactAutomationPaused(
   return { ok: true }
 }
 
+export async function setInboxStatus(
+  contactId: string,
+  status: 'open' | 'done' | 'snoozed',
+  snoozeHours?: number,
+): Promise<ActionResult> {
+  const patch: Record<string, unknown> = { inbox_status: status }
+
+  if (status === 'snoozed') {
+    const hours = snoozeHours ?? 1
+    patch.snooze_until = new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+  } else {
+    patch.snooze_until = null
+  }
+
+  // Sair da fila implica ter lido.
+  if (status !== 'open') patch.unread_count = 0
+
+  const { error } = await supabaseAdmin.from('contacts').update(patch).eq('id', contactId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/conversas')
+  return { ok: true }
+}
+
+export async function saveContactNotes(contactId: string, notes: string): Promise<ActionResult> {
+  const { error } = await supabaseAdmin
+    .from('contacts')
+    .update({ notes: notes.trim() || null })
+    .eq('id', contactId)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/conversas')
+  revalidatePath(`/contatos/${contactId}`)
+  return { ok: true }
+}
+
+export async function createCannedReply(title: string, text: string): Promise<ActionResult> {
+  const cleanTitle = title.trim()
+  const cleanText = text.trim()
+  if (!cleanTitle || !cleanText) {
+    return { ok: false, error: 'Atalho precisa de título e texto.' }
+  }
+
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta conectada.' }
+
+  const { error } = await supabaseAdmin
+    .from('canned_replies')
+    .insert({ account_id: account.id, title: cleanTitle, text: cleanText })
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/conversas')
+  return { ok: true }
+}
+
+export async function deleteCannedReply(id: string): Promise<ActionResult> {
+  const { error } = await supabaseAdmin.from('canned_replies').delete().eq('id', id)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/conversas')
+  return { ok: true }
+}
+
 export async function markThreadRead(contactId: string): Promise<ActionResult> {
   await supabaseAdmin.from('contacts').update({ unread_count: 0 }).eq('id', contactId)
   revalidatePath('/conversas')

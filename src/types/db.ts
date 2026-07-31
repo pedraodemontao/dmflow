@@ -5,6 +5,15 @@ export type MatchMode = 'exact' | 'contains' | 'starts_with'
 export type RunStatus = 'running' | 'waiting_reply' | 'sleeping' | 'done' | 'failed'
 export type MessageDirection = 'in' | 'out'
 export type EventStatus = 'pending' | 'processing' | 'done' | 'failed'
+export type InboxStatus = 'open' | 'snoozed' | 'done'
+
+export interface CannedReply {
+  id: string
+  account_id: string
+  title: string
+  text: string
+  created_at: string
+}
 
 export interface Account {
   id: string
@@ -40,6 +49,9 @@ export interface Contact {
   source_type: 'comment' | 'ref' | 'ad' | null
   source_id: string | null
   source_at: string | null
+  inbox_status: InboxStatus
+  snooze_until: string | null
+  notes: string | null
   created_at: string
   updated_at: string
 }

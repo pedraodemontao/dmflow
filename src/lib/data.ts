@@ -2,7 +2,7 @@ import 'server-only'
 
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { fetchMedia } from '@/lib/instagram/api'
-import type { Account, Contact, Flow, Trigger } from '@/types/db'
+import type { Account, CannedReply, Contact, Flow, Trigger } from '@/types/db'
 
 /**
  * Uma "automação" na UI é o par trigger + flow — a mesma ideia do ManyChat,
@@ -294,11 +294,28 @@ export interface InboxItem {
  * segunda query reduzida em memória — o volume é de uso próprio, não vale um
  * lateral join via PostgREST.
  */
-export async function getInbox(limit = 50): Promise<InboxItem[]> {
-  const { data } = await supabaseAdmin
-    .from('contacts')
-    .select('*')
-    .not('last_message_at', 'is', null)
+export type InboxFilter = 'abertas' | 'nao-lidas' | 'adiadas' | 'resolvidas'
+
+export async function getInbox(
+  filter: InboxFilter = 'abertas',
+  limit = 50,
+): Promise<InboxItem[]> {
+  let query = supabaseAdmin.from('contacts').select('*').not('last_message_at', 'is', null)
+
+  const nowIso = new Date().toISOString()
+
+  if (filter === 'nao-lidas') {
+    query = query.gt('unread_count', 0)
+  } else if (filter === 'adiadas') {
+    query = query.eq('inbox_status', 'snoozed').gt('snooze_until', nowIso)
+  } else if (filter === 'resolvidas') {
+    query = query.eq('inbox_status', 'done')
+  } else {
+    // Abertas inclui adiadas cujo prazo já venceu — senão elas somem para sempre.
+    query = query.or(`inbox_status.eq.open,and(inbox_status.eq.snoozed,snooze_until.lte.${nowIso})`)
+  }
+
+  const { data } = await query
     .order('last_message_at', { ascending: false })
     .limit(limit)
 
@@ -335,6 +352,48 @@ export async function getInbox(limit = 50): Promise<InboxItem[]> {
     },
     lastMessage: lastByContact.get(contact.id) ?? null,
   }))
+}
+
+export async function getCannedReplies(): Promise<CannedReply[]> {
+  const { data } = await supabaseAdmin
+    .from('canned_replies')
+    .select('*')
+    .order('title')
+
+  return (data ?? []) as CannedReply[]
+}
+
+/** Contadores dos filtros, para as abas mostrarem quanto tem em cada fila. */
+export async function getInboxCounts(): Promise<Record<InboxFilter, number>> {
+  const now = new Date().toISOString()
+
+  const [abertas, naoLidas, adiadas, resolvidas] = await Promise.all([
+    supabaseAdmin
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .not('last_message_at', 'is', null)
+      .or(`inbox_status.eq.open,and(inbox_status.eq.snoozed,snooze_until.lte.${now})`),
+    supabaseAdmin
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .gt('unread_count', 0),
+    supabaseAdmin
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .eq('inbox_status', 'snoozed')
+      .gt('snooze_until', now),
+    supabaseAdmin
+      .from('contacts')
+      .select('id', { count: 'exact', head: true })
+      .eq('inbox_status', 'done'),
+  ])
+
+  return {
+    abertas: abertas.count ?? 0,
+    'nao-lidas': naoLidas.count ?? 0,
+    adiadas: adiadas.count ?? 0,
+    resolvidas: resolvidas.count ?? 0,
+  }
 }
 
 export interface ThreadMessage {

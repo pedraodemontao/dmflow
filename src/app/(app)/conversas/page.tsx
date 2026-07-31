@@ -2,27 +2,48 @@ import { MessagesSquare } from 'lucide-react'
 
 import { Inbox } from '@/components/conversas/inbox'
 import { EmptyState } from '@/components/ui'
-import { getInbox, getThread } from '@/lib/data'
+import {
+  getCannedReplies,
+  getInbox,
+  getInboxCounts,
+  getThread,
+  type InboxFilter,
+} from '@/lib/data'
 
 export const dynamic = 'force-dynamic'
 
-export default async function ConversasPage() {
-  const items = await getInbox()
+const FILTERS: InboxFilter[] = ['abertas', 'nao-lidas', 'adiadas', 'resolvidas']
+
+export default async function ConversasPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ fila?: string }>
+}) {
+  const { fila } = await searchParams
+  const filter: InboxFilter = FILTERS.includes(fila as InboxFilter)
+    ? (fila as InboxFilter)
+    : 'abertas'
+
+  const [items, counts, cannedReplies] = await Promise.all([
+    getInbox(filter),
+    getInboxCounts(),
+    getCannedReplies(),
+  ])
+
   const firstId = items[0]?.contact.id
   const initialThread = firstId ? await getThread(firstId) : null
-  const unread = items.reduce((total, item) => total + item.contact.unread_count, 0)
 
   return (
     <>
       <header className="flex h-16 shrink-0 items-center border-b border-border px-6">
         <h1 className="text-sm font-semibold">Conversas</h1>
         <span className="ml-2 text-xs text-muted">
-          {items.length} {items.length === 1 ? 'contato' : 'contatos'}
-          {unread > 0 && ` · ${unread} não ${unread === 1 ? 'lida' : 'lidas'}`}
+          {counts.abertas} {counts.abertas === 1 ? 'aberta' : 'abertas'}
+          {counts['nao-lidas'] > 0 && ` · ${counts['nao-lidas']} não lidas`}
         </span>
       </header>
 
-      {items.length === 0 ? (
+      {counts.abertas === 0 && counts.resolvidas === 0 && counts.adiadas === 0 ? (
         <main className="flex-1 overflow-y-auto p-6">
           <EmptyState
             icon={<MessagesSquare className="size-8" />}
@@ -31,7 +52,13 @@ export default async function ConversasPage() {
           />
         </main>
       ) : (
-        <Inbox items={items} initialThread={initialThread} />
+        <Inbox
+          items={items}
+          initialThread={initialThread}
+          filter={filter}
+          counts={counts}
+          cannedReplies={cannedReplies}
+        />
       )}
     </>
   )
