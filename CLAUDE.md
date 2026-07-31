@@ -12,13 +12,19 @@ Next.js 16 (App Router, Turbopack) · TypeScript · Tailwind 4 · Supabase (serv
 ## Mapa
 
 ```
-src/lib/instagram/   oauth.ts (login + token), api.ts (envio), signature.ts (HMAC do webhook)
-src/lib/flow/        types.ts (schema Zod dos nós), engine.ts (state machine), triggers.ts (matcher)
-src/lib/webhook/     process.ts (fila + roteamento de evento)
-src/app/api/         webhooks/instagram, auth/instagram(+callback), cron/tick
+src/lib/instagram/   oauth.ts (login + token), api.ts (envio + corte de tamanho),
+                     errors.ts (permanente × transitório), signature.ts (HMAC), health.ts
+src/lib/flow/        types.ts (schema Zod dos nós + META_LIMITS), engine.ts (state machine),
+                     triggers.ts (matcher), variation.ts (trava anti-spam),
+                     send-cap.ts (caps), leaks.ts (onde o fluxo perde gente),
+                     button-source.ts (título ↔ payload), transform.ts (canvas ↔ JSON)
+src/lib/webhook/     poll.ts (A VARREDURA — é o que entrega), process.ts (fila + roteamento)
+src/lib/risk/        cinco sinais puros + assess.ts (veredito)
+src/app/api/         webhooks/instagram, auth/instagram(+callback), cron/tick, conversao
 supabase/            migrations/0001..0013, seed.sql (fluxo de exemplo)
 src/lib/series.ts    agrupamento em balde de dia/hora (puro), alimenta os gráficos
-src/components/ui/   index.tsx (primitivos), chart.tsx (BigNumber, Meter, RankBars, TimeSeries)
+src/components/ui/   index.tsx (primitivos), chart.tsx (BigNumber, Meter, RankBars,
+                     TimeSeries, LineSeries)
 ```
 
 ## Invariantes — quebrar isso quebra a automação
@@ -41,10 +47,13 @@ src/components/ui/   index.tsx (primitivos), chart.tsx (BigNumber, Meter, RankBa
   parte da conta; não remova. Veja o README para o comando da parte do app.
 - **`MAX_STEPS` no engine** é a trava contra fluxo que cicla sozinho. Não remova.
 - **Blindagem anti-spam é invariante** (custou restrição de conta em jul/2026): spintax
-  `{a|b}` aplicado em todo texto de envio, jitter de 30–120s em evento de comentário
-  (`process_after` na fila) e cap de envios/hora (`send_log` + `SEND_HOURLY_CAP`; estourou
-  = fluxo dorme 5 min e retenta sozinho). Resposta idêntica e instantânea em volume é o que
-  o filtro de spam do Instagram derruba. Não remova nenhuma das três camadas.
+  `{a|b}` aplicado em todo texto de envio, jitter em evento de comentário (`process_after` na
+  fila — **8–35 s hoje**; nasceu 30–120 s e foi reduzido depois de teste com lead real, porque
+  o que o filtro pune é resposta imediata e sempre igual, não resposta em 20 segundos — o
+  cabeçalho da migration 0002 ainda diz 30–120 s e está desatualizado) e cap de envios/hora
+  (`send_log` + `SEND_HOURLY_CAP`; estourou = fluxo dorme 5 min e retenta sozinho). Resposta
+  idêntica e instantânea em volume é o que o filtro de spam do Instagram derruba. Não remova
+  nenhuma das três camadas.
 - **O cap falha fechado.** Erro ao consultar `send_log` conta como cap estourado
   (`src/lib/flow/send-cap.ts`). Banco fora do ar não pode virar licença para disparar sem trava.
 - **Variação é obrigatória para ativar.** `saveAutomation` recusa ativar automação cuja
@@ -59,6 +68,44 @@ src/components/ui/   index.tsx (primitivos), chart.tsx (BigNumber, Meter, RankBa
   Sem isso, comentário que chega durante uma queda do cron some para sempre.
 - **Tick que falhou responde 503.** Erro de polling não pode terminar em 200: o cron do
   Supabase é a única coisa que avisa que a automação parou.
+- **`enqueue()` lança, e é contrato.** `upsert()` do supabase-js resolve com `{ error }` em vez
+  de lançar; com o retorno ignorado, o cursor avançava por cima de comentários que nunca
+  entraram na fila e o tick respondia `ok:true`. Retorno se ignora por acidente, exceção não.
+  Quem chama tem duas saídas legítimas: deixar subir (polling → cursor não avança, tick 503) ou
+  capturar de propósito (webhook → loga e responde 200 assim mesmo).
+- **Erro permanente não retenta, e run morto retoma de onde parou.** `send()` devolve
+  `MetaSendError` com código e subcódigo; o desconhecido cai em **transitório** de propósito.
+  E `startFlow` retoma run `failed` com `current_node` em vez de criar um novo — recomeçar do
+  `entry` reentregava TODA mensagem já enviada antes da falha, que é o mesmo padrão de
+  repetição que restringiu a conta.
+- **Tudo que envia precisa de claim otimista.** `maxDuration` é 300 s e o cron dispara a cada
+  60 s, então até cinco ticks convivem. `webhook_events`, `pending_public_replies`, o run
+  `sleeping` e o run `failed` retomado têm claim condicionado ao status anterior. Sem claim,
+  dois ticks percorrem o mesmo run e a Meta aceita as duas DMs sem reclamar.
+- **Adiar não é falhar.** Cap estourado, pânico ligado e horário de silêncio devolvem a
+  tentativa e usam `continue` — nunca caem no catch que incrementa `attempts`. Com o cap dentro
+  do `try`, cinco ticks em rajada levavam a fila inteira ao teto de tentativas e ela sumia da
+  consulta para sempre.
+- **A interpolação roda ANTES do spin.** É o que faz `{Oi {{nome}}|E aí {{nome}}}` funcionar no
+  envio — e é por isso que `variantCount`/`splitVariations` mascaram `{{variavel}}` antes de
+  olhar para os grupos. Validador que mede o template cru rejeita texto que funciona.
+- **Limite da Meta estourado recusa a MENSAGEM INTEIRA** (erro 100) e mata o `flow_run` no meio.
+  Duas defesas: o schema mede a **maior expansão** do spintax (medir o template cru rejeitaria
+  texto legítimo), e o envio **corta em vez de lançar**, por code point — `slice` parte o par
+  substituto do emoji e produz UTF-8 inválido, que a Meta recusa igual. Texto de DM é 1000
+  BYTES; button template é 640 CARACTERES. São réguas diferentes.
+- **Anexo não cabe em private reply.** Bloco de mídia nascido de comentário manda a legenda e
+  para em `waiting_reply` no próprio nó; o anexo só sai depois que a pessoa responde ou toca num
+  botão e a janela abre. Mandar o anexo como DM comum ali dá "outside of allowed window" e
+  derruba o fluxo inteiro.
+- **Toque em botão chega diferente conforme o canal**: pelo webhook vem o `payload`, pelo
+  polling vem o TÍTULO. `payloadForText` traduz lendo as definições da conta e recusa traduzir
+  quando o mesmo título aponta para payloads diferentes. Sem isso, condição escrita contra o
+  payload pega o caminho errado em silêncio.
+- **A versão da Graph API na URL do polling é parte da correção.** De 3.2 em diante a edge de
+  comentários devolve do mais novo para o mais antigo — é só isso que faz "20 páginas × 25"
+  significar os 500 comentários MAIS RECENTES. Baixar a versão faz o post viral ficar
+  permanentemente mudo, sem erro e sem log.
 - **O OAuth tem que começar e terminar no mesmo domínio.** O `state` vive num cookie; iniciar
   em `localhost` com `redirect_uri` apontando para o túnel dá `state-invalido`. Sempre acesse
   o app pela URL pública.
@@ -110,7 +157,19 @@ As páginas do painel vivem em `src/app/(app)/`, cujo layout monta a navegação
 
 Não há CLI nem `psql` na máquina: a migration é colada no SQL Editor do
 Supabase, na ordem dos arquivos. Escreva o arquivo, avise o dono, e só então
-suba o código que depende dela.
+suba o código que depende dela. Como nada registra o que já rodou além do
+próprio banco, **migration aplicada é estado fora do repositório**: antes de
+confiar numa tela nova, confirme que a tabela existe.
+
+## Ambiente
+
+**Não existe staging.** `npm run dev` lê o `.env.local`, que aponta para o
+banco de PRODUÇÃO — subir o servidor local mexe nos mesmos dados e um tick
+manual dispara DM de verdade. Para trabalho de código,
+`npx tsc --noEmit && npm run lint && npm test` cobre quase tudo sem servidor.
+
+Não há `.env.example` versionado (`.gitignore` bloqueia `.env*`). A lista real
+de variáveis é o schema Zod de `src/lib/env.ts`, documentada no README.
 
 ## Convenções
 
@@ -128,10 +187,18 @@ O CI (`.github/workflows/ci.yml`) roda exatamente esses quatro em toda branch.
 
 ## Testes
 
-`vitest`, arquivos `*.test.ts` ao lado do código. Cobrem o que quebra em silêncio:
-spintax, validação de resposta do bloco `ask`, horário de silêncio, matcher de gatilho,
-schema dos nós e o caminho do `ask` no engine (com Supabase e Instagram simulados).
+`vitest`, arquivos `*.test.ts` ao lado do código — 27 deles. Cobrem o que quebra em silêncio:
+spintax e trava de variação, validação de resposta do bloco `ask`, horário de silêncio, matcher
+de gatilho, schema dos nós e limites da Meta, classificação de erro da Meta, tradução
+título ↔ payload, análise de vazamento do fluxo, os cinco sinais de risco, o balde das séries,
+o polling e o roteamento de evento, e os caminhos do engine (com Supabase e Instagram
+simulados).
 
 Bloco novo no fluxo → adicione o caso em `types.test.ts`. Mexeu no `engine.ts` →
-`engine.test.ts` tem que continuar verde; ele existe justamente porque essa lógica
-falha sem erro visível.
+`engine.test.ts` e `engine-blocks.test.ts` têm que continuar verdes; eles existem justamente
+porque essa lógica falha sem erro visível.
+
+**Cuidado com teste que codifica bug.** Os testes do bloco de mídia garantiam o comportamento
+antigo — legenda pela private reply e anexo como DM comum — que era exatamente o bug que matava
+todo fluxo de comentário com mídia. Quando um teste impede a correção, o teste é que está
+errado; verifique por mutação antes de confiar nele.
