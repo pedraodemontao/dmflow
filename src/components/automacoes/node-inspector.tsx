@@ -4,6 +4,7 @@ import { Plus, Trash2, X } from 'lucide-react'
 
 import { Button, Input, Label, Select, Textarea } from '@/components/ui'
 import { CATEGORY_LABEL, NODE_CHIP, NODE_META, nodeGlyph } from '@/components/automacoes/flow-nodes'
+import { VariationsField } from '@/components/automacoes/variations-field'
 import { cn } from '@/lib/utils'
 import type { FlowOption } from '@/lib/data'
 import type { FlowNode } from '@/lib/flow/types'
@@ -17,6 +18,17 @@ const ITEM_CARD = 'rounded-sm border border-border bg-surface-2 p-3'
 /** Wrapper dos avisos informativos (bloco sem opção, aviso de descadastro...). */
 const INFO_BOX =
   'rounded-sm border border-border bg-surface-2 p-3 text-[11px] leading-relaxed text-muted'
+
+/**
+ * Espelha `MIN_MESSAGE` de `lib/flow/variation.ts`, que não é exportado. Mudou
+ * lá, muda aqui — senão a tela promete um mínimo e o salvar cobra outro.
+ *
+ * Só os campos que `checkFlowTexts` COBRA viram lista de variações: `text` de
+ * mensagem, de botões e de pergunta (`readableTexts`, em `app/actions.ts`, só
+ * olha `node.text`). Nos outros o rodapé "faltam N para poder ativar" estaria
+ * mentindo — nada bloqueia a ativação por causa deles.
+ */
+const MIN_FLOW_VARIATIONS = 2
 
 const MEDIA_LABEL: Record<'video' | 'audio' | 'file', string> = {
   video: 'vídeo',
@@ -68,18 +80,21 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
 
         {(node.type === 'message' || node.type === 'buttons') && (
           <div>
-            <Label>Texto da mensagem</Label>
-            <Textarea
-              rows={4}
+            <VariationsField
+              label="Texto da mensagem"
               value={node.text}
-              onChange={(e) => patch({ text: e.target.value })}
-              placeholder="Oi {{nome}}, tudo bem?"
+              onChange={(text) => patch({ text })}
+              min={MIN_FLOW_VARIATIONS}
+              placeholders={[
+                'Oi {{nome}}, tudo bem? Segue o que prometi 👇',
+                'E aí {{nome}}! Tá aqui o material 👇',
+              ]}
             />
-            <p className="mt-1.5 text-[11px] text-muted">
-              Use <code className="text-accent">{'{{nome}}'}</code> e{' '}
-              <code className="text-accent">{'{{username}}'}</code> para personalizar, e{' '}
-              <code className="text-accent">{'{opção1|opção2}'}</code> para variar o texto a cada
-              envio — mensagem idêntica em volume dispara o filtro de spam.
+            <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+              A cada envio sai uma das versões, sorteada — é o que impede a mensagem de chegar
+              igual para todo mundo. Use <code className="text-accent">{'{{nome}}'}</code> e{' '}
+              <code className="text-accent">{'{{username}}'}</code> em qualquer versão para
+              personalizar.
               {node.type === 'buttons' && (
                 <>
                   {' '}
@@ -137,7 +152,12 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
                 Adicionar resposta rápida
               </Button>
             </div>
-            <p className="mt-1.5 text-[11px] text-muted">Máximo 20 caracteres por botão.</p>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+              Máximo 20 caracteres por botão. Aqui não use{' '}
+              <code className="text-accent">{'{opção 1|opção 2}'}</code> nem{' '}
+              <code className="text-accent">{'{{nome}}'}</code>: a resposta rápida sai literal,
+              com chaves e tudo. Quem varia é o texto da mensagem, acima.
+            </p>
           </div>
         )}
 
@@ -196,6 +216,12 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
                 </Button>
               )}
             </div>
+            <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+              O título do botão não precisa variar — a trava cobra variação só do texto da
+              mensagem. Se quiser variar mesmo assim, os 20 caracteres contam o campo inteiro, e
+              não cada versão: <code className="text-accent">{'{Quero|Bora}'}</code> já gasta 12
+              dos 20.
+            </p>
           </div>
         )}
 
@@ -378,9 +404,12 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
                   </Button>
                 )}
               </div>
-              <p className="mt-1.5 text-[11px] text-muted">
-                Cada bolha passa por spintax própria e sai como mensagem separada — mais parecido
-                com gente digitando do que um parágrafo só.
+              <p className="mt-1.5 text-[11px] leading-relaxed text-muted">
+                Cada bolha sai como mensagem separada — mais parecido com gente digitando do que
+                um parágrafo só. Cada uma também sorteia a própria versão, mas aqui as opções vão
+                na mão, dentro do texto: escreva{' '}
+                <code className="text-accent">{'{Oi|E aí|Opa}, tudo bem?'}</code> e cada envio
+                pega uma. Ativar não cobra isso das bolhas; o filtro de spam, sim.
               </p>
             </div>
             <div>
@@ -457,15 +486,16 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
 
         {node.type === 'ask' && (
           <>
-            <div>
-              <Label>Pergunta</Label>
-              <Textarea
-                rows={3}
-                value={node.text}
-                placeholder="Qual é o seu melhor e-mail?"
-                onChange={(e) => patch({ text: e.target.value })}
-              />
-            </div>
+            <VariationsField
+              label="Pergunta"
+              value={node.text}
+              onChange={(text) => patch({ text })}
+              min={MIN_FLOW_VARIATIONS}
+              placeholders={[
+                'Qual é o seu melhor e-mail?',
+                'Me passa o e-mail que você mais usa?',
+              ]}
+            />
             <div>
               <Label>Tipo de resposta esperada</Label>
               <Select
