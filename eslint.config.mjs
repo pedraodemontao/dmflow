@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Worktrees de subagentes moram DENTRO do repo; sem isto o lint varre uma
+    // cópia inteira do projeto por agente e acusa milhares de falsos problemas.
+    ".claude/**",
   ]),
 ]);
 

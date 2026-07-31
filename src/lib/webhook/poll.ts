@@ -11,10 +11,18 @@ import type { Account } from '@/types/db'
 
 const GRAPH = 'https://graph.instagram.com/v23.0'
 
-/** Só olha para trás até aqui — comentário mais velho já era. */
-const LOOKBACK_MS = 60 * 60 * 1000
-/** Quantos posts recentes varrer por rodada. */
-const MEDIA_LIMIT = 10
+/**
+ * Teto de segurança quando não há cursor (primeira varredura). Com cursor, a
+ * janela é "desde a última varredura que deu certo" — é isso que faz o sistema
+ * se recuperar de uma parada longa em vez de perder o que passou nela.
+ */
+const FIRST_RUN_LOOKBACK_MS = 60 * 60 * 1000
+/** Quanto o cursor recua ao retomar: cobre comentário que chegou fora de ordem. */
+const CURSOR_OVERLAP_MS = 5 * 60 * 1000
+/** Páginas de mídia por rodada. Cada página traz 25 — 8 páginas = 200 posts. */
+const MEDIA_PAGES = 8
+/** Páginas de comentários por post. Post viral passa de 25 fácil. */
+const COMMENT_PAGES = 20
 
 interface RawComment {
   id: string
@@ -48,23 +56,56 @@ async function fetchJson<T>(url: string, token: string): Promise<T> {
   return res.json() as Promise<T>
 }
 
-async function pollComments(account: Account): Promise<number> {
-  const media = await fetchJson<{ data?: Array<{ id: string }> }>(
-    `${GRAPH}/me/media?fields=id&limit=${MEDIA_LIMIT}`,
-    account.access_token,
-  )
-  if (!media.data?.length) return 0
+interface Paged<T> {
+  data?: T[]
+  paging?: { cursors?: { after?: string }; next?: string }
+}
 
-  const cutoff = Date.now() - LOOKBACK_MS
+/** Segue a paginação da Graph API até acabar ou bater o teto de páginas. */
+async function fetchAllPages<T>(
+  baseUrl: string,
+  token: string,
+  maxPages: number,
+): Promise<T[]> {
+  const all: T[] = []
+  let url: string | undefined = baseUrl
+
+  for (let page = 0; page < maxPages && url; page += 1) {
+    const res: Paged<T> = await fetchJson<Paged<T>>(url, token)
+    if (res.data?.length) all.push(...res.data)
+
+    const after = res.paging?.cursors?.after
+    // Sem cursor de próxima página, acabou.
+    url = res.paging?.next && after ? `${baseUrl}&after=${after}` : undefined
+  }
+
+  return all
+}
+
+async function pollComments(account: Account): Promise<number> {
+  const media = await fetchAllPages<{ id: string; timestamp?: string }>(
+    `${GRAPH}/me/media?fields=id,timestamp&limit=25`,
+    account.access_token,
+    MEDIA_PAGES,
+  )
+  if (!media.length) return 0
+
+  // Janela: desde o cursor (menos uma folga), ou a última hora na primeira vez.
+  const cursor = account.comments_cursor
+    ? new Date(account.comments_cursor).getTime() - CURSOR_OVERLAP_MS
+    : Date.now() - FIRST_RUN_LOOKBACK_MS
+  const cutoff = cursor
+
   const events: Array<{ dedupKey: string; igAccountId: string; kind: 'comment'; value: CommentValue }> = []
 
-  for (const item of media.data) {
-    const comments = await fetchJson<{ data?: RawComment[] }>(
+  for (const item of media) {
+    const comments = await fetchAllPages<RawComment>(
       `${GRAPH}/${item.id}/comments?fields=id,text,timestamp,username,from&limit=25`,
       account.access_token,
+      COMMENT_PAGES,
     )
 
-    for (const comment of comments.data ?? []) {
+    for (const comment of comments) {
       if (comment.timestamp && new Date(comment.timestamp).getTime() < cutoff) continue
 
       const fromId = comment.from?.id
@@ -91,6 +132,15 @@ async function pollComments(account: Account): Promise<number> {
   }
 
   if (events.length) await enqueue(events)
+
+  // Só avança o cursor depois de a varredura inteira ter dado certo. Se
+  // qualquer página falhar, fetchJson lança e o cursor fica onde estava —
+  // a próxima rodada tenta de novo em vez de pular o buraco.
+  await supabaseAdmin
+    .from('accounts')
+    .update({ comments_cursor: new Date().toISOString() })
+    .eq('id', account.id)
+
   return events.length
 }
 
@@ -110,7 +160,9 @@ async function pollMessages(account: Account): Promise<number> {
   )
   if (!conversations.data?.length) return 0
 
-  const cutoff = Date.now() - LOOKBACK_MS
+  const cutoff = account.messages_cursor
+    ? new Date(account.messages_cursor).getTime() - CURSOR_OVERLAP_MS
+    : Date.now() - FIRST_RUN_LOOKBACK_MS
   const events: Array<{ dedupKey: string; igAccountId: string; kind: 'messaging'; value: MessagingValue }> = []
 
   for (const conversation of conversations.data) {
@@ -131,6 +183,12 @@ async function pollMessages(account: Account): Promise<number> {
   }
 
   if (events.length) await enqueue(events)
+
+  await supabaseAdmin
+    .from('accounts')
+    .update({ messages_cursor: new Date().toISOString() })
+    .eq('id', account.id)
+
   return events.length
 }
 

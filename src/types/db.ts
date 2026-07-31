@@ -28,6 +28,9 @@ export interface Account {
   /** Silêncio noturno em hora cheia (America/Sao_Paulo). Null = sempre ativo. */
   quiet_from: number | null
   quiet_to: number | null
+  /** Até onde a varredura já chegou. Null = nunca varreu. Ver migration 0009. */
+  comments_cursor: string | null
+  messages_cursor: string | null
   created_at: string
   updated_at: string
 }

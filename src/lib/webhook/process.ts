@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { fetchContactProfile, replyToComment } from '@/lib/instagram/api'
 import { resumeFlow, startFlow } from '@/lib/flow/engine'
-import { assertUnderSendCap, logSend } from '@/lib/flow/send-cap'
+import { assertUnderSendCap, isUnderPublicReplyCap, logSend } from '@/lib/flow/send-cap'
 import { isQuiet, nextOpening } from '@/lib/flow/quiet-hours'
 import { spin } from '@/lib/flow/spintax'
 import { findTrigger } from '@/lib/flow/triggers'
@@ -287,19 +287,36 @@ async function handleComment(
   // Só publica uma vez por comentário. O retry do evento não pode republicar:
   // comentário repetido é padrão de spam para o Instagram.
   if (trigger.public_reply && !alreadyReplied) {
+    const mediaId = value.media?.id
+    const message = spin(trigger.public_reply)
+
+    // TODO comentário é respondido. Passando do teto do post, a resposta vai
+    // para a fila em vez de ser descartada — sai depois, espaçada. A DM segue
+    // na hora: conversa privada não incomoda ninguém, parede de comentários
+    // iguais no mesmo post sim.
+    const withinPostCap = mediaId ? await isUnderPublicReplyCap(account.id, mediaId) : true
+
     try {
-      await assertUnderSendCap(account.id)
-      await replyToComment({
-        accessToken: account.access_token,
-        commentId,
-        message: spin(trigger.public_reply),
-      })
-      await logSend(account.id, 'public_reply')
+      if (!withinPostCap) {
+        await supabaseAdmin.from('pending_public_replies').upsert(
+          { account_id: account.id, comment_id: commentId, media_id: mediaId ?? null, message },
+          { onConflict: 'comment_id', ignoreDuplicates: true },
+        )
+      } else {
+        await assertUnderSendCap(account.id)
+        await replyToComment({ accessToken: account.access_token, commentId, message })
+        await logSend(account.id, 'public_reply', mediaId)
+      }
       // Marca ANTES de seguir: se o fluxo falhar depois, o retry já sabe.
       await onPublicReply?.()
     } catch (error) {
-      // Cap ou API fora: perder a resposta pública é aceitável, a DM não.
-      console.error('[dm-flow] resposta pública pulada:', error)
+      // Cap global ou API fora: enfileira para não perder a resposta.
+      console.error('[dm-flow] resposta pública adiada:', error)
+      await supabaseAdmin.from('pending_public_replies').upsert(
+        { account_id: account.id, comment_id: commentId, media_id: mediaId ?? null, message },
+        { onConflict: 'comment_id', ignoreDuplicates: true },
+      )
+      await onPublicReply?.()
     }
   }
 
@@ -326,7 +343,12 @@ export async function processPending(limit = 20): Promise<number> {
     // Claim otimista: só processa quem conseguiu virar o status de pending.
     const { data: claimed } = await supabaseAdmin
       .from('webhook_events')
-      .update({ status: 'processing', attempts: row.attempts + 1 })
+      // process_after vira a hora do claim: é ela que requeueStuckEvents mede.
+      .update({
+        status: 'processing',
+        attempts: row.attempts + 1,
+        process_after: new Date().toISOString(),
+      })
       .eq('id', row.id)
       .eq('status', 'pending')
       .select('id')

@@ -12,6 +12,8 @@ const schema = z.object({
   PANEL_PASSWORD: z.string().min(8).optional(),
   /** Teto de envios por conta por hora (anti-flag da Meta). */
   SEND_HOURLY_CAP: z.coerce.number().int().positive().default(60),
+  /** Teto de respostas públicas no MESMO post por hora. DM não tem esse limite. */
+  PUBLIC_REPLY_PER_POST_CAP: z.coerce.number().int().positive().default(8),
   /** Protege POST /api/conversao. Sem ela, a rota recusa tudo. */
   CONVERSION_SECRET: z.string().min(16).optional(),
 })

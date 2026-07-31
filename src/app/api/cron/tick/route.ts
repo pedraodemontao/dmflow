@@ -4,6 +4,8 @@ import { env } from '@/lib/env'
 import { refreshLongLivedToken } from '@/lib/instagram/oauth'
 import { resumeFlow } from '@/lib/flow/engine'
 import { isQuiet } from '@/lib/flow/quiet-hours'
+import { assertUnderSendCap, isUnderPublicReplyCap, logSend } from '@/lib/flow/send-cap'
+import { replyToComment } from '@/lib/instagram/api'
 import { pollAll } from '@/lib/webhook/poll'
 import { processPending } from '@/lib/webhook/process'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -15,17 +17,79 @@ export const maxDuration = 300
 const STUCK_AFTER_MS = 5 * 60 * 1000
 const REFRESH_WHEN_DAYS_LEFT = 10
 
-/** Evento que travou em 'processing' (deploy no meio, timeout) volta para a fila. */
+/**
+ * Evento que travou em 'processing' (deploy no meio, timeout) volta para a fila.
+ *
+ * Usa `process_after` — que o claim carimba com a hora atual — e NÃO
+ * `created_at`. Com `created_at`, qualquer evento enfileirado há mais de 5 min
+ * era considerado travado no instante em que era reclamado: dois ticks
+ * sobrepostos (o de 1 min contra um tick que passou de 60s por causa de bolhas
+ * ou lote grande) reprocessavam o mesmo evento e mandavam a DM duas vezes.
+ */
 async function requeueStuckEvents(): Promise<number> {
   const { data } = await supabaseAdmin
     .from('webhook_events')
     .update({ status: 'pending' })
     .eq('status', 'processing')
-    .lt('created_at', new Date(Date.now() - STUCK_AFTER_MS).toISOString())
+    .lt('process_after', new Date(Date.now() - STUCK_AFTER_MS).toISOString())
     .lt('attempts', 3)
     .select('id')
 
   return data?.length ?? 0
+}
+
+/**
+ * Drena a fila de respostas públicas. Todo comentário é respondido — aqui é só
+ * o ritmo: sai no teto por post, espaçado, para não virar parede de comentários
+ * iguais no mesmo lugar.
+ */
+async function drainPublicReplies(): Promise<number> {
+  const { data } = await supabaseAdmin
+    .from('pending_public_replies')
+    .select('*')
+    .is('sent_at', null)
+    .lt('attempts', 5)
+    .order('created_at', { ascending: true })
+    .limit(20)
+
+  let sent = 0
+
+  for (const row of data ?? []) {
+    const { data: account } = await supabaseAdmin
+      .from('accounts')
+      .select('*')
+      .eq('id', row.account_id)
+      .single()
+
+    if (!account) continue
+    const acc = account as Account
+    if (acc.automations_paused || isQuiet(acc)) continue
+    if (row.media_id && !(await isUnderPublicReplyCap(acc.id, row.media_id))) continue
+
+    try {
+      await assertUnderSendCap(acc.id)
+      await replyToComment({
+        accessToken: acc.access_token,
+        commentId: row.comment_id,
+        message: row.message,
+      })
+      await logSend(acc.id, 'public_reply', row.media_id ?? undefined)
+
+      await supabaseAdmin
+        .from('pending_public_replies')
+        .update({ sent_at: new Date().toISOString(), error: null })
+        .eq('id', row.id)
+      sent += 1
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      await supabaseAdmin
+        .from('pending_public_replies')
+        .update({ attempts: row.attempts + 1, error: message })
+        .eq('id', row.id)
+    }
+  }
+
+  return sent
 }
 
 /** Fluxos que estavam em nó de delay e já venceram. */
@@ -108,8 +172,9 @@ export async function GET(request: NextRequest) {
   const processed = await processPending(50)
   const resumed = await resumeSleepingRuns()
   const refreshed = await refreshExpiringTokens()
+  const publicReplies = await drainPublicReplies()
 
-  const body = { polled, requeued, processed, resumed, refreshed }
+  const body = { polled, requeued, processed, resumed, refreshed, publicReplies }
 
   // Não conseguir varrer NENHUMA conta é o sistema parado, não um tick
   // tranquilo. Em 30/07 isso durou 22h reportando 200 e "succeeded" no

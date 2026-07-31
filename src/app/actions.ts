@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
 import { flowDefinitionSchema } from '@/lib/flow/types'
+import { checkFlowTexts, checkPublicReply, type VariationIssue } from '@/lib/flow/variation'
 import { assertUnderSendCap, logSend } from '@/lib/flow/send-cap'
 import { sendText } from '@/lib/instagram/api'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -24,6 +25,21 @@ const automationSchema = z.object({
 
 export type AutomationInput = z.infer<typeof automationSchema>
 
+const NODE_LABEL: Record<string, string> = {
+  message: 'Mensagem',
+  buttons: 'Botões',
+  ask: 'Pergunta',
+}
+
+/** Só o texto que a pessoa lê. Bloco de lógica não precisa variar. */
+function readableTexts(definition: AutomationInput['definition']) {
+  return Object.entries(definition.nodes).flatMap(([id, node]) =>
+    'text' in node && typeof node.text === 'string'
+      ? [{ id, label: NODE_LABEL[node.type] ?? node.type, text: node.text }]
+      : [],
+  )
+}
+
 export interface ActionResult {
   ok: boolean
   error?: string
@@ -43,6 +59,21 @@ export async function saveAutomation(raw: unknown): Promise<ActionResult> {
   // Gatilho de comentário sem keyword dispararia em qualquer comentário do post.
   if (input.triggerType !== 'default' && input.keywords.length === 0) {
     return { ok: false, error: 'Adicione ao menos uma palavra-chave.' }
+  }
+
+  // Variação é obrigatória para ATIVAR. Rascunho pausado pode ficar como está —
+  // o problema só existe quando começa a sair em volume.
+  if (input.isActive) {
+    const issues = [
+      checkPublicReply(input.publicReply),
+      ...checkFlowTexts(readableTexts(input.definition)),
+    ].filter((issue): issue is VariationIssue => issue !== null)
+
+    if (issues.length > 0) {
+      const first = issues[0]
+      const extra = issues.length > 1 ? ` (e mais ${issues.length - 1})` : ''
+      return { ok: false, error: `${first.where}: ${first.message}${extra}` }
+    }
   }
 
   try {
@@ -418,7 +449,10 @@ export async function resetTestData(): Promise<ActionResult> {
 
   const [contacts, events] = await Promise.all([
     supabaseAdmin.from('contacts').delete().neq('id', impossible).select('id'),
-    supabaseAdmin.from('webhook_events').delete().neq('id', impossible).select('id'),
+    // Só o que ainda não foi processado. Apagar 'done' e 'failed' destruiria o
+    // livro de dedup e faria o polling reprocessar tudo — resposta pública e
+    // private reply repetidas para quem já tinha recebido.
+    supabaseAdmin.from('webhook_events').delete().eq('status', 'pending').select('id'),
   ])
 
   if (contacts.error) return { ok: false, error: contacts.error.message }
