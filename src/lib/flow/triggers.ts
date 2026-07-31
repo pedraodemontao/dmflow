@@ -10,7 +10,8 @@ function normalize(value: string): string {
     .trim()
 }
 
-function matches(trigger: Trigger, text: string): boolean {
+/** Exportada para teste: é a regra que decide se um comentário vira lead. */
+export function matches(trigger: Trigger, text: string): boolean {
   if (trigger.keywords.length === 0) return true
 
   const haystack = normalize(text)

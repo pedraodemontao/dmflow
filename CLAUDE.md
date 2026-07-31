@@ -74,5 +74,17 @@ senão `next build` passa a exigir `.env`.
 ## Antes de dizer que terminou
 
 ```bash
-npx tsc --noEmit && npm run lint && npm run build
+npx tsc --noEmit && npm run lint && npm test && npm run build
 ```
+
+O CI (`.github/workflows/ci.yml`) roda exatamente esses quatro em toda branch.
+
+## Testes
+
+`vitest`, arquivos `*.test.ts` ao lado do código. Cobrem o que quebra em silêncio:
+spintax, validação de resposta do bloco `ask`, horário de silêncio, matcher de gatilho,
+schema dos nós e o caminho do `ask` no engine (com Supabase e Instagram simulados).
+
+Bloco novo no fluxo → adicione o caso em `types.test.ts`. Mexeu no `engine.ts` →
+`engine.test.ts` tem que continuar verde; ele existe justamente porque essa lógica
+falha sem erro visível.

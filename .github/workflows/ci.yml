@@ -1,0 +1,38 @@
+name: CI
+
+# Roda em toda branch e em todo PR: com vários agentes trabalhando em
+# paralelo, é o CI que diz se uma branch pode ser mesclada — não a leitura
+# do diff.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Tipos
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Testes
+        run: npm test
+
+      # As variáveis são Proxies lazy, então o build passa sem .env — se um dia
+      # alguém transformar `env` numa constante avaliada no import, quebra aqui.
+      - name: Build
+        run: npm run build
