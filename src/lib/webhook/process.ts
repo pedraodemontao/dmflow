@@ -5,7 +5,7 @@ import { assertUnderSendCap, isUnderPublicReplyCap, logSend } from '@/lib/flow/s
 import { isQuiet, nextOpening } from '@/lib/flow/quiet-hours'
 import { spin } from '@/lib/flow/spintax'
 import { findTrigger } from '@/lib/flow/triggers'
-import type { Account, Contact, Flow, FlowRun } from '@/types/db'
+import type { Account, Contact, Flow, FlowRun, TriggerType } from '@/types/db'
 
 /**
  * Resposta instantânea a comentário é assinatura de bot. O que importa para o
@@ -33,6 +33,11 @@ export interface MessagingValue {
     is_echo?: boolean
     quick_reply?: { payload?: string }
     reply_to?: { story?: unknown; mid?: string }
+    /**
+     * Anexos da mensagem. Hoje só nos interessa o tipo `story_mention` —
+     * quando alguém marca a conta num story dela. Vem sem texto, só o anexo.
+     */
+    attachments?: Array<{ type?: string; payload?: { url?: string } }>
   }
   postback?: { mid?: string; title?: string; payload?: string }
 }
@@ -189,7 +194,25 @@ async function loadFlow(flowId: string): Promise<Flow | null> {
   return (data as Flow | null) ?? null
 }
 
-async function handleMessaging(account: Account, value: MessagingValue) {
+/**
+ * Detecta o tipo de gatilho de um evento de messaging: menção em story
+ * (anexo `story_mention`), resposta de story (`reply_to.story`) ou palavra
+ * comum em DM. Exportada para teste — é a peça que nunca foi validada
+ * ponta a ponta (`story_reply`) e a que fica pronta sem poder ser testada
+ * contra dado real (`story_mention`, ver README/HANDOFF sobre o webhook).
+ */
+export function detectMessagingTriggerType(value: MessagingValue): TriggerType {
+  const isStoryMention =
+    value.message?.attachments?.some((attachment) => attachment.type === 'story_mention') ?? false
+  if (isStoryMention) return 'story_mention'
+
+  const isStoryReply = Boolean(value.message?.reply_to?.story)
+  if (isStoryReply) return 'story_reply'
+
+  return 'keyword'
+}
+
+export async function handleMessaging(account: Account, value: MessagingValue) {
   // Echo = mensagem que a própria conta enviou. Ignorar, senão o bot conversa sozinho.
   if (value.message?.is_echo) return
 
@@ -199,7 +222,9 @@ async function handleMessaging(account: Account, value: MessagingValue) {
   const text: string =
     value.message?.quick_reply?.payload ?? value.postback?.payload ?? value.message?.text ?? ''
 
-  const isStoryReply = Boolean(value.message?.reply_to?.story)
+  const triggerType = detectMessagingTriggerType(value)
+  const isStoryMention = triggerType === 'story_mention'
+
   const contact = await upsertContact({ account, igUserId: senderId, markInbound: true })
 
   await supabaseAdmin.from('messages').upsert(
@@ -214,30 +239,32 @@ async function handleMessaging(account: Account, value: MessagingValue) {
     { onConflict: 'mid', ignoreDuplicates: true },
   )
 
-  if (!text) return
+  // Sem texto e sem ser menção não há o que casar contra gatilho — mesmo
+  // tratamento de sempre para figurinha/imagem sem legenda.
+  if (!text && !isStoryMention) return
 
   // Contato em atendimento humano: a mensagem fica registrada para o inbox,
   // mas nenhum fluxo dispara nem retoma por cima da pessoa.
   if (contact.automation_paused) return
 
-  // Fluxo esperando resposta tem prioridade sobre disparar um novo.
-  const { data: waiting } = await supabaseAdmin
-    .from('flow_runs')
-    .select('*')
-    .eq('contact_id', contact.id)
-    .eq('status', 'waiting_reply')
-    .maybeSingle()
+  // Fluxo esperando resposta tem prioridade sobre disparar um novo — mas só
+  // faz sentido para texto de verdade. Uma menção não é resposta a um
+  // wait_reply pendente, é um gatilho de entrada novo (e chega sem texto).
+  if (text) {
+    const { data: waiting } = await supabaseAdmin
+      .from('flow_runs')
+      .select('*')
+      .eq('contact_id', contact.id)
+      .eq('status', 'waiting_reply')
+      .maybeSingle()
 
-  if (waiting) {
-    await resumeFlow({ run: waiting as FlowRun, account, contact, input: text })
-    return
+    if (waiting) {
+      await resumeFlow({ run: waiting as FlowRun, account, contact, input: text })
+      return
+    }
   }
 
-  const trigger = await findTrigger({
-    accountId: account.id,
-    type: isStoryReply ? 'story_reply' : 'keyword',
-    text,
-  })
+  const trigger = await findTrigger({ accountId: account.id, type: triggerType, text })
   if (!trigger) return
 
   const flow = await loadFlow(trigger.flow_id)

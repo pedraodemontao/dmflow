@@ -1,6 +1,6 @@
 import type { FlowDefinition } from '@/lib/flow/types'
 
-export type TriggerType = 'keyword' | 'comment' | 'story_reply' | 'default'
+export type TriggerType = 'keyword' | 'comment' | 'story_reply' | 'story_mention' | 'default'
 export type MatchMode = 'exact' | 'contains' | 'starts_with'
 export type RunStatus = 'running' | 'waiting_reply' | 'sleeping' | 'done' | 'failed'
 export type MessageDirection = 'in' | 'out'
@@ -13,6 +13,17 @@ export interface CannedReply {
   title: string
   text: string
   created_at: string
+}
+
+/**
+ * Pergunta fixa mostrada quando alguém abre o direct com a conta pela
+ * primeira vez. `payload` é o que a Meta devolve no toque — casa com uma
+ * automação de "palavra na DM" (match_mode exact) que usa o mesmo valor
+ * como palavra-chave. Ver `setIceBreakers` em `src/lib/instagram/api.ts`.
+ */
+export interface IceBreaker {
+  question: string
+  payload: string
 }
 
 export interface Account {
@@ -31,6 +42,10 @@ export interface Account {
   /** Até onde a varredura já chegou. Null = nunca varreu. Ver migration 0009. */
   comments_cursor: string | null
   messages_cursor: string | null
+  /** Até 4. O que está publicado ao vivo na Meta pode divergir — ver `ice_breakers_synced_at`. */
+  ice_breakers: IceBreaker[]
+  /** Última publicação bem-sucedida via `setIceBreakers`. Null = nunca publicado. */
+  ice_breakers_synced_at: string | null
   created_at: string
   updated_at: string
 }

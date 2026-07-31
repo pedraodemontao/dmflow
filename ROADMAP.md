@@ -1,8 +1,9 @@
 # ROADMAP — o que falta para ter o núcleo do ManyChat
 
 > Comparação honesta com o ManyChat para Instagram. Marca o que já existe, o que falta e
-> em que ordem vale construir. Atualizado em 2026-07-30 (noite) — as fases 1, 2 e 3 da
-> "ordem sugerida" já foram construídas; o que sobrou está listado como ❌ abaixo.
+> em que ordem vale construir. Atualizado em 2026-07-31 — a fase 7 ("Gatilhos novos") saiu
+> do papel: resposta de story ganhou teste de ponta a ponta, menção em story e ice breakers
+> foram implementados (ver notas na tabela). O que sobrou continua listado como ❌ abaixo.
 
 Legenda: ✅ pronto · 🟡 parcial · ❌ não existe
 
@@ -16,9 +17,9 @@ Legenda: ✅ pronto · 🟡 parcial · ❌ não existe
 | Comentário em qualquer post | ✅ | `media_id` nulo no trigger |
 | Palavra-chave em DM | ✅ | |
 | Resposta padrão (nada casou) | ✅ | trigger `default` |
-| Resposta a story | 🟡 | Existe no schema e no matcher, nunca foi testado de ponta a ponta |
-| Menção em story | ❌ | Campo de webhook `story_insights`/mentions não é assinado |
-| Ice breakers (perguntas fixas no início da conversa) | ❌ | API de persona/ice breakers do IG |
+| Resposta a story | ✅ | Detecção (`reply_to.story`) coberta por teste em `process.test.ts`. Nenhum bug encontrado |
+| Menção em story | 🟡 | Código pronto (`handleMessaging` detecta anexo `story_mention`), mas só dispara quando o webhook (nunca entregou nada, ver `HANDOFF.md`) ou o polling passarem a entregar o campo `attachments`. Não é `story_insights` — aquele campo é métrica do próprio story, engano corrigido nesta rodada |
+| Ice breakers (perguntas fixas no início da conversa) | ✅ | Tela em `/ice-breakers`, publica via `POST /messenger_profile`. O toque cai no matcher de `keyword` já existente (payload = palavra-chave com `match_mode: exact`) |
 | Link de referência (`ig.me/m/conta?ref=campanha`) | ❌ | **Bloqueado**: o `ref` só chega por webhook, e o webhook nunca entregou. O polling não expõe esse dado |
 | Anúncio Click-to-Direct (`ad_id`) | ❌ | Mesmo bloqueio do `ref` |
 | **Origem por conteúdo (de qual post veio o lead)** | ✅ | Funciona com polling: o id da mídia vem no evento de comentário |
@@ -126,8 +127,10 @@ a janela e o cap**, não uma metralhadora. Recomendo deixar por último e constr
    exportação CSV.
 6. ~~**Chat ao vivo turbinado**~~ — ✅ feito: respostas prontas, resolver/adiar, notas
    internas, filas com contador.
-7. **Gatilhos novos** — menção em story e ice breakers. ← próximo
-8. **Blocos restantes** — carrossel de cards, vídeo/áudio, pular para outro fluxo.
+7. ~~**Gatilhos novos**~~ — ✅ feito: resposta de story testada, ice breakers publicáveis pelo
+   painel, menção em story com código pronto (aguarda o webhook ou uma extensão do polling
+   para disparar de verdade — ver nota da linha na tabela acima).
+8. **Blocos restantes** — carrossel de cards, vídeo/áudio, pular para outro fluxo. ← próximo
 9. **Múltiplas contas** — o schema já isola por `account_id`; falta o seletor no painel.
 10. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação.
     O Pedro decidiu não priorizar; era exemplo, não pedido.

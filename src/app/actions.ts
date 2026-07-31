@@ -6,15 +6,15 @@ import { z } from 'zod'
 import { flowDefinitionSchema } from '@/lib/flow/types'
 import { checkFlowTexts, checkPublicReply, type VariationIssue } from '@/lib/flow/variation'
 import { assertUnderSendCap, logSend } from '@/lib/flow/send-cap'
-import { sendText } from '@/lib/instagram/api'
+import { clearIceBreakers, sendText, setIceBreakers } from '@/lib/instagram/api'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getAccount, getThread, type Thread } from '@/lib/data'
-import type { Contact } from '@/types/db'
+import type { Contact, IceBreaker } from '@/types/db'
 
 const automationSchema = z.object({
   triggerId: z.string().uuid().nullish(),
   name: z.string().min(1, 'Dê um nome para a automação'),
-  triggerType: z.enum(['comment', 'keyword', 'story_reply', 'default']),
+  triggerType: z.enum(['comment', 'keyword', 'story_reply', 'story_mention', 'default']),
   keywords: z.array(z.string().min(1)),
   matchMode: z.enum(['exact', 'contains', 'starts_with']),
   mediaId: z.string().nullish(),
@@ -359,6 +359,74 @@ export async function setQuietHours(from: number | null, to: number | null): Pro
   if (error) return { ok: false, error: error.message }
 
   revalidatePath('/')
+  return { ok: true }
+}
+
+const iceBreakerSchema = z.object({
+  question: z.string().trim().min(1, 'Escreva a pergunta').max(80, 'Máximo 80 caracteres'),
+  payload: z.string().trim().min(1, 'Defina um payload').max(200, 'Payload muito longo'),
+})
+
+const iceBreakersSchema = z.array(iceBreakerSchema).max(4, 'Máximo de 4 ice breakers')
+
+/**
+ * Salva as perguntas fixas no banco e publica na Meta (POST /messenger_profile).
+ * Lista vazia limpa o que está publicado (DELETE) em vez de dar erro — é
+ * assim que o dono desliga os ice breakers pela mesma tela.
+ *
+ * Se o banco salvar mas a Meta recusar a publicação, o erro volta claro: o
+ * texto não fica perdido (já está salvo), só desatualizado em relação ao
+ * que está ao vivo na conta.
+ */
+export async function saveIceBreakers(raw: unknown): Promise<ActionResult> {
+  const parsed = iceBreakersSchema.safeParse(raw)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
+  }
+
+  const payloads = parsed.data.map((ib) => ib.payload)
+  if (new Set(payloads).size !== payloads.length) {
+    return { ok: false, error: 'Os payloads precisam ser únicos entre si.' }
+  }
+
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta do Instagram conectada.' }
+
+  const iceBreakers: IceBreaker[] = parsed.data
+
+  const { error: dbError } = await supabaseAdmin
+    .from('accounts')
+    .update({ ice_breakers: iceBreakers })
+    .eq('id', account.id)
+
+  if (dbError) return { ok: false, error: dbError.message }
+
+  try {
+    if (iceBreakers.length === 0) {
+      await clearIceBreakers({ accessToken: account.access_token })
+    } else {
+      await setIceBreakers({
+        igUserId: account.ig_user_id,
+        accessToken: account.access_token,
+        iceBreakers,
+      })
+    }
+
+    await supabaseAdmin
+      .from('accounts')
+      .update({ ice_breakers_synced_at: new Date().toISOString() })
+      .eq('id', account.id)
+  } catch (error) {
+    revalidatePath('/ice-breakers')
+    return {
+      ok: false,
+      error: `Salvei no banco, mas publicar na Meta falhou: ${
+        error instanceof Error ? error.message : 'erro desconhecido'
+      }`,
+    }
+  }
+
+  revalidatePath('/ice-breakers')
   return { ok: true }
 }
 

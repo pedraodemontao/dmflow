@@ -1,0 +1,21 @@
+-- dm-flow :: gatilho de menção em story
+-- Quando alguém marca a conta num story dela (ROADMAP: "Menção em story").
+-- Não confundir com o campo de webhook `story_insights` — aquele é métrica
+-- do PRÓPRIO story vencendo (impressões, alcance, taps...), sem relação
+-- nenhuma com ser marcado no story de outra pessoa. Foi engano do ROADMAP.
+--
+-- A Meta entrega menção como um anexo `story_mention` dentro do MESMO
+-- evento de messaging que já usamos para DM e resposta de story — não
+-- precisa assinar campo novo (`messages` já está em WEBHOOK_FIELDS,
+-- src/lib/instagram/api.ts).
+--
+-- NUNCA testado com dado real: o webhook deste projeto nunca entregou nada
+-- (ver HANDOFF.md). O polling (src/lib/webhook/poll.ts) hoje também não
+-- pega esse evento — pollMessages não pede o campo `attachments` na
+-- Conversations API (decisão deliberada: mudar essa query sem poder testar
+-- contra a conta de produção arrisca quebrar o polling de DM que hoje
+-- sustenta toda a automação). O código de detecção já está pronto
+-- (handleMessaging, src/lib/webhook/process.ts) e dispara assim que um dos
+-- dois caminhos passar a entregar `attachments`.
+
+alter type public.trigger_type add value if not exists 'story_mention';

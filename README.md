@@ -2,7 +2,7 @@
 
 Automação de DM e comentário do Instagram. O núcleo do ManyChat, self-hosted.
 
-Faz: comentário com palavra-chave → DM automática, palavra-chave na DM → fluxo, resposta de story → fluxo, tags, delays, condições, chamada de webhook externo.
+Faz: comentário com palavra-chave → DM automática, palavra-chave na DM → fluxo, resposta de story → fluxo, ice breakers publicados na conta, tags, delays, condições, chamada de webhook externo.
 
 ---
 
@@ -207,7 +207,7 @@ Linha na tabela `triggers`:
 
 | Campo | Detalhe |
 |---|---|
-| `type` | `comment`, `keyword` (DM), `story_reply`, `default` (fallback de DM) |
+| `type` | `comment`, `keyword` (DM, inclui payload de ice breaker), `story_reply`, `story_mention`, `default` (fallback de DM) |
 | `keywords` | Array. Vazio = casa com qualquer texto |
 | `match_mode` | `contains` (padrão), `exact`, `starts_with` — ignora acento e caixa |
 | `media_id` | Só para `comment`. `null` = qualquer post |

@@ -263,6 +263,84 @@ export async function replyToComment(args: {
   return json
 }
 
+export interface IceBreaker {
+  question: string
+  payload: string
+}
+
+const ICE_BREAKER_MAX = 4
+const ICE_BREAKER_QUESTION_MAX_LEN = 80
+
+/**
+ * Publica as perguntas fixas que aparecem quando alguém abre o direct com a
+ * conta pela primeira vez. Configuração de CONTA, não bloco de fluxo —
+ * `POST /{ig-id}/messenger_profile`. Ao tocar, a Meta manda um
+ * `messaging_postback` com esse payload; quem decide o que acontece é o
+ * matcher de gatilho de palavra-chave já existente (crie uma automação com
+ * `match_mode: exact` usando o mesmo payload como palavra-chave).
+ */
+export async function setIceBreakers(args: {
+  igUserId: string
+  accessToken: string
+  iceBreakers: IceBreaker[]
+}): Promise<void> {
+  if (args.iceBreakers.length > ICE_BREAKER_MAX) {
+    throw new Error(`Máximo de ${ICE_BREAKER_MAX} ice breakers.`)
+  }
+
+  const res = await fetch(`${GRAPH}/${args.igUserId}/messenger_profile`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${args.accessToken}`,
+    },
+    body: JSON.stringify({
+      platform: 'instagram',
+      ice_breakers: [
+        {
+          call_to_actions: args.iceBreakers.map((ib) => ({
+            question: ib.question.slice(0, ICE_BREAKER_QUESTION_MAX_LEN),
+            payload: ib.payload,
+          })),
+        },
+      ],
+    }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`Publicação dos ice breakers falhou (${res.status}): ${await res.text()}`)
+  }
+}
+
+/** Remove os ice breakers publicados na conta. Não mexe no que está salvo no banco. */
+export async function clearIceBreakers(args: { accessToken: string }): Promise<void> {
+  const res = await fetch(`${GRAPH}/me/messenger_profile`, {
+    method: 'DELETE',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${args.accessToken}`,
+    },
+    body: JSON.stringify({ fields: ['ice_breakers'] }),
+  })
+
+  if (!res.ok) {
+    throw new Error(`Remoção dos ice breakers falhou (${res.status}): ${await res.text()}`)
+  }
+}
+
+/** O que está publicado ao vivo na conta agora — para o painel comparar com o banco. */
+export async function getIceBreakers(args: { accessToken: string }): Promise<IceBreaker[]> {
+  const res = await fetch(`${GRAPH}/me/messenger_profile?fields=ice_breakers`, {
+    headers: { authorization: `Bearer ${args.accessToken}` },
+  })
+
+  if (!res.ok) return []
+  const json = (await res.json()) as {
+    ice_breakers?: Array<{ call_to_actions?: IceBreaker[] }>
+  }
+  return json.ice_breakers?.[0]?.call_to_actions ?? []
+}
+
 /**
  * Campos de webhook que a conta precisa assinar. Cadastrar a URL de callback no
  * painel do app NÃO basta: cada conta conectada precisa se inscrever, senão a

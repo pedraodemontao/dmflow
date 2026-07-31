@@ -2,7 +2,15 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { AtSign, LayoutDashboard, MessagesSquare, RefreshCw, Users, Zap } from 'lucide-react'
+import {
+  AtSign,
+  LayoutDashboard,
+  MessagesSquare,
+  MessageSquarePlus,
+  RefreshCw,
+  Users,
+  Zap,
+} from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -11,6 +19,7 @@ const NAV = [
   { href: '/automacoes', label: 'Automações', icon: Zap },
   { href: '/contatos', label: 'Contatos', icon: Users },
   { href: '/conversas', label: 'Conversas', icon: MessagesSquare },
+  { href: '/ice-breakers', label: 'Ice breakers', icon: MessageSquarePlus },
 ]
 
 /**
