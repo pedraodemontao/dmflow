@@ -26,10 +26,14 @@ function canSendDm(contact: Contact): boolean {
   return Date.now() - new Date(contact.last_inbound_at).getTime() < DM_WINDOW_MS
 }
 
-function interpolate(text: string, contact: Contact, ctx: FlowContext): string {
+export function interpolate(text: string, contact: Contact, ctx: FlowContext): string {
   return text.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_match, key: string) => {
     if (key === 'nome' || key === 'name') return contact.name ?? contact.username ?? ''
     if (key === 'username') return contact.username ?? ''
+    // Identificador para carregar no link da página: é ele que permite ao
+    // endpoint de conversão saber QUEM converteu. Sem isso, a página só
+    // conhece o telefone e a gente só conhece o perfil do Instagram.
+    if (key === 'contact_id') return contact.id
     return ctx.vars[key] ?? ''
   })
 }
@@ -57,6 +61,13 @@ async function deliver(
 
   const text = spin(interpolate(payload.text, contact, ctx))
 
+  // Botões também interpolam: o link precisa carregar {{contact_id}}.
+  const buttons = payload.buttons?.map((button) => ({
+    ...button,
+    title: spin(interpolate(button.title, contact, ctx)),
+    ...(button.url ? { url: interpolate(button.url, contact, ctx) } : {}),
+  }))
+
   if (ctx.pendingCommentId) {
     const commentId = ctx.pendingCommentId
     delete ctx.pendingCommentId
@@ -67,20 +78,20 @@ async function deliver(
       text,
       // Botões e quick replies iam para o lixo aqui: o fluxo nascido de
       // comentário perdia justamente o que abre a janela de 24h.
-      buttons: payload.buttons,
+      buttons,
       quickReplies: payload.quickReplies,
     })
     await logSend(account.id, 'private_reply')
   } else {
     if (!canSendDm(contact)) throw new WindowClosedError()
 
-    if (payload.buttons?.length) {
+    if (buttons?.length) {
       await sendButtons({
         igUserId: account.ig_user_id,
         accessToken: account.access_token,
         recipientId: contact.ig_user_id,
         text,
-        buttons: payload.buttons,
+        buttons,
       })
     } else {
       await sendText({
