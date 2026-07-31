@@ -1,3 +1,5 @@
+import { MetaSendError, type MetaErrorBody } from '@/lib/instagram/errors'
+
 const GRAPH = 'https://graph.instagram.com/v23.0'
 
 export interface QuickReply {
@@ -22,9 +24,20 @@ async function send({ igUserId, accessToken, recipient, message }: SendArgs) {
     body: JSON.stringify({ recipient, message }),
   })
 
-  const json = await res.json().catch(() => ({}))
+  const raw = await res.text()
+  const json = (() => {
+    try {
+      return JSON.parse(raw) as Record<string, unknown>
+    } catch {
+      return {}
+    }
+  })()
+
   if (!res.ok) {
-    throw new Error(`Envio falhou (${res.status}): ${JSON.stringify(json)}`)
+    // `MetaSendError` em vez de `Error` cru: quem chama precisa saber se vale
+    // retentar. Erro permanente retentado reexecuta o fluxo do início e
+    // reentrega mensagem já enviada — ver o comentário em errors.ts.
+    throw new MetaSendError({ status: res.status, body: json as MetaErrorBody, raw })
   }
   return json as { recipient_id?: string; message_id?: string }
 }

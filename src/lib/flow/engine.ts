@@ -519,6 +519,48 @@ export async function startFlow(args: {
 
   if (existing) return
 
+  // Run que já morreu neste fluxo para este contato: RETOMA de onde parou, não
+  // recomeça. Sem isto, a retentativa do evento criava um run novo e caminhava
+  // desde `definition.entry` — reentregando toda mensagem já enviada antes da
+  // falha. Doze retentativas viravam doze cópias da mesma sequência, que é
+  // exatamente o padrão de repetição que restringiu a conta em jul/2026.
+  //
+  // Só retoma o que tem `current_node`: sem bloco atual não existe ponto de
+  // retomada, e aí começar do zero é o comportamento certo.
+  const { data: died } = await supabaseAdmin
+    .from('flow_runs')
+    .select('*')
+    .eq('contact_id', args.contact.id)
+    .eq('flow_id', args.flow.id)
+    .eq('status', 'failed')
+    .order('updated_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  // `current_node` nulo não tem ponto de retomada — aí recomeçar é o certo.
+  // O filtro fica aqui e não na query de propósito: `.not()` amarraria o
+  // código ao dialeto do PostgREST por uma condição de uma linha.
+  if (died && (died as FlowRun).current_node) {
+    const run = died as FlowRun
+    const stored = (run.context ?? {}) as Partial<FlowContext>
+    const ctx: FlowContext = { vars: {}, ...stored }
+
+    // Claim: só retoma quem conseguiu virar o status. Dois ticks sobrepostos
+    // reivindicando o mesmo run morto reenviariam a mesma sequência.
+    const { data: claimed } = await supabaseAdmin
+      .from('flow_runs')
+      .update({ status: 'running', error: null })
+      .eq('id', run.id)
+      .eq('status', 'failed')
+      .select('id')
+      .maybeSingle()
+
+    if (!claimed) return
+
+    await walk(run, args.flow, args.account, args.contact, ctx, run.current_node)
+    return
+  }
+
   const definition = flowDefinitionSchema.parse(args.flow.definition)
   const ctx: FlowContext = {
     vars: {},

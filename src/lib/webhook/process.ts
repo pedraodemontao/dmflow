@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { fetchContactProfile, replyToComment } from '@/lib/instagram/api'
+import { isPermanentError } from '@/lib/instagram/errors'
 import { resolveButtonSource, type FlowDefinitionRow } from '@/lib/flow/button-source'
 import { resumeFlow, startFlow } from '@/lib/flow/engine'
 import { assertUnderSendCap, isUnderPublicReplyCap, logSend } from '@/lib/flow/send-cap'
@@ -564,7 +565,10 @@ export async function processPending(limit = 20): Promise<number> {
       console.error('[dm-flow] evento falhou:', row.dedup_key, message)
 
       const attempts = row.attempts + 1
-      const desistiu = attempts >= MAX_ATTEMPTS
+      // Erro permanente (payload inválido, política da Meta, token morto) não
+      // melhora com insistência: retentar reexecuta o fluxo e só gasta
+      // orçamento de envio com mensagem que a Meta vai recusar de novo.
+      const desistiu = attempts >= MAX_ATTEMPTS || isPermanentError(error)
 
       await supabaseAdmin
         .from('webhook_events')
