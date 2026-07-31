@@ -1,10 +1,11 @@
 import { Card } from '@/components/ui'
 import { Skeleton } from '@/components/ui/skeleton'
 
-/** Mesma tela de `page.tsx`: taxa de conclusão em número grande com barra, os
- *  dois totais ao lado e o funil — uma linha por bloco, cada uma com a barra
- *  de proporção. Mudou a grade lá, muda aqui: esqueleto de outro formato faz a
- *  tela pular quando o conteúdo chega. */
+/** Mesma tela de `page.tsx`, na mesma ordem: taxa de conclusão em número
+ *  grande com barra, os dois totais ao lado, os dois gráficos (iniciados ×
+ *  concluídos e disparos por dia) e o funil — uma linha por bloco, cada uma
+ *  com a barra de proporção. Mudou a grade lá, muda aqui: esqueleto de outro
+ *  formato faz a tela pular quando o conteúdo chega. */
 export default function Loading() {
   return (
     <>
@@ -35,6 +36,25 @@ export default function Loading() {
               ))}
             </Card>
           </div>
+
+          {/* Iniciados × concluídos: legenda, cabeçalho de duas linhas e a
+              área do gráfico (170px, o mesmo `height` do LineSeries). */}
+          <Card className="p-5">
+            <Skeleton className="h-2.5 w-56 max-w-full rounded-sm" />
+            <Skeleton className="mt-1.5 h-3 w-full max-w-lg rounded-sm" />
+            <Skeleton className="mt-4 h-[170px] w-full rounded-sm" />
+            <Skeleton className="mt-2 h-2 w-24 rounded-sm" />
+          </Card>
+
+          {/* Disparos por dia: barras de 80px. */}
+          <Card className="p-5">
+            <div className="flex items-baseline justify-between gap-3">
+              <Skeleton className="h-2.5 w-44 rounded-sm" />
+              <Skeleton className="h-2.5 w-14 rounded-sm" />
+            </div>
+            <Skeleton className="mt-4 h-20 w-full rounded-sm" />
+            <Skeleton className="mt-2 h-2 w-24 rounded-sm" />
+          </Card>
 
           <Card className="overflow-hidden">
             <div className="border-b border-border p-4">

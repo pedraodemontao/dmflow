@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { dailyBuckets, hourlyBuckets } from '@/lib/series'
+import { dailyBuckets, dailyBucketsByKey, hourlyBuckets } from '@/lib/series'
 
 /** 15/07/2026 às 18h em São Paulo = 21h UTC. */
 const NOW = new Date('2026-07-15T21:00:00.000Z')
@@ -49,6 +49,51 @@ describe('dailyBuckets', () => {
     const series = dailyBuckets(['2026-06-01T12:00:00.000Z'], 3, NOW)
 
     expect(series.every((bucket) => bucket.value === 0)).toBe(true)
+  })
+})
+
+describe('dailyBucketsByKey', () => {
+  it('devolve uma série por chave, todas sobre os mesmos dias', () => {
+    const [primeira, segunda] = dailyBucketsByKey(
+      [
+        { key: 'post-a', at: '2026-07-15T12:00:00.000Z' },
+        { key: 'post-a', at: '2026-07-15T13:00:00.000Z' },
+        { key: 'post-b', at: '2026-07-14T12:00:00.000Z' },
+      ],
+      ['post-a', 'post-b'],
+      2,
+      NOW,
+    )
+
+    expect(primeira).toEqual([
+      { label: '14/07', value: 0 },
+      { label: '15/07', value: 2 },
+    ])
+    // Mesmos rótulos nas duas: régua compartilhada é o que deixa comparar.
+    expect(segunda).toEqual([
+      { label: '14/07', value: 1 },
+      { label: '15/07', value: 0 },
+    ])
+  })
+
+  it('mantém a chave sem registro nenhum, zerada', () => {
+    // O post que morreu tem que continuar desenhado — sumir da saída faria a
+    // legenda apontar para uma linha que não existe.
+    const [morto] = dailyBucketsByKey([], ['post-morto'], 3, NOW)
+
+    expect(morto).toHaveLength(3)
+    expect(morto.every((bucket) => bucket.value === 0)).toBe(true)
+  })
+
+  it('ignora chave que não foi pedida', () => {
+    const series = dailyBucketsByKey(
+      [{ key: 'post-z', at: '2026-07-15T12:00:00.000Z' }],
+      ['post-a'],
+      1,
+      NOW,
+    )
+
+    expect(series).toEqual([[{ label: '15/07', value: 0 }]])
   })
 })
 

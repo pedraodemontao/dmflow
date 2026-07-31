@@ -72,6 +72,23 @@ export default function Loading() {
                 </div>
               </Card>
             </div>
+
+            {/* Os três gráficos de contexto, na ordem do `page.tsx`: leads por
+                dia dos 3 primeiros posts, envios por dia por tipo e envios por
+                hora. Cada bloco tem a altura do gráfico que vai substituir
+                (170, 170 e 88px) para a tela não pular. */}
+            {[
+              { key: 'fontes', chart: 170, hint: true },
+              { key: 'tipos', chart: 170, hint: true },
+              { key: 'horas', chart: 88, hint: false },
+            ].map((bloco) => (
+              <Card key={bloco.key} className="mt-4 p-4">
+                <Skeleton className="h-3 w-56 max-w-full" />
+                {bloco.hint && <Skeleton className="mt-1.5 h-3 w-full max-w-xl" />}
+                <Skeleton className="mt-4 w-full" style={{ height: bloco.chart }} />
+                <Skeleton className="mt-2 h-2 w-24" />
+              </Card>
+            ))}
           </section>
 
           {/* Operação: trava geral + horário de silêncio */}

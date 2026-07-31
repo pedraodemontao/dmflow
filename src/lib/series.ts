@@ -61,6 +61,32 @@ export function dailyBuckets(
 }
 
 /**
+ * Uma série diária POR CHAVE, todas sobre exatamente os mesmos dias — é o que
+ * permite jogar as curvas no mesmo par de eixos sem que uma comece antes da
+ * outra.
+ *
+ * Chave sem nenhum registro na janela devolve série toda zerada, e não some da
+ * saída: "esse post parou de trazer" é justamente o dado que o ranking por
+ * total esconde. Some do gráfico seria o pior dos dois mundos — a linha
+ * desapareceria e a legenda ficaria mentindo.
+ */
+export function dailyBucketsByKey(
+  rows: Array<{ key: string; at: string }>,
+  keys: string[],
+  days: number,
+  now: Date = new Date(),
+): SeriesBucket[][] {
+  const byKey = new Map<string, string[]>()
+  for (const row of rows) {
+    const list = byKey.get(row.key)
+    if (list) list.push(row.at)
+    else byKey.set(row.key, [row.at])
+  }
+
+  return keys.map((key) => dailyBuckets(byKey.get(key) ?? [], days, now))
+}
+
+/**
  * Um balde por hora, terminando na hora corrente. Usado no gráfico de envios:
  * é o formato da curva que denuncia disparo concentrado, e concentração é o
  * que o filtro de spam do Instagram pega (ver a blindagem no CLAUDE.md).
