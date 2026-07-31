@@ -21,25 +21,29 @@ export const dynamic = 'force-dynamic'
 function Stat({
   label,
   value,
+  hint,
   icon: Icon,
 }: {
   label: string
   value: number
+  /** Linha de contexto — o mesmo número dito de outro jeito, não um dado novo. */
+  hint: string
   icon: typeof Users
 }) {
   return (
-    <Card className="p-5">
-      <div className="flex items-center gap-2">
-        <div className="flex size-7 items-center justify-center rounded-md bg-accent/10 text-accent">
-          <Icon className="size-3.5" />
-        </div>
+    <Card className="p-4">
+      <div className="flex items-start justify-between gap-2">
         <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
           {label}
         </span>
+        <div className="flex size-6 shrink-0 items-center justify-center rounded-md bg-accent/10 text-accent">
+          <Icon className="size-3.5" />
+        </div>
       </div>
-      <p className="mt-3 font-mono text-3xl font-semibold tracking-tight text-foreground tabular-nums">
+      <p className="mt-2 font-mono text-2xl font-semibold tracking-tight text-foreground tabular-nums">
         {value}
       </p>
+      <p className="mt-0.5 truncate text-[11px] text-muted">{hint}</p>
     </Card>
   )
 }
@@ -80,7 +84,7 @@ export default async function Home({
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+      <header className="glass-chrome flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
         <h1 className="text-base font-semibold tracking-tight text-foreground">Painel</h1>
         <Link href="/automacoes/nova">
           <Button size="sm">
@@ -90,11 +94,11 @@ export default async function Home({
         </Link>
       </header>
 
-      <main className="flex-1 space-y-8 overflow-y-auto p-6">
+      <main className="flex-1 space-y-6 overflow-y-auto p-6">
         {/* O callback do OAuth volta para cá com ?erro= ou ?conectado=. Sem
             mostrar, uma reconexão que falhou parece ter dado certo. */}
         {erro && (
-          <div className="flex items-start gap-3 rounded-xl border border-danger/40 bg-danger/10 p-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-danger/40 bg-danger/10 p-4">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
             <div className="min-w-0">
               <p className="text-sm font-medium text-danger">A conexão com o Instagram falhou</p>
@@ -109,7 +113,7 @@ export default async function Home({
         )}
 
         {conectado && !erro && (
-          <div className="rounded-xl border border-success/40 bg-success/10 p-4">
+          <div className="rounded-2xl border border-success/40 bg-success/10 p-4">
             <p className="text-sm font-medium text-success">
               Instagram reconectado: @{conectado}
             </p>
@@ -117,7 +121,7 @@ export default async function Home({
         )}
 
         {health?.status === 'token_invalido' && (
-          <div className="flex items-start gap-3 rounded-xl border border-danger/40 bg-danger/10 p-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-danger/40 bg-danger/10 p-4">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-danger">
@@ -136,7 +140,7 @@ export default async function Home({
         )}
 
         {health?.status === 'sem_webhook' && (
-          <div className="flex items-start gap-3 rounded-xl border border-warning/30 bg-warning/10 p-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" />
             <div>
               <p className="text-sm font-medium text-warning">
@@ -151,7 +155,7 @@ export default async function Home({
         )}
 
         {health?.status === 'indisponivel' && (
-          <div className="flex items-start gap-3 rounded-xl border border-border bg-surface-2 p-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-border bg-surface-2 p-4">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-muted" />
             <div>
               <p className="text-sm font-medium">Não consegui falar com o Instagram agora</p>
@@ -161,22 +165,45 @@ export default async function Home({
             </div>
           </div>
         )}
-        {account && (
-          <Operacao
-            paused={account.automations_paused}
-            quietFrom={account.quiet_from}
-            quietTo={account.quiet_to}
-          />
-        )}
-
-        {riskReport && <Risco report={riskReport} />}
-
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Stat label="Contatos" value={stats.contacts} icon={Users} />
-          <Stat label="Automações ativas" value={stats.activeAutomations} icon={Zap} />
-          <Stat label="Mensagens enviadas" value={stats.messagesSent} icon={MessagesSquare} />
-          <Stat label="Fluxos em andamento" value={stats.runsRunning} icon={Play} />
+          <Stat
+            label="Contatos"
+            value={stats.contacts}
+            hint="quem já apareceu na base"
+            icon={Users}
+          />
+          <Stat
+            label="Automações ativas"
+            value={stats.activeAutomations}
+            hint="rodando agora, prontas para disparar"
+            icon={Zap}
+          />
+          <Stat
+            label="Mensagens enviadas"
+            value={stats.messagesSent}
+            hint="total histórico da conta"
+            icon={MessagesSquare}
+          />
+          <Stat
+            label="Fluxos em andamento"
+            value={stats.runsRunning}
+            hint="pessoas no meio de uma sequência"
+            icon={Play}
+          />
         </div>
+
+        {(account || riskReport) && (
+          <div className="grid gap-4 xl:grid-cols-[1.15fr_1fr]">
+            {account && (
+              <Operacao
+                paused={account.automations_paused}
+                quietFrom={account.quiet_from}
+                quietTo={account.quiet_to}
+              />
+            )}
+            {riskReport && <Risco report={riskReport} />}
+          </div>
+        )}
 
         {leadSources.length > 0 && (
           <section>
@@ -265,7 +292,7 @@ export default async function Home({
                   href={`/automacoes/${trigger.id}`}
                   className="rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
                 >
-                  <Card className="p-4 transition-colors duration-150 hover:border-accent/40">
+                  <Card className="p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_20px_36px_-20px_rgb(0_0_0_/75%)]">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-foreground">

@@ -174,7 +174,7 @@ function Canvas({
           proOptions={{ hideAttribution: true }}
           defaultEdgeOptions={{ animated: true }}
         >
-          <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#232936" />
+          <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#3a332c" />
           <Controls className="!bottom-4 !left-4" showInteractive={false} />
         </ReactFlow>
 
@@ -185,7 +185,7 @@ function Canvas({
           </Button>
 
           {paletteOpen && (
-            <div className="mt-2 w-64 overflow-hidden rounded-xl border border-border bg-surface shadow-xl">
+            <div className="glass-pop mt-2 w-64 max-h-[70vh] overflow-y-auto rounded-2xl">
               {PALETTE.map((type) => {
                 const meta = NODE_META[type]
                 const Icon = meta.icon
@@ -194,7 +194,7 @@ function Canvas({
                     key={type}
                     type="button"
                     onClick={() => addNode(type)}
-                    className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left hover:bg-surface-2"
+                    className="flex w-full items-start gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
                   >
                     <Icon className={cn('mt-0.5 size-4 shrink-0', meta.color)} />
                     <div>

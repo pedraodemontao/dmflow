@@ -19,7 +19,7 @@ export default async function AutomacoesPage() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+      <header className="glass-chrome flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
         <h1 className="text-base font-semibold tracking-tight text-foreground">Automações</h1>
         <Link href="/automacoes/nova">
           <Button size="sm">
@@ -46,7 +46,7 @@ export default async function AutomacoesPage() {
             {automations.map(({ trigger, flow, stats }) => (
               <Card
                 key={trigger.id}
-                className="flex items-center gap-4 p-4 transition-colors duration-150 hover:border-accent/40"
+                className="flex items-center gap-4 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-[0_20px_36px_-20px_rgb(0_0_0_/75%)]"
               >
                 <Link
                   href={`/automacoes/${trigger.id}`}

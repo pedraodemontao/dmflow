@@ -2,18 +2,35 @@
 @import "@xyflow/react/dist/style.css";
 
 /*
- * Tokens em três camadas (ver skill design-system):
+ * Tokens em quatro camadas (ver skill design-system):
  *   1. Primitivos  — a rampa de cor crua, sem significado.
  *   2. Semânticos  — os nomes que o app inteiro consome (bg-surface,
  *      text-muted, bg-accent...). Os NOMES não mudam — só o valor por trás.
- *   3. Componente  — expressos como classes Tailwind compostas a partir dos
- *      semânticos (ex.: `bg-accent text-background` no Button), não como
- *      variáveis próprias — é o padrão do Tailwind v4 para este projeto.
+ *   3. Material    — desfoque, saturação, opacidade e refração de borda.
+ *      Tão parte do design system quanto a cor: é o que faz uma superfície
+ *      parecer vidro ou parecer chapa. Só duas classes usam de fato
+ *      `backdrop-filter` (.glass-chrome e .glass-pop) — ver nota de uso
+ *      logo abaixo, antes delas.
+ *   4. Componente  — expressos como classes Tailwind compostas a partir dos
+ *      semânticos (ex.: `bg-accent text-background` no Button). As três
+ *      classes de material são a única exceção: multi-layer box-shadow +
+ *      backdrop-filter não cabem em utilitário Tailwind sem repetir a mesma
+ *      string gigante em cada arquivo, então viram classe CSS de verdade,
+ *      igual a qualquer outro token de componente compartilhado.
  *
  * Identidade: grafite morno (leve tom terracota no neutro, H≈30°) + accent
  * "brasa" (laranja-cobre, H≈22°) — foge do indigo/roxo genérico de dashboard
  * SaaS (e do azul/roxo do ManyChat). Todo par texto/fundo abaixo foi checado
  * para WCAG AA (4.5:1 texto normal, 3:1 UI) — contas na descrição do commit.
+ *
+ * Vidro é seletivo, não decorativo (decisão registrada no commit): só onde a
+ * função é flutuar sobre conteúdo — sidebar, cabeçalho de página, o inspetor
+ * de bloco do builder (mesmo papel estrutural da sidebar) e popovers (menu de
+ * adiar, atalhos de resposta, paleta de blocos). Superfície de DADO — card de
+ * métrica, linha de lista, balão de mensagem, card de risco — continua
+ * opaca: a leitura de estado operacional não pode depender de quanto contraste
+ * sobrou depois do desfoque. Profundidade ali vem de sombra difusa e de um
+ * fio de luz sutil na borda (`.surface-panel`), nunca de transparência.
  */
 
 :root {
@@ -44,6 +61,26 @@
   --success: var(--green-500);
   --warning: var(--yellow-500);
   --danger: var(--red-500);
+
+  /* ---------- 3. Material — vidro (chrome flutuante) ---------- */
+  /* Preenchimento "vidro fumê": a própria cor de superfície, translúcida —
+     não vidro branco. Um branco a 6-10% sobre conteúdo claro (ex. thumbnail
+     de post) explode em contraste; a cor de superfície a 70-85% nunca fica
+     mais clara que o token original, então todo par já validado como AA
+     continua AA — o desfoque só acrescenta o material, não muda a luminância
+     de base. */
+  --glass-fill: rgb(22 20 18 / 70%); /* sidebar, cabeçalhos, inspetor */
+  --glass-fill-pop: rgb(22 20 18 / 84%); /* popovers — flutuam sobre conteúdo variável */
+  --glass-edge-light: rgb(255 255 255 / 14%); /* refração: luz batendo em cima */
+  --glass-edge-dark: rgb(0 0 0 / 46%); /* refração: sombra acumulada embaixo */
+  --glass-blur: 22px;
+  --glass-saturate: 1.55;
+
+  /* ---------- 3. Material — superfície de dado (opaca, sem blur) ---------- */
+  --surface-edge-light: rgb(255 255 255 / 6%);
+  --surface-shadow:
+    0 1px 2px 0 rgb(0 0 0 / 30%),
+    0 16px 32px -20px rgb(0 0 0 / 65%);
 }
 
 @theme inline {
@@ -62,10 +99,20 @@
   --font-mono: var(--font-geist-mono);
 }
 
+/*
+ * Malha de fundo: três orbes radiais, fixos, bem discretos. Ela não é o
+ * efeito — ela é o combustível do efeito. Sem algo colorido atrás, o vidro
+ * dos elementos `.glass-chrome`/`.glass-pop` não tem o que refratar e vira
+ * só um desfoque cinza. `background-attachment: fixed` mantém a malha parada
+ * quando o `main` de cada página rola por baixo do cabeçalho.
+ */
 body {
   background:
-    radial-gradient(1100px 560px at 12% -12%, rgb(242 118 46 / 8%), transparent 60%),
+    radial-gradient(900px 620px at 6% -10%, rgb(242 118 46 / 11%), transparent 60%),
+    radial-gradient(760px 640px at 100% 8%, rgb(31 122 118 / 6%), transparent 62%),
+    radial-gradient(820px 700px at 55% 112%, rgb(180 69 107 / 6%), transparent 60%),
     var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -80,6 +127,50 @@ body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
 ::-webkit-scrollbar-thumb:hover { background: #453f38; }
+
+/*
+ * .glass-chrome — vidro estrutural: sidebar, cabeçalho de página, inspetor de
+ * bloco do builder. Elementos fixos/dockados que não sobrepõem conteúdo (são
+ * vizinhos dele no layout), então o que refratam é a malha de fundo.
+ */
+.glass-chrome {
+  background: linear-gradient(180deg, var(--glass-fill), rgb(22 20 18 / 58%));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge-light),
+    inset 0 -1px 0 var(--glass-edge-dark);
+}
+
+/*
+ * .glass-pop — vidro flutuante: menu de adiar, atalhos de resposta, paleta
+ * de blocos. Sobrepõe conteúdo de verdade (lista de mensagens, canvas), por
+ * isso o preenchimento é mais opaco — legibilidade em primeiro lugar mesmo
+ * flutuando sobre o que for.
+ */
+.glass-pop {
+  background: var(--glass-fill-pop);
+  backdrop-filter: blur(26px) saturate(var(--glass-saturate));
+  -webkit-backdrop-filter: blur(26px) saturate(var(--glass-saturate));
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge-light),
+    inset 0 -1px 0 var(--glass-edge-dark),
+    0 24px 48px -16px rgb(0 0 0 / 60%);
+}
+
+/*
+ * .surface-panel — a superfície de dado padrão (Card e o card de bloco do
+ * builder). Opaca, sem backdrop-filter: profundidade vem só de sombra difusa
+ * e de um fio de luz de 1px no topo, nunca de transparência.
+ */
+.surface-panel {
+  background: var(--surface);
+  box-shadow: inset 0 1px 0 var(--surface-edge-light), var(--surface-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; }
+}
 
 /* Canvas do React Flow no tema escuro */
 .react-flow { background: var(--background); }

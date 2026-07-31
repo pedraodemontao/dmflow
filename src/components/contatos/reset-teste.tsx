@@ -29,7 +29,7 @@ export function ResetTeste({ total }: { total: number }) {
   }
 
   return (
-    <div className="w-full space-y-2 rounded-lg border border-danger/40 bg-danger/10 p-3">
+    <div className="w-full space-y-2 rounded-2xl border border-danger/40 bg-danger/10 p-3">
       <p className="text-xs font-medium text-danger">
         Apagar {total} {total === 1 ? 'contato' : 'contatos'} e a fila de eventos
       </p>

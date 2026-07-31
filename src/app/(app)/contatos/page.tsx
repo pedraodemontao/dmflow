@@ -23,7 +23,7 @@ export default async function ContatosPage({
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center border-b border-border bg-surface px-6">
+      <header className="glass-chrome flex h-16 shrink-0 items-center border-b border-white/[0.06] px-6">
         <h1 className="text-base font-semibold tracking-tight text-foreground">Contatos</h1>
         <span className="ml-2 font-mono text-xs text-muted">({contacts.length})</span>
 
