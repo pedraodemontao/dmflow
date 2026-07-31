@@ -12,6 +12,7 @@ import {
   Zap,
 } from 'lucide-react'
 
+import { CommandPaletteTrigger } from '@/components/layout/command-palette'
 import { cn } from '@/lib/utils'
 
 const NAV = [
@@ -82,6 +83,12 @@ export function Sidebar({
           </span>
           <span className="text-base font-semibold tracking-tight text-foreground">flow</span>
         </span>
+      </div>
+
+      {/* O atalho ⌘K não existe para quem não sabe que ele existe: o botão é a
+          única pista visível da paleta, e por isso fica antes da navegação. */}
+      <div className="px-3 pb-3">
+        <CommandPaletteTrigger />
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 px-3">
