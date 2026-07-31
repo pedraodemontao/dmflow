@@ -2,6 +2,7 @@ import 'server-only'
 
 import { computeDayTrend, dayWindows, type DayTrend } from '@/lib/day-trend'
 import { env } from '@/lib/env'
+import { DISMISSED_ERROR_PREFIX } from '@/lib/flow/dismissed'
 import { fetchMedia } from '@/lib/instagram/api'
 import { assessRisk } from '@/lib/risk/assess'
 import type { RiskReport } from '@/lib/risk/types'
@@ -576,6 +577,13 @@ export async function getLeadsTrend(): Promise<DayTrend> {
 
 /** Depois desse tanto sem resposta a janela de 24h já fechou — a conversa não reabre sozinha. */
 const STALE_WAITING_REPLY_MS = 24 * 60 * 60 * 1000
+/**
+ * "Falha ainda não dispensada", num `or` só — dois `or` empilhados na mesma
+ * query dependeriam de o PostgREST juntá-los com AND, o que não é garantido.
+ * O ramo `error.is.null` é obrigatório: `NOT LIKE` contra NULL dá NULL, então
+ * sem ele toda falha SEM texto de erro sumiria do painel em silêncio.
+ */
+const NOT_DISMISSED = `error.is.null,error.not.ilike.${DISMISSED_ERROR_PREFIX}*`
 /** Teto de linhas puxadas só para achar qual automação concentra mais gente travada. */
 const STUCK_SAMPLE_LIMIT = 500
 
@@ -600,7 +608,11 @@ export async function getStuckSummary(): Promise<StuckSummary> {
   const staleBefore = new Date(Date.now() - STALE_WAITING_REPLY_MS).toISOString()
 
   const [{ count: failed }, { count: stale }] = await Promise.all([
-    supabaseAdmin.from('flow_runs').select('id', { count: 'exact', head: true }).eq('status', 'failed'),
+    supabaseAdmin
+      .from('flow_runs')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'failed')
+      .or(NOT_DISMISSED),
     supabaseAdmin
       .from('flow_runs')
       .select('id', { count: 'exact', head: true })
@@ -613,10 +625,16 @@ export async function getStuckSummary(): Promise<StuckSummary> {
     return { failed: failed ?? 0, staleWaitingReply: stale ?? 0, total: 0, topAutomation: null }
   }
 
+  // Um `or` só, com o "não dispensado" aberto nos dois ramos de `failed` —
+  // encadear um segundo `.or()` misturaria os dois grupos.
   const { data: stuckRows } = await supabaseAdmin
     .from('flow_runs')
     .select('flow_id')
-    .or(`status.eq.failed,and(status.eq.waiting_reply,updated_at.lt.${staleBefore})`)
+    .or(
+      `and(status.eq.failed,error.is.null),` +
+        `and(status.eq.failed,error.not.ilike.${DISMISSED_ERROR_PREFIX}*),` +
+        `and(status.eq.waiting_reply,updated_at.lt.${staleBefore})`,
+    )
     .limit(STUCK_SAMPLE_LIMIT)
 
   const countByFlow = new Map<string, number>()
@@ -667,12 +685,17 @@ export interface FailedRun {
  * com join (limitada a `limit`) traz as falhas mais recentes; a segunda busca
  * só os triggers dos fluxos envolvidos (poucos, `in flow_id`) para linkar
  * direto na automação em vez de mandar o dono abrir cada uma na mão.
+ *
+ * Falha dispensada na mão (ver `src/lib/flow/dismissed.ts`) fica de fora: ela
+ * continua `failed` no banco, mas já foi reconhecida e não deve manter o
+ * painel vermelho para sempre.
  */
 export async function getFailedAutomations(limit = 5): Promise<FailedRun[]> {
   const { data } = await supabaseAdmin
     .from('flow_runs')
     .select('id, error, updated_at, flow_id, flows(name), contacts(username)')
     .eq('status', 'failed')
+    .or(NOT_DISMISSED)
     .order('updated_at', { ascending: false })
     .limit(limit)
 
