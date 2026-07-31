@@ -29,6 +29,7 @@ import {
 import { NodeInspector } from '@/components/automacoes/node-inspector'
 import { Button } from '@/components/ui'
 import type { FlowOption } from '@/lib/data'
+import { findLeaks } from '@/lib/flow/leaks'
 import { blankNode, definitionToGraph, graphToDefinition } from '@/lib/flow/transform'
 import type { FlowDefinition, FlowNode } from '@/lib/flow/types'
 import { cn } from '@/lib/utils'
@@ -82,6 +83,12 @@ function Canvas({
   const counter = useRef(0)
 
   const entry = definition.entry
+
+  /**
+   * Onde o fluxo perde gente. Recalculado a cada mudança da definição, no
+   * navegador — a análise é pura, então não custa ida ao servidor.
+   */
+  const leaks = useMemo(() => findLeaks(definition), [definition])
 
   /** Toda mutação do grafo reflete de volta na definição que será salva. */
   const sync = useCallback(
@@ -208,6 +215,42 @@ function Canvas({
               biblioteca vêm sem camada e ganhariam do utilitário normal. */}
           <Controls className="bottom-4! left-4!" showInteractive={false} />
         </ReactFlow>
+
+        {leaks.length > 0 && (
+          // Fica no canto oposto à paleta e é clicável: cada aviso leva ao
+          // bloco. Alerta que não leva ao lugar do problema vira ruído que a
+          // pessoa aprende a ignorar.
+          <div className="pop-panel absolute right-4 top-4 z-10 w-80 rounded-md">
+            <p className="label border-b border-border px-3 py-2 text-[9px] text-muted">
+              {leaks.length} {leaks.length === 1 ? 'ponto a conferir' : 'pontos a conferir'}
+            </p>
+            <ul className="max-h-64 divide-y divide-border overflow-y-auto">
+              {leaks.map((leak, index) => (
+                <li key={`${leak.nodeId}-${index}`}>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedId(leak.nodeId)}
+                    className="w-full px-3 py-2.5 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+                  >
+                    <span
+                      className={cn(
+                        'label text-[9px]',
+                        leak.level === 'erro' && 'text-danger',
+                        leak.level === 'aviso' && 'text-warning',
+                        leak.level === 'nota' && 'text-muted',
+                      )}
+                    >
+                      {leak.nodeId}
+                    </span>
+                    <span className="mt-1 block text-[11px] leading-relaxed text-muted">
+                      {leak.message}
+                    </span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
 
         <div className="absolute left-4 top-4 z-10">
           <Button type="button" size="sm" onClick={() => setPaletteOpen((v) => !v)}>
