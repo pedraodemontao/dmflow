@@ -35,9 +35,9 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-surface px-6">
+      <header className="glass-chrome flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] px-6">
         <Link href={`/automacoes/${id}`}>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" aria-label="Voltar para a automação">
             <ArrowLeft className="size-4" />
           </Button>
         </Link>

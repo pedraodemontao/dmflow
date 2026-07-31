@@ -219,8 +219,11 @@ export function BuilderNode({ data, selected }: NodeProps) {
   return (
     <div
       className={cn(
-        'w-64 rounded-xl border bg-surface shadow-lg transition-colors',
-        selected ? 'border-accent' : 'border-border',
+        // Card de dado no canvas — pode haver muitos ao mesmo tempo, por isso
+        // é sólido (.surface-panel), nunca vidro: dezenas de backdrop-filter
+        // no mesmo canvas custariam caro à toa.
+        'surface-panel w-64 rounded-2xl border transition-colors',
+        selected ? 'border-accent' : 'border-border/70',
       )}
     >
       {node.type !== 'message' || !node.isEntry ? (

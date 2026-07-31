@@ -150,7 +150,7 @@ export function DeleteContact({ contactId, name }: { contactId: string; name: st
   }
 
   return (
-    <div className="space-y-2 rounded-lg border border-danger/40 bg-danger/10 p-3">
+    <div className="space-y-2 rounded-2xl border border-danger/40 bg-danger/10 p-3">
       <p className="text-[11px] text-muted">
         Apagar <span className="font-medium text-foreground">{name}</span> leva junto todo o
         histórico de mensagens e os fluxos que ele rodou. Não tem como desfazer.

@@ -90,8 +90,8 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <header className="flex h-16 shrink-0 items-center gap-4 border-b border-border px-6">
-        <Link href="/automacoes" className="text-muted hover:text-foreground">
+      <header className="glass-chrome flex h-16 shrink-0 items-center gap-4 border-b border-white/[0.06] px-6">
+        <Link href="/automacoes" className="text-muted hover:text-foreground" aria-label="Voltar para automações">
           <ArrowLeft className="size-4" />
         </Link>
         <input
@@ -108,7 +108,7 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
               type="button"
               onClick={() => setStep(id)}
               className={cn(
-                'flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs transition-colors',
+                'flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition-colors',
                 step === id
                   ? 'bg-surface-2 font-medium text-foreground'
                   : 'text-muted hover:text-foreground',
@@ -127,7 +127,7 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
             type="checkbox"
             checked={isActive}
             onChange={(e) => setIsActive(e.target.checked)}
-            className="size-4 accent-indigo-500"
+            className="size-4 accent-accent"
           />
           Ativa
         </label>
@@ -177,10 +177,10 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
                   type="button"
                   onClick={() => setTriggerType(option.value)}
                   className={cn(
-                    'rounded-xl border p-4 text-left transition-colors',
+                    'rounded-2xl border p-4 text-left transition-all duration-150',
                     triggerType === option.value
-                      ? 'border-accent bg-accent/5'
-                      : 'border-border hover:border-muted',
+                      ? 'border-accent bg-accent/5 shadow-[0_16px_32px_-20px_rgb(242_118_46_/45%)]'
+                      : 'border-border hover:-translate-y-0.5 hover:border-muted',
                   )}
                 >
                   <p className="text-xs font-semibold">{option.title}</p>

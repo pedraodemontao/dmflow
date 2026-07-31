@@ -62,7 +62,7 @@ export function PostPicker({
           type="button"
           onClick={() => onSelect(null)}
           className={cn(
-            'flex aspect-square flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-4 text-center transition-colors',
+            'flex aspect-square flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-4 text-center transition-colors',
             selectedId === null
               ? 'border-accent bg-accent/10'
               : 'border-border hover:border-muted',
@@ -85,7 +85,7 @@ export function PostPicker({
               type="button"
               onClick={() => onSelect(item.id)}
               className={cn(
-                'group relative aspect-square overflow-hidden rounded-xl border-2 transition-colors',
+                'group relative aspect-square overflow-hidden rounded-2xl border-2 transition-colors',
                 selected ? 'border-accent' : 'border-transparent hover:border-border',
               )}
             >

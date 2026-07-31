@@ -48,7 +48,7 @@ export function CannedReplies({
       </Button>
 
       {open && (
-        <div className="absolute bottom-10 left-0 z-20 w-72 overflow-hidden rounded-lg border border-border bg-surface shadow-lg">
+        <div className="glass-pop absolute bottom-10 left-0 z-20 w-72 overflow-hidden rounded-2xl">
           {creating ? (
             <div className="space-y-2 p-3">
               <Input
@@ -97,7 +97,7 @@ export function CannedReplies({
                   >
                     <button
                       type="button"
-                      className="min-w-0 flex-1 text-left"
+                      className="min-w-0 flex-1 rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                       onClick={() => {
                         onPick(reply.text)
                         close()
@@ -116,7 +116,7 @@ export function CannedReplies({
                           router.refresh()
                         })
                       }
-                      className="shrink-0 text-muted opacity-0 transition-opacity hover:text-danger group-hover:opacity-100"
+                      className="shrink-0 rounded-md text-muted opacity-0 transition-opacity hover:text-danger group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
@@ -131,7 +131,7 @@ export function CannedReplies({
                   // O que já está escrito vira o ponto de partida do atalho.
                   setText(draft)
                 }}
-                className="flex w-full items-center gap-1.5 border-t border-border p-2.5 text-[11px] text-accent hover:bg-surface-2"
+                className="flex w-full items-center gap-1.5 border-t border-border p-2.5 text-[11px] text-accent hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
               >
                 <Plus className="size-3.5" />
                 {draft.trim() ? 'Salvar o que escrevi como atalho' : 'Novo atalho'}

@@ -171,7 +171,8 @@ export function Inbox({
             <div className="flex items-baseline gap-2">
               <span className="truncate text-xs font-medium">{displayName(contact)}</span>
               {contact.unread_count > 0 && (
-                <span className="ml-auto shrink-0 rounded-full bg-accent px-1.5 text-[10px] font-semibold text-white">
+                // Tinta escura sobre o accent — texto branco não bate 4.5:1 (WCAG AA).
+                <span className="ml-auto shrink-0 rounded-full bg-accent px-1.5 text-[10px] font-semibold text-background">
                   {contact.unread_count}
                 </span>
               )}
@@ -207,7 +208,7 @@ export function Inbox({
           </div>
         ) : (
           <>
-            <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border px-5">
+            <header className="glass-chrome flex h-14 shrink-0 items-center gap-3 border-b border-white/[0.06] px-5">
               <span className="text-sm font-semibold">{displayName(thread.contact)}</span>
               {thread.contact.windowOpen ? (
                 <Badge tone="success">janela de 24h aberta</Badge>
@@ -244,13 +245,13 @@ export function Inbox({
                 </Button>
 
                 {snoozeOpen && (
-                  <div className="absolute right-0 top-9 z-10 w-36 overflow-hidden rounded-lg border border-border bg-surface shadow-lg">
+                  <div className="glass-pop absolute right-0 top-9 z-10 w-36 overflow-hidden rounded-2xl">
                     {SNOOZE_OPTIONS.map((option) => (
                       <button
                         key={option.hours}
                         type="button"
                         onClick={() => changeStatus('snoozed', option.hours)}
-                        className="block w-full px-3 py-2 text-left text-xs hover:bg-surface-2"
+                        className="block w-full px-3 py-2 text-left text-xs transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
                       >
                         {option.label}
                       </button>
@@ -317,17 +318,19 @@ export function Inbox({
                 >
                   <div
                     className={cn(
-                      'max-w-[70%] rounded-2xl px-3.5 py-2',
+                      'max-w-[70%] rounded-2xl px-3.5 py-2 shadow-[0_6px_16px_-10px_rgb(0_0_0_/70%)]',
                       message.direction === 'in'
                         ? 'bg-surface-2 text-foreground'
-                        : 'bg-accent text-white',
+                        : // Tinta escura sobre o accent — texto branco não bate 4.5:1 (WCAG AA);
+                          // esta combinação bate ~6.8:1 (mesma regra do balão em contatos/[id]).
+                          'bg-gradient-to-b from-accent to-accent-soft text-background',
                     )}
                   >
                     <p className="whitespace-pre-wrap text-sm">{message.text || <em>sem texto</em>}</p>
                     <div
                       className={cn(
                         'mt-1 flex items-center gap-1 text-[10px]',
-                        message.direction === 'in' ? 'text-muted' : 'text-white/70',
+                        message.direction === 'in' ? 'text-muted' : 'text-background/70',
                       )}
                     >
                       {message.direction === 'out' &&

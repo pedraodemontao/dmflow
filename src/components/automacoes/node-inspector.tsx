@@ -33,8 +33,8 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
   }
 
   return (
-    <div className="flex w-80 shrink-0 flex-col border-l border-border bg-surface">
-      <div className="flex h-14 items-center gap-2 border-b border-border px-4">
+    <div className="glass-chrome flex w-80 shrink-0 flex-col border-l border-white/[0.06]">
+      <div className="flex h-14 items-center gap-2 border-b border-white/[0.06] px-4">
         <Icon className={`size-4 ${meta.color}`} />
         <span className="text-sm font-semibold">{meta.label}</span>
         <button
@@ -821,7 +821,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
         )}
       </div>
 
-      <div className="border-t border-border p-4">
+      <div className="border-t border-white/[0.06] p-4">
         <Button
           variant="danger"
           size="sm"

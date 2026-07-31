@@ -18,14 +18,16 @@ export function Button({
   return (
     <button
       className={cn(
-        'inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors duration-150',
+        'inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-150',
         'disabled:cursor-not-allowed disabled:opacity-50',
         FOCUS_RING,
         size === 'sm' ? 'h-8 px-3 text-xs' : 'h-10 px-4 text-sm',
         // Primário: tinta escura sobre gradiente laranja-cobre — contraste maior que
         // texto branco sobre a mesma cor (AA falha em ~4.46:1, isto passa em ~6.8:1).
+        // Sombra difusa e colorida em vez de sombra dura: o botão lê como material
+        // sólido erguido do fundo, não como retângulo com contorno.
         variant === 'primary' &&
-          'bg-gradient-to-b from-accent to-accent-soft font-semibold text-background shadow-sm shadow-accent/20 hover:brightness-110 active:brightness-95',
+          'bg-gradient-to-b from-accent to-accent-soft font-semibold text-background shadow-[0_10px_24px_-10px_rgb(242_118_46_/55%)] hover:brightness-110 hover:shadow-[0_12px_28px_-8px_rgb(242_118_46_/65%)] active:brightness-95',
         variant === 'outline' &&
           'border border-border bg-surface text-foreground hover:border-muted hover:bg-surface-2',
         variant === 'ghost' && 'text-muted hover:bg-surface-2 hover:text-foreground',
@@ -38,15 +40,15 @@ export function Button({
   )
 }
 
+/**
+ * Superfície de dado padrão — opaca, nunca translúcida. Cards leem estado
+ * operacional (métrica, risco, lista); profundidade vem de `.surface-panel`
+ * (sombra difusa + fio de luz no topo), não de vidro. Vidro fica reservado
+ * para chrome flutuante (sidebar, cabeçalhos, popovers — ver globals.css).
+ */
 export function Card({ className, ...props }: ComponentProps<'div'>) {
   return (
-    <div
-      className={cn(
-        'rounded-xl border border-border bg-surface shadow-sm shadow-black/20',
-        className,
-      )}
-      {...props}
-    />
+    <div className={cn('surface-panel rounded-2xl border border-border/70', className)} {...props} />
   )
 }
 
@@ -54,7 +56,7 @@ export function Input({ className, ...props }: ComponentProps<'input'>) {
   return (
     <input
       className={cn(
-        'h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground transition-colors duration-150',
+        'h-10 w-full rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/5%)] transition-colors duration-150',
         'placeholder:text-muted hover:border-muted/80',
         FOCUS_RING,
         'focus-visible:border-accent',
@@ -69,7 +71,7 @@ export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
   return (
     <textarea
       className={cn(
-        'w-full resize-y rounded-lg border border-border bg-surface-2 p-3 text-sm text-foreground transition-colors duration-150',
+        'w-full resize-y rounded-xl border border-border bg-surface-2 p-3 text-sm text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/5%)] transition-colors duration-150',
         'placeholder:text-muted hover:border-muted/80',
         FOCUS_RING,
         'focus-visible:border-accent',
@@ -84,7 +86,7 @@ export function Select({ className, ...props }: ComponentProps<'select'>) {
   return (
     <select
       className={cn(
-        'h-10 w-full rounded-lg border border-border bg-surface-2 px-3 text-sm text-foreground transition-colors duration-150',
+        'h-10 w-full rounded-xl border border-border bg-surface-2 px-3 text-sm text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/5%)] transition-colors duration-150',
         'hover:border-muted/80',
         FOCUS_RING,
         'focus-visible:border-accent',
@@ -150,9 +152,9 @@ export function EmptyState({
   action?: ReactNode
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border bg-surface/40 px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-border/80 bg-surface/40 px-6 py-16 text-center">
       {icon && (
-        <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-surface-2 text-muted">
+        <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-surface-2 text-muted shadow-[inset_0_1px_0_rgb(255_255_255_/6%)]">
           {icon}
         </div>
       )}
