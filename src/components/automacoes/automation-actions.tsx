@@ -1,8 +1,9 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { Copy, Loader2, Pause, Play, Trash2 } from 'lucide-react'
+import { BarChart3, Copy, Loader2, Pause, Play, Trash2 } from 'lucide-react'
 
 import { deleteAutomation, duplicateAutomation, toggleAutomation } from '@/app/actions'
 import { Button } from '@/components/ui'
@@ -48,6 +49,11 @@ export function AutomationActions({
 
   return (
     <div className="flex shrink-0 items-center gap-1">
+      <Link href={`/automacoes/${triggerId}/metricas`}>
+        <Button size="sm" variant="ghost" title="Ver métricas do fluxo">
+          <BarChart3 className="size-4" />
+        </Button>
+      </Link>
       <Button
         size="sm"
         variant="ghost"

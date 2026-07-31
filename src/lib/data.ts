@@ -81,6 +81,47 @@ export async function getAutomation(triggerId: string): Promise<Automation | nul
   }
 }
 
+export interface NodeMetric {
+  nodeId: string
+  nodeType: string
+  people: number
+  /** % de quem entrou no fluxo que chegou até aqui. */
+  share: number
+}
+
+/**
+ * Funil do fluxo: quantas pessoas distintas passaram por cada bloco.
+ * Distinto por contato porque um nó pode repetir (a repergunta do `ask`).
+ */
+export async function getFlowMetrics(flowId: string): Promise<NodeMetric[]> {
+  const { data } = await supabaseAdmin
+    .from('flow_node_events')
+    .select('node_id, node_type, contact_id')
+    .eq('flow_id', flowId)
+    .limit(10000)
+
+  const rows = (data ?? []) as Array<{ node_id: string; node_type: string; contact_id: string }>
+  if (rows.length === 0) return []
+
+  const byNode = new Map<string, { type: string; contacts: Set<string> }>()
+  for (const row of rows) {
+    const entry = byNode.get(row.node_id) ?? { type: row.node_type, contacts: new Set<string>() }
+    entry.contacts.add(row.contact_id)
+    byNode.set(row.node_id, entry)
+  }
+
+  const top = Math.max(...[...byNode.values()].map((entry) => entry.contacts.size))
+
+  return [...byNode.entries()]
+    .map(([nodeId, entry]) => ({
+      nodeId,
+      nodeType: entry.type,
+      people: entry.contacts.size,
+      share: top > 0 ? Math.round((entry.contacts.size / top) * 100) : 0,
+    }))
+    .sort((a, b) => b.people - a.people)
+}
+
 export interface DashboardStats {
   contacts: number
   automations: number

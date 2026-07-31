@@ -271,6 +271,21 @@ async function walk(
 
       steps += 1
 
+      // Registro do funil: quem passou por qual bloco. Falha aqui não pode
+      // derrubar o fluxo — métrica é acessório, entrega não.
+      void supabaseAdmin
+        .from('flow_node_events')
+        .insert({
+          flow_id: flow.id,
+          run_id: runRow.id,
+          contact_id: contact.id,
+          node_id: cursor,
+          node_type: node.type,
+        })
+        .then(({ error }) => {
+          if (error) console.error('[dm-flow] métrica de nó falhou:', error.message)
+        })
+
       let result: StepResult
       try {
         result = await executeNode(cursor, node, account, contact, ctx)
