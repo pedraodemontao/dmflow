@@ -5,6 +5,7 @@ import { LibraryStats } from '@/components/biblioteca/library-stats'
 import { summarize } from '@/components/biblioteca/format'
 import { parseOrder, parseStatus } from '@/components/biblioteca/query-params'
 
+import { estimateScrapeCost } from '@/lib/data'
 import { getLibraryScreen, LIBRARY_LIMIT } from './queries'
 
 /**
@@ -43,12 +44,17 @@ export default async function BibliotecaPage({
   const order = parseOrder(ordem)
   const libraryStatus = parseStatus(status)
 
-  const data = await getLibraryScreen({
-    search: busca,
-    category: categoria,
-    order,
-    status: libraryStatus,
-  })
+  // Em paralelo: o custo é lido para a tela poder avisar ANTES de gastar, e
+  // uma ida a mais em série atrasaria a página por um número pequeno.
+  const [data, custo] = await Promise.all([
+    getLibraryScreen({
+      search: busca,
+      category: categoria,
+      order,
+      status: libraryStatus,
+    }),
+    estimateScrapeCost(),
+  ])
 
   const summary = summarize(data.items)
   const scrapedAt = lastScrapeLabel(data.profiles.map((profile) => profile.lastScrapedAt))
@@ -106,7 +112,7 @@ export default async function BibliotecaPage({
             senão a grade se estica até a borda e a página perde a medida. */}
         <div className="canon mx-auto w-full max-w-7xl">
           {acervoVazio && emptyKind ? (
-            <LibraryEmpty kind={emptyKind} profiles={data.profiles} />
+            <LibraryEmpty kind={emptyKind} profiles={data.profiles} custoEstimado={custo.usd} />
           ) : (
             <>
               {/* A faixa some quando o recorte não devolve nada: "vale modelar:
@@ -128,7 +134,7 @@ export default async function BibliotecaPage({
               />
 
               {emptyKind ? (
-                <LibraryEmpty kind={emptyKind} profiles={data.profiles} />
+                <LibraryEmpty kind={emptyKind} profiles={data.profiles} custoEstimado={custo.usd} />
               ) : (
                 <>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

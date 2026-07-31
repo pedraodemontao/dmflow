@@ -5,6 +5,7 @@ import type { LibraryProfileSummary } from '@/app/(app)/biblioteca/queries'
 import { EmptyState } from '@/components/ui'
 
 import { AddProfile } from './add-profile'
+import { RunScrape } from './run-scrape'
 
 /**
  * "Vazio" aqui não é um estado, são cinco — e confundi-los custa caro.
@@ -29,9 +30,12 @@ export type LibraryEmptyKind =
 export function LibraryEmpty({
   kind,
   profiles,
+  custoEstimado,
 }: {
   kind: LibraryEmptyKind
   profiles: LibraryProfileSummary[]
+  /** Custo estimado da próxima raspagem, em dólar. Mostrado antes de rodar. */
+  custoEstimado: number
 }) {
   if (kind === 'sem-tabela') {
     return (
@@ -66,20 +70,23 @@ export function LibraryEmpty({
         } na fila e a raspagem nunca rodou. Ela acontece na infraestrutura da Apify, sobre conteúdo público — não usa o token do Instagram da conta e não expõe o perfil restringido. Enquanto não rodar, não há reel para comparar.`}
         action={
           esperando.length > 0 ? (
-            <div className="flex max-w-md flex-wrap justify-center gap-1.5">
-              {esperando.slice(0, 12).map((profile) => (
-                <span
-                  key={profile.id}
-                  className="label rounded-sm border border-border bg-surface-2 px-2 py-1 text-[9.5px] text-muted"
-                >
-                  @{profile.username}
-                </span>
-              ))}
-              {esperando.length > 12 && (
-                <span className="label rounded-sm border border-border bg-surface-2 px-2 py-1 text-[9.5px] text-muted">
-                  +{esperando.length - 12}
-                </span>
-              )}
+            <div className="flex flex-col items-center gap-4">
+              <RunScrape custoEstimado={custoEstimado} perfisAtivos={esperando.length} />
+              <div className="flex max-w-md flex-wrap justify-center gap-1.5">
+                {esperando.slice(0, 12).map((profile) => (
+                  <span
+                    key={profile.id}
+                    className="label rounded-sm border border-border bg-surface-2 px-2 py-1 text-[9.5px] text-muted"
+                  >
+                    @{profile.username}
+                  </span>
+                ))}
+                {esperando.length > 12 && (
+                  <span className="label rounded-sm border border-border bg-surface-2 px-2 py-1 text-[9.5px] text-muted">
+                    +{esperando.length - 12}
+                  </span>
+                )}
+              </div>
             </div>
           ) : undefined
         }
@@ -93,6 +100,7 @@ export function LibraryEmpty({
         icon={<SearchX className="size-8" />}
         title="A raspagem rodou e não trouxe nada"
         description="Os perfis foram visitados, mas nenhum reel entrou no acervo. Costuma ser perfil privado, perfil sem reel público ou conta que mudou de @ desde o cadastro. Confira os @ da lista e rode de novo."
+        action={<RunScrape custoEstimado={custoEstimado} perfisAtivos={profiles.length} />}
       />
     )
   }

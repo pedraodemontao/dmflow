@@ -22,6 +22,7 @@ import {
   Users,
   Zap,
   type LucideIcon,
+  Library,
 } from 'lucide-react'
 
 import { Avatar, Badge } from '@/components/ui'
@@ -78,6 +79,14 @@ const ROUTES: RouteCommand[] = [
     detail: 'Caixa de entrada',
     keywords: 'inbox dm mensagens atendimento',
     icon: MessagesSquare,
+  },
+  {
+    id: 'biblioteca',
+    href: '/biblioteca',
+    label: 'Biblioteca',
+    detail: 'Referências do nicho',
+    keywords: 'conteudo referencia outlier reels raspagem apify',
+    icon: Library,
   },
   {
     id: 'ice-breakers',

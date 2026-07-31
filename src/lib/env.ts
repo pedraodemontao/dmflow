@@ -12,6 +12,11 @@ const schema = z.object({
   PANEL_PASSWORD: z.string().min(8).optional(),
   /** Teto de envios por conta por hora (anti-flag da Meta). */
   SEND_HOURLY_CAP: z.coerce.number().int().positive().default(60),
+  /**
+   * Raspagem da biblioteca. Opcional: sem ela a tela funciona e só o botão de
+   * raspar recusa — nada mais no produto depende disto.
+   */
+  APIFY_TOKEN: z.string().min(1).optional(),
   /** Teto de respostas públicas no MESMO post por hora. DM não tem esse limite. */
   PUBLIC_REPLY_PER_POST_CAP: z.coerce.number().int().positive().default(8),
   /** Protege POST /api/conversao. Sem ela, a rota recusa tudo. */
@@ -33,6 +38,7 @@ function load(): Env {
     CRON_SECRET: process.env.CRON_SECRET,
     PANEL_PASSWORD: process.env.PANEL_PASSWORD,
     SEND_HOURLY_CAP: process.env.SEND_HOURLY_CAP,
+    APIFY_TOKEN: process.env.APIFY_TOKEN,
     // Estava fora da lista: o schema tem `.default(8)`, então o valor era
     // SEMPRE 8 e definir a variável na Vercel não surtia efeito nenhum.
     // Configuração que mente em silêncio é pior que configuração inexistente.
