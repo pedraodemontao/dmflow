@@ -32,7 +32,9 @@ async function requeueStuckEvents(): Promise<number> {
     .update({ status: 'pending' })
     .eq('status', 'processing')
     .lt('process_after', new Date(Date.now() - STUCK_AFTER_MS).toISOString())
-    .lt('attempts', 3)
+    // Mesmo teto de `MAX_ATTEMPTS` em process.ts: quem já desistiu não volta
+    // sozinho — volta pelo painel, com o dono sabendo que vai reenviar.
+    .lt('attempts', 12)
     .select('id')
 
   return data?.length ?? 0

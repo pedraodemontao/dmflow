@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 
+import { DroppedEvents } from '@/components/painel/dropped-events'
 import { FailedRuns } from '@/components/painel/failed-runs'
 import { Risco } from '@/components/painel/risco'
 import { Badge, Card, EmptyState } from '@/components/ui'
@@ -118,13 +119,24 @@ function TrendBadge({ delta, deltaPercent }: { delta: number; deltaPercent: numb
 }
 
 export function Cockpit({ data }: { data: CockpitData }) {
-  const { leadsTrend, leadsSeries, sends, leadSources, stuck, failedRuns, inboxCounts, riskReport } =
-    data
+  const {
+    leadsTrend,
+    dropped,
+    droppedTotal,
+    leadsSeries,
+    sends,
+    leadSources,
+    stuck,
+    failedRuns,
+    inboxCounts,
+    riskReport,
+  } = data
 
   const waiting = inboxCounts['nao-lidas']
   const riskElevated = riskReport && riskReport.level !== 'verde'
 
-  const needsAction = failedRuns.length > 0 || waiting > 0 || stuck.total > 0 || riskElevated
+  const needsAction =
+    dropped.length > 0 || failedRuns.length > 0 || waiting > 0 || stuck.total > 0 || riskElevated
 
   return (
     <div className="space-y-6">
@@ -146,6 +158,21 @@ export function Cockpit({ data }: { data: CockpitData }) {
                 title={`Risco de flag ${RISK_LABEL[riskReport.level]}`}
                 description={riskReport.recommendation}
               />
+            )}
+
+            {/* Primeiro card da seção, acima de tudo: comentário sem resposta
+                fura a invariante do produto. Falha de disparo é dinheiro
+                parado; comentário perdido é o lead que nunca soube que existia
+                uma resposta. */}
+            {dropped.length > 0 && (
+              <ActionCard
+                tone="danger"
+                icon={<OctagonAlert className="size-4" />}
+                title={`${droppedTotal} ${droppedTotal === 1 ? 'comentário ficou' : 'comentários ficaram'} sem resposta`}
+                description="A fila desistiu depois de esgotar as tentativas. Todo comentário deveria ser respondido, nem que demore — estes não foram."
+              >
+                <DroppedEvents events={dropped} total={droppedTotal} />
+              </ActionCard>
             )}
 
             <div className="grid gap-3 md:grid-cols-3">

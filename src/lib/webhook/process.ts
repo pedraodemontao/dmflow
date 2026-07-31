@@ -452,6 +452,30 @@ async function handleComment(
 }
 
 /**
+ * Orçamento de retentativa de um evento.
+ *
+ * Eram 3 tentativas seguidas, o que dá ~3 minutos de horizonte — e isso furou
+ * a invariante "todo comentário é respondido, nem que demore" em 30/07/2026:
+ * o token do Instagram caiu por 22 horas, dois comentários queimaram as três
+ * tentativas nos primeiros minutos e ficaram `failed` para sempre, sem
+ * aparecer em lugar nenhum do painel.
+ *
+ * Agora a espera dobra a cada tentativa até um teto de 6h, e são 12 tentativas
+ * — o horizonte passa de 24 horas. Uma queda de um dia inteiro deixa de matar
+ * o comentário: quando o token volta, a fila drena sozinha.
+ *
+ * Retentativa é segura porque `public_reply_sent` já marca o que saiu; o
+ * evento reprocessado não responde o mesmo comentário duas vezes.
+ */
+const MAX_ATTEMPTS = 12
+const RETRY_BASE_MS = 60_000
+const RETRY_CAP_MS = 6 * 60 * 60 * 1000
+
+export function retryDelayMs(attempts: number): number {
+  return Math.min(RETRY_BASE_MS * 2 ** Math.max(attempts - 1, 0), RETRY_CAP_MS)
+}
+
+/**
  * Pega eventos pendentes e processa. Chamado pelo webhook via after()
  * e pelo cron (que também recolhe o que travou em 'processing').
  */
@@ -539,12 +563,19 @@ export async function processPending(limit = 20): Promise<number> {
       const message = error instanceof Error ? error.message : String(error)
       console.error('[dm-flow] evento falhou:', row.dedup_key, message)
 
+      const attempts = row.attempts + 1
+      const desistiu = attempts >= MAX_ATTEMPTS
+
       await supabaseAdmin
         .from('webhook_events')
         .update({
-          // 3 tentativas antes de desistir.
-          status: row.attempts + 1 >= 3 ? 'failed' : 'pending',
+          status: desistiu ? 'failed' : 'pending',
           error: message,
+          // Espera crescente: erro transitório (token caído, Meta instável)
+          // não pode queimar o orçamento inteiro em três minutos.
+          ...(desistiu
+            ? {}
+            : { process_after: new Date(Date.now() + retryDelayMs(attempts)).toISOString() }),
         })
         .eq('id', row.id)
     }

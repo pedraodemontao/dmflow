@@ -106,7 +106,9 @@ vi.mock('@/lib/flow/triggers', () => ({
   },
 }))
 
-const { handleMessaging, detectMessagingTriggerType } = await import('@/lib/webhook/process')
+const { handleMessaging, detectMessagingTriggerType, retryDelayMs } = await import(
+  '@/lib/webhook/process',
+)
 
 const account = { id: 'acc-1', ig_user_id: 'ig-1', access_token: 't' }
 
@@ -430,5 +432,28 @@ describe('registro do clique em botão', () => {
     expect(startFlowCalls).toHaveLength(1)
     expect(logged).toHaveBeenCalled()
     logged.mockRestore()
+  })
+})
+
+describe('retryDelayMs', () => {
+  it('dobra a espera a cada tentativa', () => {
+    expect(retryDelayMs(1)).toBe(60_000)
+    expect(retryDelayMs(2)).toBe(120_000)
+    expect(retryDelayMs(3)).toBe(240_000)
+  })
+
+  it('para de dobrar no teto de 6h', () => {
+    expect(retryDelayMs(20)).toBe(6 * 60 * 60 * 1000)
+  })
+
+  it('cobre mais de 24h com o orçamento de 12 tentativas', () => {
+    // A queda de token de 30/07/2026 durou 22h. Com 3 tentativas seguidas o
+    // comentário morria nos primeiros minutos; o horizonte tem que passar disso.
+    const total = Array.from({ length: 12 }, (_, i) => retryDelayMs(i + 1)).reduce((a, b) => a + b, 0)
+    expect(total).toBeGreaterThan(24 * 60 * 60 * 1000)
+  })
+
+  it('não devolve espera negativa para tentativa zero', () => {
+    expect(retryDelayMs(0)).toBe(60_000)
   })
 })

@@ -821,6 +821,54 @@ export async function dismissAllFailedRuns(): Promise<BulkActionResult> {
   }
 }
 
+/**
+ * Devolve um evento descartado para a fila.
+ *
+ * Diferente do retry de `flow_run`, aqui não há risco de mandar a mesma
+ * resposta pública duas vezes: `webhook_events.public_reply_sent` marca o que
+ * já saiu, e o reprocessamento respeita a marca. O que pode sair de novo é a
+ * DM — e sai, porque o comentário nunca foi respondido.
+ */
+export async function retryDroppedEvent(eventId: string): Promise<ActionResult> {
+  const parsed = z.string().uuid('Evento inválido.').safeParse(eventId)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
+  }
+
+  const { error } = await supabaseAdmin
+    .from('webhook_events')
+    .update({ status: 'pending', attempts: 0, error: null, process_after: new Date().toISOString() })
+    .eq('id', parsed.data)
+    .eq('status', 'failed')
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/')
+  return { ok: true }
+}
+
+/** Reconhece o evento descartado sem reprocessar. Nada é enviado. */
+export async function dismissDroppedEvent(eventId: string): Promise<ActionResult> {
+  const parsed = z.string().uuid('Evento inválido.').safeParse(eventId)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
+  }
+
+  const { error } = await supabaseAdmin
+    .from('webhook_events')
+    // 'done' aqui não mente: o evento saiu da fila por decisão do dono, e
+    // `webhook_events` não alimenta métrica de conversão nenhuma — diferente
+    // de `flow_runs`, onde 'done' inflaria "concluídos".
+    .update({ status: 'done', processed_at: new Date().toISOString() })
+    .eq('id', parsed.data)
+    .eq('status', 'failed')
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/')
+  return { ok: true }
+}
+
 export async function deleteAutomation(triggerId: string): Promise<ActionResult> {
   const { data: trigger } = await supabaseAdmin
     .from('triggers')

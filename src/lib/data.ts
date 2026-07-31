@@ -836,6 +836,67 @@ export async function getStuckSummary(): Promise<StuckSummary> {
   return { failed: failed ?? 0, staleWaitingReply: stale ?? 0, total, topAutomation }
 }
 
+export interface DroppedEvent {
+  id: string
+  kind: 'comment' | 'messaging'
+  /** O que a Meta mandou, resumido para caber na linha do card. */
+  summary: string
+  error: string | null
+  attempts: number
+  createdAt: string
+}
+
+/**
+ * Eventos que esgotaram o orçamento de retentativa.
+ *
+ * Existe porque a invariante do projeto é "todo comentário é respondido, nem
+ * que demore" — e ela furou em 30/07/2026: dois comentários queimaram as
+ * tentativas durante a queda do token e ficaram `failed` sem aparecer em
+ * lugar nenhum. Comentário perdido em silêncio é pior que comentário
+ * respondido tarde, porque ninguém fica sabendo.
+ */
+export async function getDroppedEvents(limit = 5): Promise<DroppedEvent[]> {
+  const { data } = await supabaseAdmin
+    .from('webhook_events')
+    .select('id, dedup_key, payload, error, attempts, created_at')
+    .eq('status', 'failed')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  return ((data ?? []) as Array<{
+    id: string
+    dedup_key: string
+    payload: unknown
+    error: string | null
+    attempts: number
+    created_at: string
+  }>).map((row) => {
+    const kind: DroppedEvent['kind'] = row.dedup_key.startsWith('comment:') ? 'comment' : 'messaging'
+    const value = (row.payload as { value?: Record<string, unknown> } | null)?.value ?? {}
+    const from = (value.from as { username?: string } | undefined)?.username
+    const text = typeof value.text === 'string' ? value.text : null
+
+    return {
+      id: row.id,
+      kind,
+      summary: [from ? `@${from}` : null, text].filter(Boolean).join(' · ') || row.dedup_key,
+      error: row.error,
+      attempts: row.attempts,
+      createdAt: row.created_at,
+    }
+  })
+}
+
+/** Quantos eventos foram descartados no total — o card mostra 5, o número é o de verdade. */
+export async function countDroppedEvents(): Promise<number> {
+  const { count } = await supabaseAdmin
+    .from('webhook_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('status', 'failed')
+
+  return count ?? 0
+}
+
 export interface FailedRun {
   id: string
   flowName: string
@@ -898,6 +959,8 @@ export async function getFailedAutomations(limit = 5): Promise<FailedRun[]> {
 }
 
 export interface CockpitData {
+  dropped: DroppedEvent[]
+  droppedTotal: number
   leadsSeries: SeriesBucket[]
   sends: { points: SeriesBucket[]; cap: number }
   leadsTrend: DayTrend
@@ -914,9 +977,21 @@ export interface CockpitData {
  * reaproveitados aqui, não reescritos.
  */
 export async function getCockpitData(): Promise<CockpitData> {
-  const [leadsTrend, leadsSeries, sends, leadSources, stuck, failedRuns, inboxCounts, riskReport] =
-    await Promise.all([
+  const [
+    leadsTrend,
+    dropped,
+    droppedTotal,
+    leadsSeries,
+    sends,
+    leadSources,
+    stuck,
+    failedRuns,
+    inboxCounts,
+    riskReport,
+  ] = await Promise.all([
     getLeadsTrend(),
+    getDroppedEvents(),
+    countDroppedEvents(),
     getLeadsSeries(),
     getSendsSeries(),
     getLeadSources(),
@@ -926,5 +1001,16 @@ export async function getCockpitData(): Promise<CockpitData> {
     getRiskReport(),
   ])
 
-  return { leadsTrend, leadsSeries, sends, leadSources, stuck, failedRuns, inboxCounts, riskReport }
+  return {
+    leadsTrend,
+    dropped,
+    droppedTotal,
+    leadsSeries,
+    sends,
+    leadSources,
+    stuck,
+    failedRuns,
+    inboxCounts,
+    riskReport,
+  }
 }
