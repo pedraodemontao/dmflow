@@ -8,6 +8,14 @@ import { flowDefinitionSchema } from '@/lib/flow/types'
 import { checkFlowTexts, checkPublicReply, type VariationIssue } from '@/lib/flow/variation'
 import { assertUnderSendCap, logSend } from '@/lib/flow/send-cap'
 import { clearIceBreakers, sendText, setIceBreakers } from '@/lib/instagram/api'
+import { DEFAULT_POSTS_PER_PROFILE } from '@/lib/library/cost'
+import { importDefaultTrackedProfiles } from '@/lib/library/profiles'
+import {
+  runLibraryScrape,
+  SCRAPE_BATCH_PROFILES,
+  SCRAPE_BUDGET_MS,
+  type ScrapeReport,
+} from '@/lib/library/scrape'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { getAccount, getThread, type Thread } from '@/lib/data'
 import type { Contact, IceBreaker } from '@/types/db'
@@ -920,4 +928,108 @@ export async function deleteAutomation(triggerId: string): Promise<ActionResult>
   revalidatePath('/')
   revalidatePath('/automacoes')
   return { ok: true }
+}
+
+// ============================================================
+// Biblioteca de referência
+// ============================================================
+
+export interface ImportProfilesActionResult extends ActionResult {
+  total: number
+  inserted: number
+}
+
+/**
+ * Põe a lista curada do dono em `tracked_profiles`.
+ *
+ * A lista e o porquê de ela ser uma action em vez de um seed SQL estão em
+ * `src/lib/library/profiles.ts`. Resumo: o seed precisaria de um `account_id`
+ * colado à mão, e ele só existe depois que o Instagram é conectado.
+ */
+export async function importDefaultProfiles(): Promise<ImportProfilesActionResult> {
+  const account = await getAccount()
+  if (!account) {
+    return { ok: false, error: 'Nenhuma conta do Instagram conectada.', total: 0, inserted: 0 }
+  }
+
+  const result = await importDefaultTrackedProfiles(account.id)
+
+  if (result.error) {
+    return { ok: false, error: result.error, total: result.total, inserted: result.inserted }
+  }
+
+  revalidatePath('/biblioteca')
+  return { ok: true, total: result.total, inserted: result.inserted }
+}
+
+/**
+ * A entrada é validada mesmo vindo de uma tela nossa: Server Action é endpoint
+ * HTTP, e aqui um número errado vira dinheiro gasto na Apify.
+ */
+const scrapeSchema = z.object({
+  postsPerProfile: z.coerce.number().int().min(1).max(50).default(DEFAULT_POSTS_PER_PROFILE),
+  batchSize: z.coerce.number().int().min(1).max(20).default(SCRAPE_BATCH_PROFILES),
+  /**
+   * Quanto tempo esta chamada pode gastar. Fica na entrada porque o teto real
+   * depende da PÁGINA que chamou (Server Action herda o `maxDuration` dela):
+   * uma página que declare 300 s pode pedir mais e fazer a rodada inteira num
+   * clique só.
+   */
+  budgetMs: z.coerce.number().int().min(5_000).max(280_000).default(SCRAPE_BUDGET_MS),
+})
+
+export interface ScrapeActionResult extends ActionResult, ScrapeReport {}
+
+/**
+ * Dispara (e continua) a raspagem da biblioteca.
+ *
+ * Chamar de novo CONTINUA de onde parou — não recomeça e não paga duas vezes.
+ * O porquê disso, e como o teto de duração da serverless foi resolvido sem
+ * infraestrutura nova, está em `src/lib/library/scrape.ts`.
+ */
+export async function scrapeLibrary(raw?: unknown): Promise<ScrapeActionResult> {
+  const parsed = scrapeSchema.safeParse(raw ?? {})
+
+  const account = await getAccount()
+  const vazio: ScrapeReport = {
+    phase: 'sem-perfil',
+    message: '',
+    runsStarted: 0,
+    received: 0,
+    inserted: 0,
+    updated: 0,
+    profilesTouched: 0,
+    profilesRemaining: 0,
+    costUsd: 0,
+    errors: [],
+  }
+
+  if (!parsed.success) {
+    return { ...vazio, ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
+  }
+
+  if (!account) {
+    return { ...vazio, ok: false, error: 'Nenhuma conta do Instagram conectada.' }
+  }
+
+  try {
+    const report = await runLibraryScrape({ accountId: account.id, ...parsed.data })
+
+    revalidatePath('/biblioteca')
+
+    return {
+      ...report,
+      // Rodada que gravou alguma coisa é sucesso mesmo com erro em um lote:
+      // raspagem parcial é melhor que raspagem perdida, e o dono precisa ver o
+      // que entrou em vez de uma tela vermelha que apaga o progresso.
+      ok: report.errors.length === 0 || report.inserted + report.updated > 0,
+      ...(report.errors.length > 0 ? { error: report.errors.join('\n') } : {}),
+    }
+  } catch (error) {
+    return {
+      ...vazio,
+      ok: false,
+      error: error instanceof Error ? error.message : 'Não foi possível raspar agora.',
+    }
+  }
 }

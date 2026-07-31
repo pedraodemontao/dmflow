@@ -5,6 +5,11 @@ import { dailyBuckets, dailyBucketsByKey, hourlyBuckets, type SeriesBucket } fro
 import { env } from '@/lib/env'
 import { DISMISSED_ERROR_PREFIX } from '@/lib/flow/dismissed'
 import { fetchMedia } from '@/lib/instagram/api'
+import {
+  DEFAULT_POSTS_PER_PROFILE,
+  estimateScrapeCostFor,
+  type ScrapeCostEstimate,
+} from '@/lib/library/cost'
 import { assessRisk } from '@/lib/risk/assess'
 import type { RiskReport } from '@/lib/risk/types'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -1181,4 +1186,42 @@ export async function getCockpitData(): Promise<CockpitData> {
     inboxCounts,
     riskReport,
   }
+}
+
+// ============================================================
+// Biblioteca de referência
+// ============================================================
+
+/**
+ * O preço da próxima raspagem, ANTES do clique.
+ *
+ * O dono está no plano grátis da Apify — US$ 5 de crédito por mês. Ferramenta
+ * que gasta o dinheiro dele sem avisar é ferramenta que ele desliga, então o
+ * botão de raspar precisa dizer quanto custa antes de existir clique.
+ *
+ * A conta é: perfis ativos × posts por perfil × US$ 0,0027 por resultado
+ * (aferido em 30/07/2026 — 5 resultados custaram US$ 0,0135). A matemática
+ * mora em `src/lib/library/cost.ts`; aqui só se busca quantos perfis são.
+ */
+export async function estimateScrapeCost(
+  postsPerProfile: number = DEFAULT_POSTS_PER_PROFILE,
+): Promise<ScrapeCostEstimate> {
+  const account = await getAccount()
+
+  if (!account) {
+    return estimateScrapeCostFor({ activeProfiles: 0, postsPerProfile })
+  }
+
+  const { count, error } = await supabaseAdmin
+    .from('tracked_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('account_id', account.id)
+    .eq('is_active', true)
+
+  // Tabela que ainda não existe no banco (a migration 0014 é colada à mão no
+  // SQL Editor) não pode derrubar a página. Mesma postura do resto do arquivo:
+  // leitura de apoio falha para zero, entrega não.
+  if (error) return estimateScrapeCostFor({ activeProfiles: 0, postsPerProfile })
+
+  return estimateScrapeCostFor({ activeProfiles: count ?? 0, postsPerProfile })
 }
