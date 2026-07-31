@@ -158,3 +158,86 @@ export function RankBars({ items, className }: { items: RankItem[]; className?: 
     </ul>
   )
 }
+
+export interface SeriesPoint {
+  /** Rótulo do balde — "12/07", "14h". Aparece no eixo e no title do hover. */
+  label: string
+  value: number
+}
+
+/**
+ * Série temporal em barras. O que faltava: todo número do painel era uma foto
+ * do agora ("0 leads hoje, 2 ontem") e nunca a curva. Saber o valor e enxergar
+ * a tendência são coisas diferentes, e é a segunda que faz um painel parecer
+ * instrumento — é o gráfico que domina as referências (Unkey, Profound).
+ *
+ * Barras e não linha: os baldes aqui são discretos (um dia, uma hora) e a
+ * contagem costuma ser baixa. Linha entre dois inteiros sugere valor
+ * intermediário que não existe — às 14h30 não houve "meio envio".
+ *
+ * `highlight` marca o pico em limão. Não é enfeite: no gráfico de envios por
+ * hora, o pico É o dado que importa, porque concentração é o que o filtro de
+ * spam do Instagram pega (ver a blindagem anti-spam no CLAUDE.md).
+ */
+export function TimeSeries({
+  points,
+  tone = 'ink',
+  highlight = 'max',
+  threshold,
+  height = 72,
+  className,
+  'aria-label': ariaLabel,
+}: {
+  points: SeriesPoint[]
+  tone?: Tone
+  /** 'max' pinta o pico com o acento; 'none' deixa a série toda no mesmo tom. */
+  highlight?: 'max' | 'none'
+  /** Linha de teto, tracejada — o cap de envios por hora, por exemplo. */
+  threshold?: { value: number; label: string }
+  height?: number
+  className?: string
+  'aria-label'?: string
+}) {
+  const max = Math.max(1, ...points.map((point) => point.value), threshold?.value ?? 0)
+  const peak = Math.max(...points.map((point) => point.value))
+  // Só marca pico quando existe pico: série toda em zero (ou toda igual) não
+  // tem "o maior", e pintar a primeira barra de limão seria inventar um dado.
+  const hasPeak = highlight === 'max' && peak > 0 && points.some((p) => p.value < peak)
+
+  return (
+    <figure className={cn('m-0', className)} aria-label={ariaLabel}>
+      <div className="relative flex items-end gap-px" style={{ height }}>
+        {threshold && (
+          <div
+            className="pointer-events-none absolute inset-x-0 border-t border-dashed border-warning/60"
+            style={{ bottom: `${(threshold.value / max) * 100}%` }}
+          >
+            <span className="label absolute -top-4 right-0 text-[9px] text-warning">
+              {threshold.label}
+            </span>
+          </div>
+        )}
+
+        {points.map((point, index) => (
+          <div
+            key={`${point.label}-${index}`}
+            title={`${point.label}: ${point.value}`}
+            className={cn(
+              'min-w-px flex-1',
+              hasPeak && point.value === peak ? 'bg-accent' : FILL[tone],
+              // Zero ainda desenha um traço de 1px: barra ausente e barra de
+              // valor baixo têm que ser distinguíveis de "não carregou".
+              point.value === 0 && 'bg-border',
+            )}
+            style={{ height: point.value === 0 ? 1 : `${Math.max((point.value / max) * 100, 4)}%` }}
+          />
+        ))}
+      </div>
+
+      <figcaption className="label mt-2 flex justify-between text-[9px] text-muted">
+        <span>{points[0]?.label}</span>
+        <span>{points[points.length - 1]?.label}</span>
+      </figcaption>
+    </figure>
+  )
+}

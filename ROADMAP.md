@@ -102,7 +102,7 @@ a janela e o cap**, não uma metralhadora. Recomendo deixar por último e constr
 | Onde o fluxo perde gente (funil por bloco) | ✅ `/automacoes/[id]/metricas` |
 | Taxa de conclusão | ✅ |
 | Cliques por botão especificamente | ❌ O bloco de botões conta como um só |
-| Gráfico ao longo do tempo | ❌ |
+| Gráfico ao longo do tempo | 🟡 Leads por dia (30d) e envios por hora (24h, com o cap marcado) no painel. Falta série por automação |
 
 ## 7. Operação
 

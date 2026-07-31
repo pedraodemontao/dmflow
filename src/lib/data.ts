@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { computeDayTrend, dayWindows, type DayTrend } from '@/lib/day-trend'
+import { dailyBuckets, hourlyBuckets, type SeriesBucket } from '@/lib/series'
 import { env } from '@/lib/env'
 import { DISMISSED_ERROR_PREFIX } from '@/lib/flow/dismissed'
 import { fetchMedia } from '@/lib/instagram/api'
@@ -575,6 +576,63 @@ export async function getLeadsTrend(): Promise<DayTrend> {
   return computeDayTrend(today.count ?? 0, yesterday.count ?? 0)
 }
 
+/** Janela do gráfico de leads. 30 dias cabe na largura do card sem virar risco de cabelo. */
+const LEADS_SERIES_DAYS = 30
+/** Envios por hora: 24h é o ciclo que interessa, e casa com a janela de DM. */
+const SENDS_SERIES_HOURS = 24
+/**
+ * Teto de linhas puxadas para montar uma série. Passar disso significaria
+ * volume muito acima do cap por hora — aí o gráfico já não é o problema.
+ */
+const SERIES_ROW_LIMIT = 5000
+
+/**
+ * Leads por dia. Conta contato criado, que é o primeiro toque — o mesmo
+ * critério de `getLeadsTrend`, para o número grande e a curva não divergirem.
+ */
+export async function getLeadsSeries(days = LEADS_SERIES_DAYS): Promise<SeriesBucket[]> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data } = await supabaseAdmin
+    .from('contacts')
+    .select('created_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: true })
+    .limit(SERIES_ROW_LIMIT)
+
+  return dailyBuckets((data ?? []).map((row) => (row as { created_at: string }).created_at), days)
+}
+
+/**
+ * Envios por hora nas últimas 24h, com o cap marcado.
+ *
+ * É o gráfico mais operacional do painel: o cap e o relatório de risco dizem
+ * "0 de 60 na última hora" sem mostrar o FORMATO da curva, e é o formato que
+ * denuncia disparo concentrado — exatamente o padrão que custou restrição de
+ * conta em jul/2026 (ver a blindagem anti-spam no CLAUDE.md).
+ */
+export async function getSendsSeries(hours = SENDS_SERIES_HOURS): Promise<{
+  points: SeriesBucket[]
+  cap: number
+}> {
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString()
+
+  const { data } = await supabaseAdmin
+    .from('send_log')
+    .select('created_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: true })
+    .limit(SERIES_ROW_LIMIT)
+
+  return {
+    points: hourlyBuckets(
+      (data ?? []).map((row) => (row as { created_at: string }).created_at),
+      hours,
+    ),
+    cap: env.SEND_HOURLY_CAP,
+  }
+}
+
 /** Depois desse tanto sem resposta a janela de 24h já fechou — a conversa não reabre sozinha. */
 const STALE_WAITING_REPLY_MS = 24 * 60 * 60 * 1000
 /**
@@ -731,6 +789,8 @@ export async function getFailedAutomations(limit = 5): Promise<FailedRun[]> {
 }
 
 export interface CockpitData {
+  leadsSeries: SeriesBucket[]
+  sends: { points: SeriesBucket[]; cap: number }
   leadsTrend: DayTrend
   leadSources: LeadSource[]
   stuck: StuckSummary
@@ -745,8 +805,11 @@ export interface CockpitData {
  * reaproveitados aqui, não reescritos.
  */
 export async function getCockpitData(): Promise<CockpitData> {
-  const [leadsTrend, leadSources, stuck, failedRuns, inboxCounts, riskReport] = await Promise.all([
+  const [leadsTrend, leadsSeries, sends, leadSources, stuck, failedRuns, inboxCounts, riskReport] =
+    await Promise.all([
     getLeadsTrend(),
+    getLeadsSeries(),
+    getSendsSeries(),
     getLeadSources(),
     getStuckSummary(),
     getFailedAutomations(),
@@ -754,5 +817,5 @@ export async function getCockpitData(): Promise<CockpitData> {
     getRiskReport(),
   ])
 
-  return { leadsTrend, leadSources, stuck, failedRuns, inboxCounts, riskReport }
+  return { leadsTrend, leadsSeries, sends, leadSources, stuck, failedRuns, inboxCounts, riskReport }
 }

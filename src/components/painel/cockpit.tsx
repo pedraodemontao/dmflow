@@ -16,7 +16,7 @@ import {
 import { FailedRuns } from '@/components/painel/failed-runs'
 import { Risco } from '@/components/painel/risco'
 import { Badge, Card, EmptyState } from '@/components/ui'
-import { RankBars } from '@/components/ui/chart'
+import { RankBars, TimeSeries } from '@/components/ui/chart'
 import type { CockpitData } from '@/lib/data'
 import type { RiskLevel } from '@/lib/risk/types'
 import { cn } from '@/lib/utils'
@@ -118,7 +118,8 @@ function TrendBadge({ delta, deltaPercent }: { delta: number; deltaPercent: numb
 }
 
 export function Cockpit({ data }: { data: CockpitData }) {
-  const { leadsTrend, leadSources, stuck, failedRuns, inboxCounts, riskReport } = data
+  const { leadsTrend, leadsSeries, sends, leadSources, stuck, failedRuns, inboxCounts, riskReport } =
+    data
 
   const waiting = inboxCounts['nao-lidas']
   const riskElevated = riskReport && riskReport.level !== 'verde'
@@ -209,11 +210,19 @@ export function Cockpit({ data }: { data: CockpitData }) {
 
             <p className="display text-6xl tabular-nums">{leadsTrend.today}</p>
 
-            <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="mt-3 mb-4 flex flex-wrap items-center gap-2">
               <TrendBadge delta={leadsTrend.delta} deltaPercent={leadsTrend.deltaPercent} />
               <span className="text-[11px] text-muted">ontem: {leadsTrend.yesterday}</span>
             </div>
 
+            {/* A curva de 30 dias embaixo do número: o número diz quanto, a
+                curva diz se está subindo. Sem ela o painel só tinha fotos do
+                agora. */}
+            <TimeSeries
+              points={leadsSeries}
+              height={56}
+              aria-label="Leads por dia nos últimos 30 dias"
+            />
           </Card>
 
           <Card className="overflow-hidden">
@@ -279,6 +288,26 @@ export function Cockpit({ data }: { data: CockpitData }) {
             )}
           </Card>
         </div>
+
+        {/* Envios por hora é o gráfico mais operacional do painel: o cap e o
+            relatório de risco dizem "0 de 60 na última hora" sem mostrar o
+            FORMATO da curva — e é o formato que denuncia disparo concentrado,
+            o padrão que custou restrição de conta em jul/2026. */}
+        <Card className="mt-4 p-4">
+          <div className="mb-4 flex items-baseline justify-between gap-3">
+            <span className="label text-[10px] text-muted">Envios por hora · últimas 24h</span>
+            <span className="label text-[9px] text-muted">
+              pico {Math.max(0, ...sends.points.map((p) => p.value))} · teto {sends.cap}
+            </span>
+          </div>
+
+          <TimeSeries
+            points={sends.points}
+            height={88}
+            threshold={{ value: sends.cap, label: `cap ${sends.cap}/h` }}
+            aria-label="Envios por hora nas últimas 24 horas"
+          />
+        </Card>
 
         {/* O banner lá em cima só dá o veredito. O detalhamento por sinal é o
             diferencial real contra o ManyChat — é o que diz POR QUE o risco
