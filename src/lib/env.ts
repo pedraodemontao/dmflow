@@ -17,6 +17,20 @@ const schema = z.object({
    * raspar recusa — nada mais no produto depende disto.
    */
   APIFY_TOKEN: z.string().min(1).optional(),
+  /**
+   * Gerador de roteiro. Sem a chave o gerador cai num mock determinístico e a
+   * tela continua funcionando — foi assim que o projeto de origem permitiu
+   * demonstrar sem gastar crédito, e o padrão foi mantido.
+   *
+   * ATENÇÃO: estas três estão declaradas aqui como DOCUMENTAÇÃO e validação,
+   * mas o código de IA e o da raspagem leem `process.env` direto. O motivo é
+   * o Proxy `env`: ele valida o schema inteiro no primeiro acesso e estoura
+   * sem as variáveis do Instagram e do Supabase — o que mataria o caminho do
+   * mock em teste e em máquina sem `.env`. Declarar aqui mantém a lista
+   * oficial honesta sem acoplar o opcional ao obrigatório.
+   */
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_MODEL: z.string().min(1).optional(),
   /** Teto de respostas públicas no MESMO post por hora. DM não tem esse limite. */
   PUBLIC_REPLY_PER_POST_CAP: z.coerce.number().int().positive().default(8),
   /** Protege POST /api/conversao. Sem ela, a rota recusa tudo. */
@@ -39,6 +53,8 @@ function load(): Env {
     PANEL_PASSWORD: process.env.PANEL_PASSWORD,
     SEND_HOURLY_CAP: process.env.SEND_HOURLY_CAP,
     APIFY_TOKEN: process.env.APIFY_TOKEN,
+    ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
+    ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL,
     // Estava fora da lista: o schema tem `.default(8)`, então o valor era
     // SEMPRE 8 e definir a variável na Vercel não surtia efeito nenhum.
     // Configuração que mente em silêncio é pior que configuração inexistente.
