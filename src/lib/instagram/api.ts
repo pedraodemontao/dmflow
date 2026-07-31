@@ -411,13 +411,38 @@ export async function fetchMedia(args: {
   return json.data ?? []
 }
 
-/** Perfil do contato. Só disponível depois que ele mandou mensagem para a conta. */
-export async function fetchContactProfile(args: { accessToken: string; contactIgId: string }) {
-  const params = new URLSearchParams({ fields: 'name,username' })
+export interface ContactProfile {
+  name?: string
+  username?: string
+  /**
+   * URL assinada da foto — EXPIRA em horas/dias, não é permanente. Nunca
+   * assuma que continua válida: quem grava isso precisa saber que vai
+   * quebrar depois (ver `profile_synced_at` em `contacts`, migration 0012).
+   */
+  profile_pic?: string
+  follower_count?: number
+  is_verified_user?: boolean
+}
+
+/**
+ * Perfil do contato. Só disponível depois que ele mandou mensagem para a
+ * conta — quem só comentou não deu consentimento e a Graph API responde
+ * "User consent is required to access user profile". Isso não é uma falha:
+ * `!res.ok` cobre esse caso e devolve `null` como qualquer outro perfil
+ * indisponível, sem logar erro. Quem chama decide markInbound antes de
+ * chamar esta função, então esse cenário não deveria nem chegar aqui.
+ */
+export async function fetchContactProfile(args: {
+  accessToken: string
+  contactIgId: string
+}): Promise<ContactProfile | null> {
+  const params = new URLSearchParams({
+    fields: 'name,username,profile_pic,follower_count,is_verified_user',
+  })
   const res = await fetch(`${GRAPH}/${args.contactIgId}?${params}`, {
     headers: { authorization: `Bearer ${args.accessToken}` },
   })
 
   if (!res.ok) return null
-  return res.json() as Promise<{ name?: string; username?: string }>
+  return res.json() as Promise<ContactProfile>
 }

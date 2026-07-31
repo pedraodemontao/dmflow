@@ -8,9 +8,11 @@ import {
   DeleteContact,
   SubscriptionToggle,
 } from '@/components/contatos/contact-editor'
-import { Badge, Button, Card } from '@/components/ui'
+import { Avatar, Badge, Button, Card } from '@/components/ui'
 import { getContactDetail } from '@/lib/data'
 import { cn } from '@/lib/utils'
+
+const followerFormatter = new Intl.NumberFormat('pt-BR', { notation: 'compact' })
 
 export const dynamic = 'force-dynamic'
 
@@ -28,6 +30,7 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
   if (!detail) notFound()
 
   const { contact, messages, runs } = detail
+  const label = contact.username ? `@${contact.username}` : contact.ig_user_id
 
   return (
     <>
@@ -37,10 +40,22 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
             <ArrowLeft className="size-4" />
           </Button>
         </Link>
-        <h1 className="text-base font-semibold tracking-tight text-foreground">
-          {contact.username ? `@${contact.username}` : contact.ig_user_id}
-        </h1>
-        {contact.name && <span className="text-xs text-muted">{contact.name}</span>}
+
+        <Avatar src={contact.profile_pic_url} label={label} verified={contact.is_verified} size="sm" />
+
+        <div className="min-w-0">
+          <h1 className="truncate text-base font-semibold tracking-tight text-foreground">
+            {label}
+          </h1>
+          {(contact.name || contact.follower_count != null) && (
+            <p className="truncate text-[11px] text-muted">
+              {[contact.name, contact.follower_count != null ? `${followerFormatter.format(contact.follower_count)} seguidores` : null]
+                .filter(Boolean)
+                .join(' · ')}
+            </p>
+          )}
+        </div>
+
         <Badge tone={contact.windowOpen ? 'success' : 'neutral'}>
           {contact.windowOpen ? 'janela de 24h aberta' : 'janela fechada'}
         </Badge>

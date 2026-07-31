@@ -3,8 +3,10 @@ import { Download, Users } from 'lucide-react'
 
 import { ContactFilters } from '@/components/contatos/contact-filters'
 import { ResetTeste } from '@/components/contatos/reset-teste'
-import { Badge, Button, Card, EmptyState } from '@/components/ui'
+import { Avatar, Badge, Button, Card, EmptyState } from '@/components/ui'
 import { getAllTags, getContacts } from '@/lib/data'
+
+const followerFormatter = new Intl.NumberFormat('pt-BR', { notation: 'compact' })
 
 export const dynamic = 'force-dynamic'
 
@@ -72,38 +74,51 @@ export default async function ContatosPage({
           />
         ) : (
           <Card className="divide-y divide-border">
-            {contacts.map((contact) => (
-              <Link
-                key={contact.id}
-                href={`/contatos/${contact.id}`}
-                className="flex items-center gap-4 p-4 transition-colors duration-150 hover:bg-surface-2/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {contact.username ? `@${contact.username}` : contact.ig_user_id}
-                  </p>
-                  {contact.name && <p className="truncate text-xs text-muted">{contact.name}</p>}
-                </div>
+            {contacts.map((contact) => {
+              const label = contact.username ? `@${contact.username}` : contact.ig_user_id
+              const secondary = [
+                contact.name,
+                contact.follower_count != null
+                  ? `${followerFormatter.format(contact.follower_count)} seguidores`
+                  : null,
+              ]
+                .filter(Boolean)
+                .join(' · ')
 
-                <div className="hidden flex-wrap gap-1 sm:flex">
-                  {contact.tags.slice(0, 4).map((tag) => (
-                    <Badge key={tag} tone="accent">
-                      {tag}
+              return (
+                <Link
+                  key={contact.id}
+                  href={`/contatos/${contact.id}`}
+                  className="flex items-center gap-3.5 px-4 py-3.5 transition-colors duration-150 hover:bg-surface-2/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                >
+                  <Avatar src={contact.profile_pic_url} label={label} verified={contact.is_verified} />
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">{label}</p>
+                    {secondary && <p className="truncate text-xs text-muted">{secondary}</p>}
+                  </div>
+
+                  <div className="hidden shrink-0 flex-wrap items-center justify-end gap-1.5 sm:flex">
+                    {contact.tags.slice(0, 4).map((tag) => (
+                      <Badge key={tag} tone="accent">
+                        {tag}
+                      </Badge>
+                    ))}
+                    {contact.tags.length > 4 && (
+                      <Badge tone="neutral">+{contact.tags.length - 4}</Badge>
+                    )}
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {!contact.subscribed && <Badge tone="warning">descadastrado</Badge>}
+                    {contact.automation_paused && <Badge tone="neutral">em atendimento</Badge>}
+                    <Badge tone={contact.windowOpen ? 'success' : 'neutral'}>
+                      {contact.windowOpen ? 'janela aberta' : 'janela fechada'}
                     </Badge>
-                  ))}
-                  {contact.tags.length > 4 && (
-                    <Badge tone="neutral">+{contact.tags.length - 4}</Badge>
-                  )}
-                </div>
-
-                {!contact.subscribed && <Badge tone="warning">descadastrado</Badge>}
-                {contact.automation_paused && <Badge tone="neutral">em atendimento</Badge>}
-
-                <Badge tone={contact.windowOpen ? 'success' : 'neutral'}>
-                  {contact.windowOpen ? 'janela aberta' : 'janela fechada'}
-                </Badge>
-              </Link>
-            ))}
+                  </div>
+                </Link>
+              )
+            })}
           </Card>
         )}
       </main>

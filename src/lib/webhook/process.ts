@@ -124,6 +124,27 @@ async function getAccount(igUserId: string): Promise<Account | null> {
   return (data as Account | null) ?? null
 }
 
+/**
+ * Perfil (nome, foto, seguidores, selo) só é revalidado a cada 24h — nunca a
+ * cada DM. A conta troca dezenas de mensagens com o mesmo contato numa
+ * conversa ativa; bater na Graph API em toda mensagem seria custo e latência
+ * sem ganho. 24h ainda mantém a foto razoavelmente fresca no momento em que
+ * importa: quando a pessoa escreve de novo é justamente quando o inbox vai
+ * ser aberto para responder. Ver migration 0012 para o resto do plano
+ * (fallback de iniciais no cliente cobre o que ficar velho entre uma
+ * revalidação e outra).
+ */
+const PROFILE_REFRESH_MS = 24 * 60 * 60 * 1000
+
+function profileFields(profile: NonNullable<Awaited<ReturnType<typeof fetchContactProfile>>>) {
+  return {
+    profile_pic_url: profile.profile_pic ?? null,
+    follower_count: profile.follower_count ?? null,
+    is_verified: profile.is_verified_user ?? false,
+    profile_synced_at: new Date().toISOString(),
+  }
+}
+
 async function upsertContact(args: {
   account: Account
   igUserId: string
@@ -139,22 +160,41 @@ async function upsertContact(args: {
     .maybeSingle()
 
   if (existing) {
+    const existingContact = existing as Contact
     const patch: Record<string, unknown> = {}
     if (args.markInbound) patch.last_inbound_at = new Date().toISOString()
-    if (args.username && !(existing as Contact).username) patch.username = args.username
+    if (args.username && !existingContact.username) patch.username = args.username
 
     // Primeiro toque manda: só preenche origem se ainda estiver vazia.
-    if (args.source && !(existing as Contact).source_type) {
+    if (args.source && !existingContact.source_type) {
       patch.source_type = args.source.type
       patch.source_id = args.source.id
       patch.source_at = new Date().toISOString()
+    }
+
+    // Só quem manda DM dá consentimento de perfil — comentário não. E só
+    // revalida se o cache já envelheceu (ver PROFILE_REFRESH_MS acima).
+    const syncedAt = existingContact.profile_synced_at
+      ? new Date(existingContact.profile_synced_at).getTime()
+      : 0
+    if (args.markInbound && Date.now() - syncedAt > PROFILE_REFRESH_MS) {
+      const profile = await fetchContactProfile({
+        accessToken: args.account.access_token,
+        contactIgId: args.igUserId,
+      }).catch(() => null)
+
+      if (profile) {
+        if (profile.username && !existingContact.username) patch.username = profile.username
+        if (profile.name && !existingContact.name) patch.name = profile.name
+        Object.assign(patch, profileFields(profile))
+      }
     }
 
     if (Object.keys(patch).length > 0) {
       const { data: updated } = await supabaseAdmin
         .from('contacts')
         .update(patch)
-        .eq('id', (existing as Contact).id)
+        .eq('id', existingContact.id)
         .select()
         .single()
       return updated as Contact
@@ -181,6 +221,7 @@ async function upsertContact(args: {
       source_type: args.source?.type ?? null,
       source_id: args.source?.id ?? null,
       source_at: args.source ? new Date().toISOString() : null,
+      ...(profile ? profileFields(profile) : {}),
     })
     .select()
     .single()
