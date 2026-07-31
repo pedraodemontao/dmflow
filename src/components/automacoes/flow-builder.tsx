@@ -18,7 +18,14 @@ import {
 } from '@xyflow/react'
 import { Plus } from 'lucide-react'
 
-import { CATEGORY_LABEL, CATEGORY_ORDER, NODE_META, nodeTypes } from '@/components/automacoes/flow-nodes'
+import {
+  CATEGORY_LABEL,
+  CATEGORY_ORDER,
+  NODE_CHIP,
+  NODE_META,
+  nodeGlyph,
+  nodeTypes,
+} from '@/components/automacoes/flow-nodes'
 import { NodeInspector } from '@/components/automacoes/node-inspector'
 import { Button } from '@/components/ui'
 import type { FlowOption } from '@/lib/data'
@@ -26,11 +33,12 @@ import { blankNode, definitionToGraph, graphToDefinition } from '@/lib/flow/tran
 import type { FlowDefinition, FlowNode } from '@/lib/flow/types'
 import { cn } from '@/lib/utils'
 
-/** Mesmo cinza-grafite de `.react-flow__edge-path` (globals.css) — arestas e a
- *  seta que marca o destino precisam nascer da mesma cor, e esse token não é
- *  semântico (é um ajuste local só para o canvas), então repete o literal em
- *  vez de inventar uma variável nova para um único uso. */
-const EDGE_COLOR = '#4a433c'
+/** O fio de cabelo (`--line-700`) em literal. A aresta é desenhada por
+ *  `.react-flow__edge-path` no globals.css, mas a ponta de seta vira um
+ *  `<marker>` no SVG e recebe a cor como atributo — atributo de SVG não lê
+ *  `var()` de forma confiável, então o hex é repetido aqui. Mudou o token,
+ *  muda esta linha. */
+const EDGE_COLOR = '#23262b'
 
 const PALETTE: FlowNode['type'][] = [
   'message',
@@ -194,8 +202,11 @@ function Canvas({
           connectionLineType={ConnectionLineType.Bezier}
           connectionLineStyle={{ stroke: 'var(--accent)', strokeWidth: 2.5 }}
         >
-          <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#3a332c" />
-          <Controls className="!bottom-4 !left-4" showInteractive={false} />
+          {/* Mesmo fio das arestas: a trama do fundo é textura, não informação. */}
+          <Background variant={BackgroundVariant.Dots} gap={20} size={1} color={EDGE_COLOR} />
+          {/* Sufixo `!` (Tailwind 4): as regras `.react-flow__controls` da
+              biblioteca vêm sem camada e ganhariam do utilitário normal. */}
+          <Controls className="bottom-4! left-4!" showInteractive={false} />
         </ReactFlow>
 
         <div className="absolute left-4 top-4 z-10">
@@ -205,13 +216,16 @@ function Canvas({
           </Button>
 
           {paletteOpen && (
-            <div className="pop-panel mt-2 w-72 max-h-[75vh] overflow-y-auto rounded-2xl py-1.5">
+            <div className="pop-panel mt-2 max-h-[75vh] w-72 overflow-y-auto rounded-md py-1.5">
               {CATEGORY_ORDER.map((category) => {
                 const types = PALETTE.filter((type) => NODE_META[type].category === category)
                 if (types.length === 0) return null
                 return (
                   <div key={category}>
-                    <p className="sticky top-0 z-10 bg-[var(--glass-fill-pop)] px-3 pb-1.5 pt-2.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                    {/* `bg-surface` porque o cabeçalho é grudento e passa por
+                        cima dos itens ao rolar — precisa ser opaco, e é a
+                        mesma superfície do `.pop-panel` que o envolve. */}
+                    <p className="label sticky top-0 z-10 bg-surface px-3 pt-2.5 pb-1.5 text-[10px] text-muted">
                       {CATEGORY_LABEL[category]}
                     </p>
                     {types.map((type) => {
@@ -222,15 +236,10 @@ function Canvas({
                           key={type}
                           type="button"
                           onClick={() => addNode(type)}
-                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset"
+                          className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-surface-2 focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset focus-visible:outline-none"
                         >
-                          <span
-                            className={cn(
-                              'flex size-7 shrink-0 items-center justify-center rounded-lg border',
-                              meta.chip,
-                            )}
-                          >
-                            <Icon className={cn('size-3.5', meta.color)} />
+                          <span className={cn(NODE_CHIP, 'size-7')}>
+                            <Icon className={cn('size-3.5', nodeGlyph(type))} />
                           </span>
                           <div className="min-w-0">
                             <p className="truncate text-xs font-medium">{meta.label}</p>

@@ -1,28 +1,14 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft, BarChart3 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 
-import { Badge, Button, Card, EmptyState } from '@/components/ui'
+import { FlowFunnel } from '@/components/automacoes/flow-funnel'
+import { Badge, Button, Card } from '@/components/ui'
+import { BigNumber, Meter } from '@/components/ui/chart'
 import { getAutomation, getFlowMetrics } from '@/lib/data'
 import { flowDefinitionSchema } from '@/lib/flow/types'
 
 export const dynamic = 'force-dynamic'
-
-const NODE_LABEL: Record<string, string> = {
-  message: 'Mensagem',
-  buttons: 'Botões',
-  image: 'Imagem',
-  ask: 'Perguntar',
-  wait_reply: 'Esperar resposta',
-  condition: 'Condição',
-  randomize: 'Sorteio',
-  delay: 'Espera',
-  tag: 'Etiqueta',
-  set_field: 'Gravar campo',
-  http: 'Webhook',
-  unsubscribe: 'Descadastrar',
-  end: 'Fim',
-}
 
 export default async function MetricasPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -31,17 +17,19 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
 
   const metrics = await getFlowMetrics(automation.flow.id)
   const parsed = flowDefinitionSchema.safeParse(automation.flow.definition)
-  const entryId = parsed.success ? parsed.data.entry : null
+
+  const { runs, done } = automation.stats
+  const rate = runs > 0 ? done / runs : 0
 
   return (
     <>
-      <header className="chrome-panel flex h-16 shrink-0 items-center gap-3 border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center gap-3 border-b px-6">
         <Link href={`/automacoes/${id}`}>
           <Button variant="ghost" size="sm" aria-label="Voltar para a automação">
             <ArrowLeft className="size-4" />
           </Button>
         </Link>
-        <h1 className="display text-4xl text-foreground">
+        <h1 className="display truncate text-4xl text-foreground">
           Métricas · {automation.flow.name}
         </h1>
         <Badge tone={automation.trigger.is_active ? 'success' : 'neutral'}>
@@ -50,68 +38,42 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">
-        <div className="canon mx-auto w-full max-w-3xl">
-          <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Card className="p-4">
-              <p className="font-mono text-3xl font-bold tracking-tight text-foreground tabular-nums">
-                {automation.stats.runs}
-              </p>
-              <p className="text-[11px] text-muted">disparos</p>
+        <div className="canon mx-auto w-full max-w-3xl space-y-3">
+          <div className="grid gap-3 md:grid-cols-[1.15fr_1fr]">
+            {/* A pergunta de cima: de quem entrou, quanta gente chegou ao fim.
+                Número grande em display + barra embaixo — a fração precisa de
+                forma, não de um terceiro número igual aos outros. */}
+            <Card className="p-5">
+              <BigNumber
+                size="lg"
+                value={`${Math.round(rate * 100)}%`}
+                label="taxa de conclusão"
+                hint={
+                  runs > 0
+                    ? `${done} de ${runs} ${runs === 1 ? 'disparo terminou' : 'disparos terminaram'} o fluxo. O resto parou no meio ou ainda está andando.`
+                    : 'Nenhum disparo ainda.'
+                }
+              />
+              <Meter
+                className="mt-4"
+                value={rate}
+                aria-label={`Taxa de conclusão: ${Math.round(rate * 100)}%`}
+              />
             </Card>
-            <Card className="p-4">
-              <p className="font-mono text-3xl font-bold tracking-tight text-foreground tabular-nums">
-                {automation.stats.done}
-              </p>
-              <p className="text-[11px] text-muted">chegaram ao fim</p>
-            </Card>
-            <Card className="p-4">
-              <p className="font-mono text-3xl font-bold tracking-tight text-foreground tabular-nums">
-                {automation.stats.runs > 0
-                  ? Math.round((automation.stats.done / automation.stats.runs) * 100)
-                  : 0}
-                %
-              </p>
-              <p className="text-[11px] text-muted">taxa de conclusão</p>
+
+            <Card className="grid grid-cols-2 divide-x divide-border">
+              <div className="p-5">
+                <BigNumber value={runs} label="disparos" />
+              </div>
+              <div className="p-5">
+                <BigNumber value={done} label="terminaram" />
+              </div>
             </Card>
           </div>
 
-          {metrics.length === 0 ? (
-            <EmptyState
-              icon={<BarChart3 className="size-8" />}
-              title="Sem dados ainda"
-              description="Assim que alguém passar pelo fluxo, cada bloco mostra quantas pessoas chegaram nele — e onde elas param."
-            />
-          ) : (
-            <Card className="divide-y divide-border">
-              {metrics.map((metric) => (
-                <div key={metric.nodeId} className="p-4">
-                  <div className="mb-2 flex items-baseline gap-2">
-                    <span className="text-xs font-medium text-foreground">
-                      {NODE_LABEL[metric.nodeType] ?? metric.nodeType}
-                    </span>
-                    <span className="font-mono text-[11px] text-muted">{metric.nodeId}</span>
-                    {/* Marcador neutro — não é ação, é informação de posição no
-                        fluxo, então não compete pelo accent da tela. */}
-                    {metric.nodeId === entryId && <Badge tone="neutral">início</Badge>}
-                    <span className="ml-auto font-mono text-sm font-semibold text-foreground tabular-nums">
-                      {metric.people}
-                    </span>
-                    <span className="text-[11px] text-muted">
-                      {metric.people === 1 ? 'pessoa' : 'pessoas'}
-                    </span>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-white/35 to-white/75"
-                      style={{ width: `${metric.share}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </Card>
-          )}
+          <FlowFunnel metrics={metrics} definition={parsed.success ? parsed.data : null} />
 
-          <p className="mt-4 text-[11px] text-muted">
+          <p className="text-[11px] leading-relaxed text-muted">
             Contagem por pessoa, não por passagem: se o bloco “Perguntar” repreguntar, a mesma
             pessoa conta uma vez só. A barra compara com o bloco mais visitado do fluxo.
           </p>

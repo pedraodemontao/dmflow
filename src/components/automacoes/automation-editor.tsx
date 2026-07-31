@@ -100,28 +100,37 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <header className="chrome-panel flex h-16 shrink-0 items-center gap-4 border-b border-white/[0.06] px-6">
-        <Link href="/automacoes" className="text-muted hover:text-foreground" aria-label="Voltar para automações">
+      <header className="chrome-panel flex h-16 shrink-0 items-center gap-4 border-b px-6">
+        <Link
+          href="/automacoes"
+          className="text-muted hover:text-foreground"
+          aria-label="Voltar para automações"
+        >
           <ArrowLeft className="size-4" />
         </Link>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none"
+          className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none placeholder:text-muted"
           placeholder="Nome da automação"
         />
 
-        <div className="flex items-center gap-1">
+        {/* Abas em monospace caixa alta, marcadas por um traço limão embaixo —
+            a caneta marca-texto passando no passo aberto. Nada de pílula
+            preenchida: o passo ativo é UM entre três, não um botão. */}
+        <div className="flex items-stretch gap-1 self-stretch">
           {STEPS.map(({ id, label, icon: Icon }, i) => (
             <button
               key={id}
               type="button"
               onClick={() => setStep(id)}
+              aria-current={step === id ? 'step' : undefined}
               className={cn(
-                'flex items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs transition-all duration-150',
+                'label flex items-center gap-1.5 border-b-2 px-3 text-[10px] transition-colors duration-150',
+                'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-inset focus-visible:outline-none',
                 step === id
-                  ? 'bg-surface-2 font-medium text-foreground shadow-[inset_0_1px_0_rgb(255_255_255_/6%)]'
-                  : 'text-muted hover:text-foreground',
+                  ? 'border-accent text-foreground'
+                  : 'border-transparent text-muted hover:text-foreground',
               )}
             >
               <Icon className="size-3.5" />
@@ -132,7 +141,7 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
           ))}
         </div>
 
-        <label className="flex cursor-pointer items-center gap-2 text-xs text-muted">
+        <label className="label flex cursor-pointer items-center gap-2 text-[10px] text-muted">
           <input
             type="checkbox"
             checked={isActive}
@@ -142,22 +151,25 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
           Ativa
         </label>
 
-        <Button type="button" size="sm" onClick={save} disabled={pending}>
+        <Button type="button" size="sm" className="cta-signature" onClick={save} disabled={pending}>
           {pending ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />}
           Salvar
         </Button>
       </header>
 
       {error && (
-        <p className="shrink-0 bg-danger/10 px-6 py-2.5 text-xs text-danger">{error}</p>
+        <p className="shrink-0 border-b border-danger/40 bg-danger/10 px-6 py-2.5 text-xs text-danger">
+          {error}
+        </p>
       )}
 
       {step === 'gatilho' && (
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mx-auto max-w-4xl space-y-6">
             <div>
-              <h2 className="text-sm font-semibold">Quando essa automação dispara?</h2>
-              <p className="mt-1 text-xs text-muted">
+              <p className="label text-[10px] text-muted">Passo 1 · Gatilho</p>
+              <h2 className="display mt-2 text-2xl">Quando essa automação dispara?</h2>
+              <p className="mt-2 text-xs text-muted">
                 O gatilho define o que a pessoa precisa fazer para entrar no fluxo.
               </p>
             </div>
@@ -185,24 +197,36 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
                 <button
                   key={option.value}
                   type="button"
+                  aria-pressed={triggerType === option.value}
                   onClick={() => setTriggerType(option.value)}
                   className={cn(
-                    'rounded-2xl border p-4 text-left transition-all duration-150',
+                    // Escolhido = preenchido de limão com texto escuro, a
+                    // mesma marcação do bloco selecionado no canvas. Uma só
+                    // gramática de seleção no produto inteiro.
+                    'rounded-md border p-4 text-left transition-colors duration-150',
+                    'focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none',
                     triggerType === option.value
-                      ? 'border-accent bg-accent/5 shadow-[0_16px_32px_-20px_rgb(242_118_46_/45%)]'
-                      : 'border-border hover:-translate-y-0.5 hover:border-muted',
+                      ? 'border-accent bg-accent text-background'
+                      : 'border-border bg-surface hover:border-muted',
                   )}
                 >
-                  <p className="text-xs font-semibold">{option.title}</p>
-                  <p className="mt-1 text-[11px] leading-tight text-muted">{option.desc}</p>
+                  <p className="label text-[10px]">{option.title}</p>
+                  <p
+                    className={cn(
+                      'mt-1.5 text-[11px] leading-tight',
+                      triggerType === option.value ? 'text-background/80' : 'text-muted',
+                    )}
+                  >
+                    {option.desc}
+                  </p>
                 </button>
               ))}
             </div>
 
             {triggerType === 'comment' && (
               <Card className="p-5">
-                <h3 className="mb-1 text-sm font-semibold">Em qual post?</h3>
-                <p className="mb-4 text-xs text-muted">
+                <h3 className="label text-[11px] text-foreground">Em qual post?</h3>
+                <p className="mt-1.5 mb-4 text-xs text-muted">
                   Escolha um post específico ou deixe valendo para todos.
                 </p>
                 <PostPicker
@@ -227,8 +251,9 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
         <div className="flex-1 overflow-y-auto p-6">
           <div className="mx-auto max-w-2xl space-y-6">
             <div>
-              <h2 className="text-sm font-semibold">Quais palavras disparam?</h2>
-              <p className="mt-1 text-xs text-muted">
+              <p className="label text-[10px] text-muted">Passo 2 · Palavras-chave</p>
+              <h2 className="display mt-2 text-2xl">Quais palavras disparam?</h2>
+              <p className="mt-2 text-xs text-muted">
                 Acentos e maiúsculas são ignorados — &quot;EU QUERO&quot; e &quot;eu quero&quot;
                 funcionam igual.
               </p>

@@ -3,6 +3,7 @@ import { MessageCircle, Zap } from 'lucide-react'
 
 import { AutomationActions } from '@/components/automacoes/automation-actions'
 import { Badge, Button, Card, EmptyState } from '@/components/ui'
+import { Meter } from '@/components/ui/chart'
 import { getAutomations } from '@/lib/data'
 
 export const dynamic = 'force-dynamic'
@@ -19,7 +20,7 @@ export default async function AutomacoesPage() {
 
   return (
     <>
-      <header className="chrome-panel flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
+      <header className="chrome-panel flex h-16 shrink-0 items-center justify-between border-b px-6">
         <h1 className="display text-4xl text-foreground">Automações</h1>
         <Link href="/automacoes/nova">
           <Button size="sm" className="cta-signature">
@@ -44,56 +45,79 @@ export default async function AutomacoesPage() {
             />
           ) : (
             <div className="space-y-2">
-              {automations.map(({ trigger, flow, stats }) => (
-                <Card
-                  key={trigger.id}
-                  className="flex items-center gap-4 p-4 transition-all duration-150 hover:-translate-y-0.5 hover:border-foreground/15 hover:shadow-[0_20px_36px_-20px_rgb(0_0_0_/75%)]"
-                >
-                  <Link
-                    href={`/automacoes/${trigger.id}`}
-                    className="min-w-0 flex-1 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+              {automations.map(({ trigger, flow, stats }) => {
+                const rate = stats.runs > 0 ? stats.done / stats.runs : 0
+                const percent = Math.round(rate * 100)
+                const blocks = Object.keys(flow.definition?.nodes ?? {}).length
+
+                return (
+                  <Card
+                    key={trigger.id}
+                    className="group relative flex items-center gap-4 overflow-hidden p-4"
                   >
-                    <div className="flex items-center gap-2">
-                      <p className="truncate text-sm font-medium text-foreground">{flow.name}</p>
-                      <Badge tone={trigger.is_active ? 'success' : 'neutral'}>
-                        {trigger.is_active ? 'ativa' : 'pausada'}
-                      </Badge>
-                    </div>
-                    <p className="mt-1 text-xs text-muted">
-                      {TRIGGER_LABEL[trigger.type] ?? trigger.type} ·{' '}
-                      {trigger.keywords.join(', ') || 'qualquer texto'}
-                      {trigger.media_id ? ' · post específico' : ''}
-                    </p>
-                  </Link>
+                    {/* Marca de caneta na borda esquerda no hover/foco. É
+                        marcação, não borda: `.surface-panel` (globals.css) é
+                        regra sem camada e venceria qualquer utilitário de
+                        `border-color` do Tailwind, então mexer na borda do
+                        Card daqui não teria efeito nenhum. */}
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-y-0 left-0 w-0.5 bg-accent opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100"
+                    />
 
-                  <div className="hidden shrink-0 gap-6 text-center sm:flex">
-                    <div>
-                      <p className="font-mono text-sm font-semibold text-foreground tabular-nums">
-                        {stats.runs}
+                    <Link
+                      href={`/automacoes/${trigger.id}`}
+                      className="min-w-0 flex-1 rounded-sm focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none"
+                    >
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-sm font-medium text-foreground">{flow.name}</p>
+                        <Badge tone={trigger.is_active ? 'success' : 'neutral'}>
+                          {trigger.is_active ? 'ativa' : 'pausada'}
+                        </Badge>
+                      </div>
+                      <p className="mt-1.5 flex min-w-0 items-baseline gap-2">
+                        <span className="label shrink-0 text-[9px] text-muted">
+                          {TRIGGER_LABEL[trigger.type] ?? trigger.type}
+                          {trigger.media_id ? ' · post' : ''}
+                        </span>
+                        <span className="truncate text-xs text-muted">
+                          {trigger.keywords.join(', ') || 'qualquer texto'}
+                        </span>
                       </p>
-                      <p className="text-[11px] text-muted">disparos</p>
-                    </div>
-                    <div>
-                      <p className="font-mono text-sm font-semibold text-foreground tabular-nums">
-                        {stats.done}
-                      </p>
-                      <p className="text-[11px] text-muted">concluídos</p>
-                    </div>
-                    <div>
-                      <p className="font-mono text-sm font-semibold text-foreground tabular-nums">
-                        {Object.keys(flow.definition?.nodes ?? {}).length}
-                      </p>
-                      <p className="text-[11px] text-muted">blocos</p>
-                    </div>
-                  </div>
+                    </Link>
 
-                  <AutomationActions
-                    triggerId={trigger.id}
-                    name={flow.name}
-                    isActive={trigger.is_active}
-                  />
-                </Card>
-              ))}
+                    {/* Concluídos sobre disparos é uma FRAÇÃO, não um segundo
+                        número solto: em barra dá para varrer a coluna e ver
+                        qual automação entrega e qual só dispara. O número
+                        cru continua ali embaixo, para quem precisa do
+                        volume. */}
+                    <div className="hidden w-52 shrink-0 sm:block">
+                      <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                        <span className="label text-[9px] text-muted">
+                          {stats.runs} {stats.runs === 1 ? 'disparo' : 'disparos'}
+                        </span>
+                        <span className="label text-[10px] tabular-nums">
+                          {stats.runs > 0 ? `${percent}% até o fim` : '—'}
+                        </span>
+                      </div>
+                      <Meter
+                        value={rate}
+                        className="h-1.5"
+                        aria-label={`Taxa de conclusão de ${flow.name}: ${percent}%`}
+                      />
+                      <p className="label mt-1.5 text-[9px] text-muted tabular-nums">
+                        {stats.done} concluíram · {blocks} {blocks === 1 ? 'bloco' : 'blocos'}
+                      </p>
+                    </div>
+
+                    <AutomationActions
+                      triggerId={trigger.id}
+                      name={flow.name}
+                      isActive={trigger.is_active}
+                    />
+                  </Card>
+                )
+              })}
             </div>
           )}
         </div>

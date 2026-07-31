@@ -3,19 +3,20 @@
 import { Plus, Trash2, X } from 'lucide-react'
 
 import { Button, Input, Label, Select, Textarea } from '@/components/ui'
-import { CATEGORY_LABEL, NODE_META } from '@/components/automacoes/flow-nodes'
+import { CATEGORY_LABEL, NODE_CHIP, NODE_META, nodeGlyph } from '@/components/automacoes/flow-nodes'
 import { cn } from '@/lib/utils'
 import type { FlowOption } from '@/lib/data'
 import type { FlowNode } from '@/lib/flow/types'
 
 /** Wrapper dos mini-cards de item de lista (botão, card, caminho...) — o
- *  mesmo visual em toda a edição de arrays, só um pouco mais "levantado" que
- *  um campo comum, pra marcar onde um item termina e o outro começa. */
-const ITEM_CARD =
-  'rounded-xl border border-border/70 bg-surface-2/40 p-3 shadow-[inset_0_1px_0_rgb(255_255_255_/4%)]'
+ *  mesmo visual em toda a edição de arrays. Fio de cabelo e canto duro, sem
+ *  brilho interno: o que marca onde um item termina e o outro começa é o
+ *  traço, igual ao resto do app. */
+const ITEM_CARD = 'rounded-sm border border-border bg-surface-2 p-3'
 
 /** Wrapper dos avisos informativos (bloco sem opção, aviso de descadastro...). */
-const INFO_BOX = 'rounded-xl border border-border/70 bg-surface-2/60 p-3 text-[11px] leading-relaxed text-muted'
+const INFO_BOX =
+  'rounded-sm border border-border bg-surface-2 p-3 text-[11px] leading-relaxed text-muted'
 
 const MEDIA_LABEL: Record<'video' | 'audio' | 'file', string> = {
   video: 'vídeo',
@@ -43,22 +44,20 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
   }
 
   return (
-    <div className="chrome-panel flex w-96 shrink-0 flex-col border-l border-white/[0.06]">
-      <div className="flex h-16 items-center gap-3 border-b border-white/[0.06] px-5">
-        <div className={cn('flex size-9 shrink-0 items-center justify-center rounded-lg border', meta.chip)}>
-          <Icon className={cn('size-4', meta.color)} />
+    <div className="chrome-panel flex w-96 shrink-0 flex-col border-l">
+      <div className="flex h-16 items-center gap-3 border-b border-border px-5">
+        <div className={cn(NODE_CHIP, 'size-9')}>
+          <Icon className={cn('size-4', nodeGlyph(node.type))} />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted">
-            {CATEGORY_LABEL[meta.category]}
-          </p>
-          <p className="truncate text-sm font-semibold leading-tight">{meta.label}</p>
+          <p className="label text-[9px] text-muted">{CATEGORY_LABEL[meta.category]}</p>
+          <p className="mt-0.5 truncate text-sm leading-tight font-semibold">{meta.label}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Fechar inspetor"
-          className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
+          className="shrink-0 rounded-sm p-1.5 text-muted transition-colors hover:bg-surface-2 hover:text-foreground"
         >
           <X className="size-4" />
         </button>
@@ -149,7 +148,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
               {node.buttons.map((b, i) => (
                 <div key={i} className={ITEM_CARD}>
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[11px] text-muted">Botão {i + 1}</span>
+                    <span className="label text-[9px] text-muted">Botão {i + 1}</span>
                     <button
                       type="button"
                       className="text-muted hover:text-danger"
@@ -207,7 +206,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
               {node.cards.map((card, i) => (
                 <div key={i} className={ITEM_CARD}>
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[11px] text-muted">Card {i + 1}</span>
+                    <span className="label text-[9px] text-muted">Card {i + 1}</span>
                     <button
                       type="button"
                       className="text-muted hover:text-danger"
@@ -745,7 +744,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
               {node.cases.map((branch, i) => (
                 <div key={i} className={ITEM_CARD}>
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-[11px] text-muted">Caminho {i + 1}</span>
+                    <span className="label text-[9px] text-muted">Caminho {i + 1}</span>
                     <button
                       type="button"
                       className="text-muted hover:text-danger"
@@ -839,7 +838,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
         )}
       </div>
 
-      <div className="border-t border-white/[0.06] p-5">
+      <div className="border-t border-border p-5">
         <Button
           variant="danger"
           size="sm"
