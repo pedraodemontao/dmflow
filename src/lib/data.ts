@@ -163,6 +163,36 @@ export async function getLeadSources(limit = 8): Promise<LeadSource[]> {
   })
 }
 
+/** Janela da série por automação. 30 dias casa com a do painel. */
+const AUTOMATION_SERIES_DAYS = 30
+
+/**
+ * Disparos por dia de UMA automação. O painel já tinha a curva geral de leads;
+ * faltava a de cada fluxo — sem ela não dá para dizer se uma automação parou
+ * de render ou se o mês inteiro caiu junto.
+ *
+ * Conta `flow_runs`, não `flow_node_events`: o que interessa aqui é quantas
+ * pessoas ENTRARAM no fluxo por dia. Contar evento de nó misturaria volume de
+ * entrada com tamanho do fluxo — um fluxo de dez blocos pareceria dez vezes
+ * mais movimentado que um de um bloco.
+ */
+export async function getAutomationSeries(
+  flowId: string,
+  days = AUTOMATION_SERIES_DAYS,
+): Promise<SeriesBucket[]> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data } = await supabaseAdmin
+    .from('flow_runs')
+    .select('created_at')
+    .eq('flow_id', flowId)
+    .gte('created_at', since)
+    .order('created_at', { ascending: true })
+    .limit(SERIES_ROW_LIMIT)
+
+  return dailyBuckets((data ?? []).map((row) => (row as { created_at: string }).created_at), days)
+}
+
 export interface NodeMetric {
   nodeId: string
   nodeType: string

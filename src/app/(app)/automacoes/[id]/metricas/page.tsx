@@ -4,8 +4,8 @@ import { ArrowLeft } from 'lucide-react'
 
 import { FlowFunnel } from '@/components/automacoes/flow-funnel'
 import { Badge, Button, Card } from '@/components/ui'
-import { BigNumber, Meter } from '@/components/ui/chart'
-import { getAutomation, getFlowMetrics } from '@/lib/data'
+import { BigNumber, Meter, TimeSeries } from '@/components/ui/chart'
+import { getAutomation, getAutomationSeries, getFlowMetrics } from '@/lib/data'
 import { flowDefinitionSchema } from '@/lib/flow/types'
 
 export const dynamic = 'force-dynamic'
@@ -15,7 +15,10 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
   const automation = await getAutomation(id)
   if (!automation) notFound()
 
-  const metrics = await getFlowMetrics(automation.flow.id)
+  const [metrics, series] = await Promise.all([
+    getFlowMetrics(automation.flow.id),
+    getAutomationSeries(automation.flow.id),
+  ])
   const parsed = flowDefinitionSchema.safeParse(automation.flow.definition)
 
   const { runs, done } = automation.stats
@@ -70,6 +73,23 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
               </div>
             </Card>
           </div>
+
+          {/* A curva de entrada desta automação. O funil diz ONDE perde gente;
+              isto diz SE ainda está entrando gente — sem os dois, uma queda de
+              volume passa por queda de conversão. */}
+          <Card className="p-5">
+            <div className="mb-4 flex items-baseline justify-between gap-3">
+              <span className="label text-[10px] text-muted">Disparos por dia · 30 dias</span>
+              <span className="label text-[9px] text-muted">
+                pico {Math.max(0, ...series.map((point) => point.value))}
+              </span>
+            </div>
+            <TimeSeries
+              points={series}
+              height={80}
+              aria-label="Disparos por dia nos últimos 30 dias"
+            />
+          </Card>
 
           <FlowFunnel metrics={metrics} definition={parsed.success ? parsed.data : null} />
 
