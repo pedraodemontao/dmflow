@@ -123,3 +123,33 @@ describe('joinVariations', () => {
     expect(splitVariations(joinVariations(original))).toEqual(original)
   })
 })
+
+describe('variação com variável interpolada', () => {
+  // No envio a interpolação roda ANTES do spin, então `{Oi {{nome}}!|E aí
+  // {{nome}}!}` funciona de verdade. O validador é que olhava o template cru,
+  // via as chaves internas e recusava — rejeitava texto que funciona.
+  const comNome = '{Oi {{nome}}, tudo bem?|E aí {{nome}}, beleza?}'
+
+  it('conta as versões mesmo com {{nome}} dentro do grupo', () => {
+    expect(variantCount(comNome)).toBe(2)
+  })
+
+  it('quebra em campos preservando a variável intacta', () => {
+    expect(splitVariations(comNome)).toEqual([
+      'Oi {{nome}}, tudo bem?',
+      'E aí {{nome}}, beleza?',
+    ])
+  })
+
+  it('ida e volta não corrompe a variável', () => {
+    expect(joinVariations(splitVariations(comNome)!)).toBe(comNome)
+  })
+
+  it('o estilo de grupos no meio da frase continua multiplicando', () => {
+    expect(variantCount('{Oi|E aí} {{nome}}! {Vi seu comentário|Reparei no seu comentário}')).toBe(4)
+  })
+
+  it('texto só com variável continua sendo uma versão só', () => {
+    expect(variantCount('Oi {{nome}}')).toBe(1)
+  })
+})

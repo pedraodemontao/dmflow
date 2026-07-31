@@ -9,9 +9,28 @@
  * checada ANTES de a automação poder ficar ativa.
  */
 
+/**
+ * Esconde `{{variavel}}` antes de olhar para os grupos de spintax.
+ *
+ * No ENVIO a interpolação roda antes do `spin` (ver `deliver` no engine), então
+ * `{Oi {{nome}}!|E aí {{nome}}!}` vira `{Oi Pedro!|E aí Pedro!}` e sorteia
+ * normalmente — o texto funciona. Mas o validador olha o TEMPLATE cru, e a
+ * expressão de grupo não aceita chave dentro: ele contava 1 versão e recusava
+ * salvar. O validador rejeitava texto que funciona, e empurrava o dono para a
+ * forma `{Oi|E aí} {{nome}}!`, que é válida mas é só UMA das maneiras certas.
+ *
+ * O sentinela usa caracteres que não aparecem em texto de mensagem; se algum
+ * dia aparecerem, o pior caso é contar uma variação a menos.
+ */
+const VAR_TOKEN = '\u0000var\u0000'
+
+function maskVars(text: string): string {
+  return text.replace(/\{\{[^{}]*\}\}/g, VAR_TOKEN)
+}
+
 /** Quantas frases diferentes um texto com spintax consegue produzir. */
 export function variantCount(text: string): number {
-  const groups = text.match(/\{[^{}|]*(?:\|[^{}|]*)+\}/g)
+  const groups = maskVars(text).match(/\{[^{}|]*(?:\|[^{}|]*)+\}/g)
   if (!groups) return 1
 
   return groups.reduce((total, group) => total * group.slice(1, -1).split('|').length, 1)
@@ -101,10 +120,13 @@ export function splitVariations(text: string): string[] | null {
   const clean = text.trim()
   if (!clean) return null
 
-  const match = clean.match(WHOLE_GROUP)
-  if (!match) return null
+  // Casa contra o texto MASCARADO (para `{{nome}}` não quebrar o grupo) e
+  // fatia o ORIGINAL nas mesmas posições, para as variáveis voltarem
+  // intactas para os campos da tela.
+  const masked = maskVars(clean)
+  if (!WHOLE_GROUP.test(masked)) return null
 
-  const parts = match[1].split('|')
+  const parts = clean.slice(1, -1).split('|')
   if (parts.length < 2) return null
 
   return parts
