@@ -67,6 +67,20 @@ export interface Contact {
   source_type: 'comment' | 'ref' | 'ad' | null
   source_id: string | null
   source_at: string | null
+  /**
+   * Cache do perfil no Instagram (ver `fetchContactProfile`,
+   * `src/lib/instagram/api.ts`, migration 0012). Só existe para quem já
+   * mandou DM — comentário sozinho não dá consentimento. `profile_pic_url`
+   * é uma URL ASSINADA QUE EXPIRA em horas/dias; nunca trate como permanente.
+   * `profile_synced_at` marca quando foi buscado pela última vez — é o que
+   * decide se vale revalidar de novo. Opcionais porque contatos de antes da
+   * migration 0012 (ou fixtures de teste fora do escopo desta mudança) não
+   * têm esses campos preenchidos.
+   */
+  profile_pic_url?: string | null
+  follower_count?: number | null
+  is_verified?: boolean
+  profile_synced_at?: string | null
   inbox_status: InboxStatus
   snooze_until: string | null
   notes: string | null

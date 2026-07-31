@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Bot, Check, Clock, Loader2, Send, StickyNote, User } from 'lucide-react'
+import { Bot, Check, Clock, Loader2, Send, StickyNote, User, Users } from 'lucide-react'
 
 import {
   fetchThread,
@@ -13,10 +13,12 @@ import {
   setInboxStatus,
 } from '@/app/actions'
 import { CannedReplies } from '@/components/conversas/canned-replies'
-import { Badge, Button, Textarea } from '@/components/ui'
+import { Avatar, Badge, Button, Textarea } from '@/components/ui'
 import type { InboxFilter, InboxItem, Thread } from '@/lib/data'
 import type { CannedReply } from '@/types/db'
 import { cn } from '@/lib/utils'
+
+const followerFormatter = new Intl.NumberFormat('pt-BR', { notation: 'compact' })
 
 const FILTERS: Array<{ key: InboxFilter; label: string }> = [
   { key: 'abertas', label: 'Abertas' },
@@ -158,36 +160,61 @@ export function Inbox({
         </div>
 
         <div className="flex-1 overflow-y-auto">
-        {items.map(({ contact, lastMessage }) => (
-          <button
-            key={contact.id}
-            type="button"
-            onClick={() => openThread(contact.id)}
-            className={cn(
-              'flex w-full flex-col gap-1 border-b border-border px-4 py-3 text-left transition-colors',
-              contact.id === selectedId ? 'bg-surface-2' : 'hover:bg-surface-2/60',
-            )}
-          >
-            <div className="flex items-baseline gap-2">
-              <span className="truncate text-xs font-medium">{displayName(contact)}</span>
-              {contact.unread_count > 0 && (
-                // Tinta escura sobre o accent — texto branco não bate 4.5:1 (WCAG AA).
-                <span className="ml-auto shrink-0 rounded-full bg-accent px-1.5 text-[10px] font-semibold text-background">
-                  {contact.unread_count}
-                </span>
+        {items.map(({ contact, lastMessage }) => {
+          const selected = contact.id === selectedId
+          return (
+            <button
+              key={contact.id}
+              type="button"
+              onClick={() => openThread(contact.id)}
+              className={cn(
+                'flex w-full items-start gap-2.5 border-b border-l-2 border-border px-3.5 py-3 text-left transition-colors',
+                selected
+                  ? 'border-l-accent bg-accent/[0.08]'
+                  : 'border-l-transparent hover:bg-surface-2/60',
               )}
-              {lastMessage && (
-                <span className={cn('shrink-0 text-[10px] text-muted', contact.unread_count > 0 && 'ml-0')}>
-                  {timeAgo(lastMessage.created_at)}
-                </span>
-              )}
-            </div>
-            <p className="truncate text-[11px] text-muted">
-              {lastMessage?.direction === 'out' && 'Você: '}
-              {lastMessage?.text || 'sem texto'}
-            </p>
-          </button>
-          ))}
+            >
+              <Avatar
+                src={contact.profile_pic_url}
+                label={displayName(contact)}
+                verified={contact.is_verified}
+                size="sm"
+                className="mt-0.5"
+              />
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="truncate text-xs font-medium text-foreground">
+                    {displayName(contact)}
+                  </span>
+                  {contact.follower_count != null && (
+                    <span className="inline-flex shrink-0 items-center gap-0.5 text-[10px] text-muted">
+                      <Users className="size-2.5" />
+                      {followerFormatter.format(contact.follower_count)}
+                    </span>
+                  )}
+                  {lastMessage && (
+                    <span className="ml-auto shrink-0 text-[10px] text-muted">
+                      {timeAgo(lastMessage.created_at)}
+                    </span>
+                  )}
+                </div>
+                <div className="mt-0.5 flex items-center gap-1.5">
+                  <p className="min-w-0 flex-1 truncate text-[11px] text-muted">
+                    {lastMessage?.direction === 'out' && 'Você: '}
+                    {lastMessage?.text || 'sem texto'}
+                  </p>
+                  {contact.unread_count > 0 && (
+                    // Tinta escura sobre o accent — texto branco não bate 4.5:1 (WCAG AA).
+                    <span className="shrink-0 rounded-full bg-accent px-1.5 py-px text-[10px] font-semibold text-background">
+                      {contact.unread_count}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+          )
+          })}
 
           {items.length === 0 && (
             <p className="p-4 text-center text-[11px] text-muted">
@@ -208,8 +235,22 @@ export function Inbox({
           </div>
         ) : (
           <>
-            <header className="glass-chrome flex h-14 shrink-0 items-center gap-3 border-b border-white/[0.06] px-5">
-              <span className="text-sm font-semibold">{displayName(thread.contact)}</span>
+            <header className="glass-chrome flex h-14 shrink-0 items-center gap-2.5 border-b border-white/[0.06] px-5">
+              <Avatar
+                src={thread.contact.profile_pic_url}
+                label={displayName(thread.contact)}
+                verified={thread.contact.is_verified}
+                size="sm"
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold">{displayName(thread.contact)}</p>
+                {thread.contact.follower_count != null && (
+                  <p className="flex items-center gap-1 text-[10px] text-muted">
+                    <Users className="size-2.5" />
+                    {followerFormatter.format(thread.contact.follower_count)} seguidores
+                  </p>
+                )}
+              </div>
               {thread.contact.windowOpen ? (
                 <Badge tone="success">janela de 24h aberta</Badge>
               ) : (

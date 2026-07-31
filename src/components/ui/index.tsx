@@ -1,4 +1,8 @@
+'use client'
+
 import type { ComponentProps, ReactNode } from 'react'
+import { useState } from 'react'
+import { BadgeCheck } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 
@@ -162,5 +166,97 @@ export function EmptyState({
       <p className="mt-1.5 max-w-sm text-sm text-muted">{description}</p>
       {action && <div className="mt-6">{action}</div>}
     </div>
+  )
+}
+
+/**
+ * Iniciais do fallback do avatar. `label` normalmente é o `@` do contato —
+ * uma palavra só, sem espaço — então o padrão pega as duas primeiras letras.
+ * Nome com espaço ("Pedro Barros") vira a inicial das duas primeiras
+ * palavras, igual ao padrão de avatar de qualquer inbox.
+ */
+export function getInitials(label: string): string {
+  const cleaned = label.trim().replace(/^@/, '')
+  if (!cleaned) return '?'
+
+  const words = cleaned.split(/\s+/).filter(Boolean)
+  const initials = words.length > 1 ? words[0][0] + words[1][0] : cleaned.slice(0, 2)
+
+  return initials.toUpperCase()
+}
+
+const AVATAR_SIZE = {
+  sm: 'size-8 text-[10px]',
+  md: 'size-10 text-xs',
+  lg: 'size-12 text-sm',
+} as const
+
+const AVATAR_BADGE_SIZE = {
+  sm: 'size-3',
+  md: 'size-3.5',
+  lg: 'size-4',
+} as const
+
+/**
+ * Avatar com fallback para iniciais — é o caso comum: só quem já mandou DM
+ * tem foto (ver `fetchContactProfile`), a maioria que só comentou não tem.
+ *
+ * A foto vem de uma URL assinada que EXPIRA (ver migration 0012). Em vez de
+ * confiar que o que está salvo ainda carrega, o próprio `<img>` observa o
+ * erro de carregamento e troca para as iniciais sem depender de nada ter
+ * revalidado a tempo no servidor — rede de segurança que cobre qualquer URL
+ * morta, não só a foto que nunca existiu.
+ */
+export function Avatar({
+  src,
+  label,
+  size = 'md',
+  verified = false,
+  className,
+}: {
+  src?: string | null
+  /** Texto usado para gerar as iniciais — normalmente `@usuario` ou o nome. */
+  label: string
+  size?: 'sm' | 'md' | 'lg'
+  /** Selo de conta verificada, mostrado no canto do avatar. */
+  verified?: boolean
+  className?: string
+}) {
+  const [errored, setErrored] = useState(false)
+  const showImage = Boolean(src) && !errored
+
+  return (
+    <span
+      className={cn(
+        'relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-surface-2 font-semibold text-foreground ring-1 ring-inset ring-border',
+        AVATAR_SIZE[size],
+        className,
+      )}
+    >
+      {showImage ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src ?? undefined}
+          alt=""
+          referrerPolicy="no-referrer"
+          className="size-full object-cover"
+          onError={() => setErrored(true)}
+        />
+      ) : (
+        <span aria-hidden="true">{getInitials(label)}</span>
+      )}
+
+      {verified && (
+        <span
+          className={cn(
+            'absolute -right-0.5 -bottom-0.5 flex items-center justify-center rounded-full bg-accent text-background ring-2 ring-surface',
+            AVATAR_BADGE_SIZE[size],
+          )}
+          title="Conta verificada"
+        >
+          <BadgeCheck className="size-full p-px" />
+        </span>
+      )}
+    </span>
   )
 }
