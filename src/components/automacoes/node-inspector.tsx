@@ -4,17 +4,26 @@ import { Plus, Trash2, X } from 'lucide-react'
 
 import { Button, Input, Label, Select, Textarea } from '@/components/ui'
 import { NODE_META } from '@/components/automacoes/flow-nodes'
+import type { FlowOption } from '@/lib/data'
 import type { FlowNode } from '@/lib/flow/types'
+
+const MEDIA_LABEL: Record<'video' | 'audio' | 'file', string> = {
+  video: 'vídeo',
+  audio: 'áudio',
+  file: 'arquivo',
+}
 
 interface Props {
   node: FlowNode
   isEntry: boolean
+  /** Fluxos disponíveis para o bloco "pular para outro fluxo" — já sem o fluxo atual. */
+  flowOptions: FlowOption[]
   onChange: (next: FlowNode) => void
   onDelete: () => void
   onClose: () => void
 }
 
-export function NodeInspector({ node, isEntry, onChange, onDelete, onClose }: Props) {
+export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, onClose }: Props) {
   const meta = NODE_META[node.type]
   const Icon = meta.icon
 
@@ -401,6 +410,34 @@ export function NodeInspector({ node, isEntry, onChange, onDelete, onClose }: Pr
           </>
         )}
 
+        {(node.type === 'video' || node.type === 'audio' || node.type === 'file') && (
+          <>
+            <div>
+              <Label>Link do {MEDIA_LABEL[node.type]}</Label>
+              <Input
+                value={node.url}
+                placeholder="https://exemplo.com/arquivo"
+                onChange={(e) => patch({ url: e.target.value })}
+              />
+              <p className="mt-1.5 text-[11px] text-muted">
+                Precisa ser um link público — o Instagram busca o arquivo sozinho.
+              </p>
+            </div>
+            <div>
+              <Label>Legenda (opcional)</Label>
+              <Textarea
+                rows={2}
+                value={node.caption ?? ''}
+                placeholder="Segue o material que prometi 👇"
+                onChange={(e) => patch({ caption: e.target.value || undefined })}
+              />
+              <p className="mt-1.5 text-[11px] text-muted">
+                Vai como mensagem separada, porque o Instagram não aceita legenda no anexo.
+              </p>
+            </div>
+          </>
+        )}
+
         {node.type === 'ask' && (
           <>
             <div>
@@ -571,17 +608,30 @@ export function NodeInspector({ node, isEntry, onChange, onDelete, onClose }: Pr
 
         {node.type === 'goto_flow' && (
           <div>
-            <Label>ID do fluxo de destino</Label>
-            <Input
-              value={node.flowId}
-              placeholder="00000000-0000-0000-0000-000000000000"
-              onChange={(e) => patch({ flowId: e.target.value.trim() })}
-            />
+            <Label>Fluxo de destino</Label>
+            {flowOptions.length === 0 ? (
+              <p className="rounded-lg border border-border bg-surface-2 p-3 text-[11px] text-muted">
+                Não há outro fluxo para pular. Crie outra automação primeiro.
+              </p>
+            ) : (
+              <Select
+                value={node.flowId}
+                onChange={(e) => patch({ flowId: e.target.value })}
+              >
+                <option value="" disabled>
+                  Escolha um fluxo
+                </option>
+                {flowOptions.map((flow) => (
+                  <option key={flow.id} value={flow.id}>
+                    {flow.name}
+                  </option>
+                ))}
+              </Select>
+            )}
             <p className="mt-1.5 text-[11px] text-muted">
-              Cole o ID (UUID) do fluxo. Ainda não há seletor visual aqui — confira o ID na
-              tabela <code className="text-accent">flows</code> do Supabase. Este fluxo termina e
-              a conversa continua na definição do fluxo de destino, mantendo tags e variáveis já
-              coletadas.
+              Este fluxo termina e a conversa continua na definição do fluxo de destino, mantendo
+              tags e variáveis já coletadas. O fluxo atual não aparece na lista — pular para si
+              mesmo reenviaria o começo do fluxo em loop.
             </p>
           </div>
         )}

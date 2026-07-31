@@ -19,6 +19,7 @@ import { Plus } from 'lucide-react'
 import { NODE_META, nodeTypes } from '@/components/automacoes/flow-nodes'
 import { NodeInspector } from '@/components/automacoes/node-inspector'
 import { Button } from '@/components/ui'
+import type { FlowOption } from '@/lib/data'
 import { blankNode, definitionToGraph, graphToDefinition } from '@/lib/flow/transform'
 import type { FlowDefinition, FlowNode } from '@/lib/flow/types'
 import { cn } from '@/lib/utils'
@@ -29,6 +30,9 @@ const PALETTE: FlowNode['type'][] = [
   'carousel',
   'bubbles',
   'image',
+  'video',
+  'audio',
+  'file',
   'ask',
   'wait_reply',
   'condition',
@@ -44,9 +48,11 @@ const PALETTE: FlowNode['type'][] = [
 
 function Canvas({
   definition,
+  flowOptions,
   onChange,
 }: {
   definition: FlowDefinition
+  flowOptions: FlowOption[]
   onChange: (next: FlowDefinition) => void
 }) {
   // O canvas assume a posse do grafo no primeiro render; depois disso a fonte
@@ -213,6 +219,7 @@ function Canvas({
         <NodeInspector
           node={selected.data as unknown as FlowNode}
           isEntry={selected.id === entry}
+          flowOptions={flowOptions}
           onChange={(data) => updateNode(selected.id, data)}
           onDelete={() => deleteNode(selected.id)}
           onClose={() => setSelectedId(null)}
@@ -224,6 +231,7 @@ function Canvas({
 
 export function FlowBuilder(props: {
   definition: FlowDefinition
+  flowOptions: FlowOption[]
   onChange: (next: FlowDefinition) => void
 }) {
   return (

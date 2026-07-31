@@ -177,6 +177,12 @@ export function blankNode(type: FlowNode['type']): FlowNode {
       return { type: 'goto_flow', flowId: '' }
     case 'image':
       return { type: 'image', url: 'https://', next: null }
+    case 'video':
+      return { type: 'video', url: 'https://', next: null }
+    case 'audio':
+      return { type: 'audio', url: 'https://', next: null }
+    case 'file':
+      return { type: 'file', url: 'https://', next: null }
     case 'ask':
       return {
         type: 'ask',

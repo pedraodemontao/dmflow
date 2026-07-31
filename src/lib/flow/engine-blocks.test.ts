@@ -89,8 +89,8 @@ vi.mock('@/lib/instagram/api', () => ({
     sent.push({ kind: 'buttons', text: args.text })
     return {}
   },
-  sendImage: async () => {
-    sent.push({ kind: 'image', text: '' })
+  sendMedia: async (args: { type: string }) => {
+    sent.push({ kind: args.type, text: '' })
     return {}
   },
   sendCarousel: async (args: { cards: Array<{ title: string }> }) => {
@@ -275,5 +275,72 @@ describe('bloco bubbles', () => {
       'Vi seu comentário',
       'Já te explico',
     ])
+  })
+})
+
+/**
+ * Vídeo, áudio e arquivo compartilham o mesmo `deliverMedia` do engine (e o
+ * mesmo `sendMedia` da API) que o bloco de imagem já usava — o que muda é só
+ * o `type` do anexo. Um caso por tipo garante que o `type` certo chega até a
+ * chamada da API.
+ */
+describe.each([
+  ['video', 'video'] as const,
+  ['audio', 'audio'] as const,
+  ['file', 'file'] as const,
+])('bloco %s', (nodeType, mediaKind) => {
+  it('manda o anexo por sendMedia com o type certo quando a janela está aberta', async () => {
+    flows['flow-a'].definition = {
+      entry: 'inicio',
+      nodes: {
+        inicio: { type: nodeType, url: 'https://exemplo.com/arquivo', next: null },
+      },
+    }
+
+    await startFlow({ account: account as never, flow: flows['flow-a'] as never, contact: contact() as never })
+
+    expect(sent.some((s) => s.kind === mediaKind)).toBe(true)
+  })
+
+  it('manda a legenda como mensagem separada antes do anexo, via private reply', async () => {
+    flows['flow-a'].definition = {
+      entry: 'inicio',
+      nodes: {
+        inicio: {
+          type: nodeType,
+          url: 'https://exemplo.com/arquivo',
+          caption: 'Segue o material',
+          next: null,
+        },
+      },
+    }
+
+    await startFlow({
+      account: account as never,
+      flow: flows['flow-a'] as never,
+      // Janela fechada de propósito: só a private reply consegue entregar.
+      contact: contact({ last_inbound_at: null }) as never,
+      commentId: 'comment-1',
+    })
+
+    expect(sent.some((s) => s.kind === 'private_reply' && s.text === 'Segue o material')).toBe(true)
+    expect(sent.some((s) => s.kind === mediaKind)).toBe(true)
+  })
+
+  it('recusa enviar fora da janela de 24h sem ser origem de comentário', async () => {
+    flows['flow-a'].definition = {
+      entry: 'inicio',
+      nodes: {
+        inicio: { type: nodeType, url: 'https://exemplo.com/arquivo', next: null },
+      },
+    }
+
+    await expect(
+      startFlow({
+        account: account as never,
+        flow: flows['flow-a'] as never,
+        contact: contact({ last_inbound_at: null }) as never,
+      }),
+    ).rejects.toThrow(/Janela de 24h/)
   })
 })

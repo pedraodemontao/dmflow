@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 
 import { AutomationEditor } from '@/components/automacoes/automation-editor'
-import { getAutomation } from '@/lib/data'
+import { getAutomation, getFlowOptions } from '@/lib/data'
 import { loadMedia } from '@/lib/media'
 
 export const dynamic = 'force-dynamic'
@@ -12,16 +12,24 @@ export default async function EditarAutomacaoPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
-  const [automation, { media, error }] = await Promise.all([getAutomation(id), loadMedia()])
+  const [automation, { media, error }, allFlows] = await Promise.all([
+    getAutomation(id),
+    loadMedia(),
+    getFlowOptions(),
+  ])
   if (!automation) notFound()
 
   const { trigger, flow } = automation
+  // O próprio fluxo não pode ser destino de "pular para outro fluxo" — pular
+  // para si mesmo reenviaria o começo em loop.
+  const flowOptions = allFlows.filter((f) => f.id !== flow.id)
 
   return (
     <AutomationEditor
       triggerId={trigger.id}
       media={media}
       mediaError={error}
+      flowOptions={flowOptions}
       initial={{
         name: flow.name,
         triggerType: trigger.type,

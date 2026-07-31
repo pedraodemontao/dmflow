@@ -9,6 +9,7 @@ import { saveAutomation } from '@/app/actions'
 import { FlowBuilder } from '@/components/automacoes/flow-builder'
 import { PostPicker } from '@/components/automacoes/post-picker'
 import { Badge, Button, Card, Input, Label, Select, Textarea } from '@/components/ui'
+import type { FlowOption } from '@/lib/data'
 import { emptyDefinition } from '@/lib/flow/transform'
 import type { FlowDefinition } from '@/lib/flow/types'
 import type { Media } from '@/lib/instagram/api'
@@ -19,6 +20,8 @@ interface Props {
   triggerId?: string
   media: Media[]
   mediaError?: string | null
+  /** Opções para o bloco "pular para outro fluxo" — já sem o fluxo desta automação. */
+  flowOptions: FlowOption[]
   initial?: {
     name: string
     triggerType: TriggerType
@@ -39,7 +42,7 @@ const STEPS = [
 
 type StepId = (typeof STEPS)[number]['id']
 
-export function AutomationEditor({ triggerId, media, mediaError, initial }: Props) {
+export function AutomationEditor({ triggerId, media, mediaError, flowOptions, initial }: Props) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
 
@@ -282,7 +285,9 @@ export function AutomationEditor({ triggerId, media, mediaError, initial }: Prop
         </div>
       )}
 
-      {step === 'fluxo' && <FlowBuilder definition={definition} onChange={setDefinition} />}
+      {step === 'fluxo' && (
+        <FlowBuilder definition={definition} flowOptions={flowOptions} onChange={setDefinition} />
+      )}
     </div>
   )
 }
