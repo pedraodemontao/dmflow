@@ -115,10 +115,26 @@ export function flattenPayload(payload: WebhookPayload): QueuedEvent[] {
   return events
 }
 
+/**
+ * Grava os eventos na fila.
+ *
+ * LANÇA se a gravação falhar — e isso é contrato, não detalhe. O `upsert()` do
+ * supabase-js não lança em erro do PostgREST: ele RESOLVE com `{ error }`.
+ * Enquanto esse retorno era ignorado, uma falha de banco (payload grande,
+ * timeout, pool esgotado) sumia com o lote inteiro sem erro e sem log, e o
+ * polling seguia gravando o cursor por cima — aquela janela de comentários
+ * nunca mais era varrida e o tick respondia `ok:true`.
+ *
+ * Lança em vez de devolver `{ error }` justamente porque devolver era o bug:
+ * retorno se ignora por acidente, exceção não. Quem chama tem duas saídas
+ * legítimas — deixar subir (o polling faz isso, e assim o cursor não avança e
+ * o tick vira 503) ou capturar de propósito (o webhook loga e responde 200
+ * assim mesmo, porque a Meta desativa webhook que falha demais).
+ */
 export async function enqueue(events: QueuedEvent[]): Promise<void> {
   if (events.length === 0) return
 
-  await supabaseAdmin.from('webhook_events').upsert(
+  const { error } = await supabaseAdmin.from('webhook_events').upsert(
     events.map((event) => ({
       dedup_key: event.dedupKey,
       payload: event as unknown as Record<string, unknown>,
@@ -126,6 +142,10 @@ export async function enqueue(events: QueuedEvent[]): Promise<void> {
     })),
     { onConflict: 'dedup_key', ignoreDuplicates: true },
   )
+
+  if (error) {
+    throw new Error(`Não consegui enfileirar ${events.length} evento(s): ${error.message}`)
+  }
 }
 
 async function getAccount(igUserId: string): Promise<Account | null> {
