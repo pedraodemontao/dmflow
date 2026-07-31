@@ -138,3 +138,48 @@ export interface FlowRun {
   created_at: string
   updated_at: string
 }
+
+/**
+ * Perfil do nicho que o dono acompanha. A raspagem (Apify) traz os reels
+ * deste perfil para a biblioteca de referência. Ver migration 0014.
+ */
+export interface TrackedProfile {
+  id: string
+  account_id: string
+  /** Sem "@" — é o que a Apify espera e o que evita o mesmo perfil duas vezes. */
+  username: string
+  /** Rótulo livre do dono. Texto e não enum: o nicho muda mais rápido que o schema. */
+  category: string | null
+  is_active: boolean
+  last_scraped_at: string | null
+  /** Régua do outlier: a mediana de views deste perfil, refeita a cada raspagem. */
+  median_views: number | null
+  created_at: string
+}
+
+export interface LibraryItem {
+  id: string
+  account_id: string
+  profile_id: string
+  /** Identidade na origem (shortcode). É o que impede duplicar entre raspagens. */
+  post_id: string
+  url: string
+  /**
+   * URL ASSINADA QUE EXPIRA — mesma lição de `contacts.profile_pic_url`.
+   * Nunca trate como permanente; a tela precisa de fallback visual.
+   */
+  thumbnail_url: string | null
+  caption: string | null
+  posted_at: string | null
+  views: number | null
+  likes: number | null
+  comments: number | null
+  /** (curtidas + comentários) / views. Ver `src/lib/library/outlier.ts`. */
+  engagement: number | null
+  /** Quantas vezes passou da mediana do próprio perfil. Null = amostra insuficiente. */
+  outlier: number | null
+  /** Marcado pelo dono, não vem da raspagem. */
+  watched: boolean
+  created_at: string
+  updated_at: string
+}
