@@ -35,18 +35,21 @@ export function ContactTags({ contactId, tags }: { contactId: string; tags: stri
     <div>
       <Label>Etiquetas</Label>
       <div className="mb-2 flex flex-wrap gap-1.5">
-        {tags.length === 0 && <span className="text-[11px] text-muted">Nenhuma etiqueta</span>}
+        {tags.length === 0 && <span className="text-xs text-muted">Nenhuma etiqueta</span>}
         {tags.map((tag) => (
+          // Chip neutro com fio, igual ao `Badge`: etiqueta é dado, não
+          // destaque. Antes eram pílulas em accent — a cor viva espalhada por
+          // toda a lateral do contato.
           <button
             key={tag}
             type="button"
             disabled={pending}
             title="Remover etiqueta"
             onClick={() => commit(tags.filter((t) => t !== tag))}
-            className="group inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[11px] font-medium text-accent"
+            className="label group inline-flex items-center gap-1.5 rounded-sm border border-border bg-surface-2 px-2 py-1 text-[9.5px] text-foreground transition-colors hover:border-danger hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
           >
             {tag}
-            <Trash2 className="size-3 opacity-0 transition-opacity group-hover:opacity-100" />
+            <Trash2 className="size-3 opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
           </button>
         ))}
       </div>
@@ -93,14 +96,17 @@ export function ContactFields({
       <Label>Campos personalizados</Label>
       <div className="mb-2 space-y-1">
         {entries.length === 0 && (
-          <span className="text-[11px] text-muted">
+          <span className="text-xs leading-relaxed text-muted">
             Nenhum campo. O bloco “Gravar campo” do fluxo preenche isso sozinho.
           </span>
         )}
         {entries.map(([name, raw]) => (
-          <div key={name} className="flex items-center gap-2 rounded-lg bg-surface-2 px-2.5 py-1.5">
-            <span className="text-[11px] font-medium text-muted">{name}</span>
-            <span className="ml-auto truncate text-xs">{String(raw)}</span>
+          <div
+            key={name}
+            className="flex items-center gap-2 rounded-sm border border-border bg-surface-2 px-2.5 py-1.5"
+          >
+            <span className="label shrink-0 text-[9.5px] text-muted">{name}</span>
+            <span className="ml-auto truncate text-sm">{String(raw)}</span>
             <button
               type="button"
               disabled={pending}
@@ -115,7 +121,7 @@ export function ContactFields({
                   router.refresh()
                 })
               }
-              className="text-muted hover:text-danger"
+              className="shrink-0 rounded-sm text-muted transition-colors hover:text-danger focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <Trash2 className="size-3.5" />
             </button>
@@ -166,8 +172,9 @@ export function DeleteContact({ contactId, name }: { contactId: string; name: st
   }
 
   return (
-    <div className="space-y-2 rounded-2xl border border-danger/40 bg-danger/10 p-3">
-      <p className="text-[11px] text-muted">
+    <div className="space-y-3 rounded-md border border-danger/40 bg-danger/10 p-3">
+      <p className="label text-[10px] text-danger">Apagar contato</p>
+      <p className="text-xs leading-relaxed text-muted">
         Apagar <span className="font-medium text-foreground">{name}</span> leva junto todo o
         histórico de mensagens e os fluxos que ele rodou. Não tem como desfazer.
       </p>

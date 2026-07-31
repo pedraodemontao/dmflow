@@ -35,12 +35,27 @@ export default async function ConversasPage({
 
   return (
     <>
-      <header className="chrome-panel flex h-16 shrink-0 items-center border-b border-white/[0.06] px-6">
-        <h1 className="display text-4xl text-foreground">Conversas</h1>
-        <span className="ml-2 text-xs text-muted">
-          {counts.abertas} {counts.abertas === 1 ? 'aberta' : 'abertas'}
-          {counts['nao-lidas'] > 0 && ` · ${counts['nao-lidas']} não lidas`}
-        </span>
+      {/*
+        O resumo fica em monospace ao lado do título, não em número grande: o
+        contador de cada fila já é protagonista dentro das abas do inbox, e
+        repetir o mesmo dado em `display` faria a tela competir consigo mesma.
+        Aqui ele existe para o caso vazio, onde não há abas nenhuma.
+      */}
+      <header className="chrome-panel flex h-16 shrink-0 items-center border-b border-border px-6">
+        <div className="flex items-baseline gap-3">
+          <h1 className="display text-4xl text-foreground">Conversas</h1>
+          <p className="label text-[10px] text-muted">
+            <span className="text-foreground tabular-nums">{counts.abertas}</span>{' '}
+            {counts.abertas === 1 ? 'aberta' : 'abertas'}
+            {counts['nao-lidas'] > 0 && (
+              <>
+                {' · '}
+                <span className="text-foreground tabular-nums">{counts['nao-lidas']}</span>{' '}
+                {counts['nao-lidas'] === 1 ? 'não lida' : 'não lidas'}
+              </>
+            )}
+          </p>
+        </div>
       </header>
 
       {counts.abertas === 0 && counts.resolvidas === 0 && counts.adiadas === 0 ? (
