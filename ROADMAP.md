@@ -19,7 +19,9 @@ Legenda: ✅ pronto · 🟡 parcial · ❌ não existe
 | Resposta a story | 🟡 | Existe no schema e no matcher, nunca foi testado de ponta a ponta |
 | Menção em story | ❌ | Campo de webhook `story_insights`/mentions não é assinado |
 | Ice breakers (perguntas fixas no início da conversa) | ❌ | API de persona/ice breakers do IG |
-| Link de referência (`ig.me/m/conta?ref=campanha`) | ❌ | Rastrear de qual anúncio/bio veio o lead |
+| Link de referência (`ig.me/m/conta?ref=campanha`) | ❌ | **Bloqueado**: o `ref` só chega por webhook, e o webhook nunca entregou. O polling não expõe esse dado |
+| Anúncio Click-to-Direct (`ad_id`) | ❌ | Mesmo bloqueio do `ref` |
+| **Origem por conteúdo (de qual post veio o lead)** | ✅ | Funciona com polling: o id da mídia vem no evento de comentário |
 | Comentário em live | 🟡 | Campo `live_comments` já é assinado, sem tratamento próprio |
 
 ## 2. Blocos do fluxo
@@ -117,9 +119,12 @@ a janela e o cap**, não uma metralhadora. Recomendo deixar por último e constr
 2. ~~**Contatos de verdade**~~ — ✅ feito: busca, filtro por etiqueta, ficha completa,
    campos personalizados.
 3. ~~**Métricas por bloco**~~ — ✅ feito: funil por bloco e taxa de conclusão.
-4. **Gatilhos novos** — menção em story, ice breakers, link de referência (`ref`). ← próximo
-5. **Chat ao vivo turbinado** — respostas prontas, resolvida/adiar, notas internas, filtros.
-6. **Blocos restantes** — carrossel de cards, vídeo/áudio, pular para outro fluxo.
-7. **Operação** — múltiplas contas, horário de atendimento, botão de pânico.
-8. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação.
+4. ~~**Origem por conteúdo**~~ — ✅ feito: ranking de posts que mais trazem lead, filtro de
+   contatos por post e origem na ficha. Primeiro toque, só para quem chega comentando.
+5. **Gatilhos novos** — menção em story e ice breakers. ← próximo
+   `ref` e `ad_id` ficam junto com a investigação do webhook, porque dependem dele.
+6. **Chat ao vivo turbinado** — respostas prontas, resolvida/adiar, notas internas, filtros.
+7. **Blocos restantes** — carrossel de cards, vídeo/áudio, pular para outro fluxo.
+8. **Operação** — múltiplas contas, horário de atendimento, botão de pânico.
+9. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação.
    O Pedro decidiu não priorizar; era exemplo, não pedido.
