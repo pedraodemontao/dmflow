@@ -13,6 +13,8 @@ const PUBLIC_PATHS = [
   '/api/webhooks',
   '/api/auth/instagram',
   '/api/cron',
+  // A página de captura avisa a conversão daqui; defesa é o CONVERSION_SECRET.
+  '/api/conversao',
 ]
 
 export function proxy(request: NextRequest) {

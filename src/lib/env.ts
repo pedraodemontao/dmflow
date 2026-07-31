@@ -12,6 +12,8 @@ const schema = z.object({
   PANEL_PASSWORD: z.string().min(8).optional(),
   /** Teto de envios por conta por hora (anti-flag da Meta). */
   SEND_HOURLY_CAP: z.coerce.number().int().positive().default(60),
+  /** Protege POST /api/conversao. Sem ela, a rota recusa tudo. */
+  CONVERSION_SECRET: z.string().min(16).optional(),
 })
 
 type Env = z.infer<typeof schema>
@@ -29,6 +31,7 @@ function load(): Env {
     CRON_SECRET: process.env.CRON_SECRET,
     PANEL_PASSWORD: process.env.PANEL_PASSWORD,
     SEND_HOURLY_CAP: process.env.SEND_HOURLY_CAP,
+    CONVERSION_SECRET: process.env.CONVERSION_SECRET,
   })
 
   if (!parsed.success) {
