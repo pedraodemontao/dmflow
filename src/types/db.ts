@@ -197,8 +197,8 @@ export interface TrackedProfile {
   category: string | null
   is_active: boolean
   last_scraped_at: string | null
-  /** Régua do outlier: mediana de views deste perfil, refeita a cada raspagem. */
-  median_views: number | null
+  /** Régua do outlier: mediana de PLAYS deste perfil, refeita a cada raspagem. */
+  median_plays: number | null
   created_at: string
 }
 
@@ -217,7 +217,10 @@ export interface LibraryItem {
    * A tela precisa de fallback visual.
    */
   thumb_url: string | null
+  /** Contagem restrita. Guardada para auditoria; não é a régua do outlier. */
   views: number
+  /** O número que aparece publicamente no reel. É sobre ele que o outlier é calculado. */
+  plays: number
   likes: number
   comments: number
   duration_sec: number | null

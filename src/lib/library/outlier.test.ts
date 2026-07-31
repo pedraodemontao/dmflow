@@ -34,7 +34,7 @@ describe('median', () => {
 })
 
 describe('outlierScore', () => {
-  const base = { views: 6000, medianViews: 1000, sampleSize: 10 }
+  const base = { plays: 6000, medianPlays: 1000, sampleSize: 10 }
 
   it('conta quantas vezes o vídeo passou do normal do perfil', () => {
     expect(outlierScore(base)).toBe(6)
@@ -46,30 +46,30 @@ describe('outlierScore', () => {
     expect(outlierScore({ ...base, sampleSize: MIN_AMOSTRA - 1 })).toBeNull()
   })
 
-  it('recusa calcular sem mediana ou sem view', () => {
+  it('recusa calcular sem mediana ou sem play', () => {
     // Devolver 1 aqui seria afirmar "performou na média", que é uma afirmação,
     // não uma ausência de dado.
-    expect(outlierScore({ ...base, medianViews: 0 })).toBeNull()
-    expect(outlierScore({ ...base, views: null })).toBeNull()
-    expect(outlierScore({ ...base, medianViews: null })).toBeNull()
+    expect(outlierScore({ ...base, medianPlays: 0 })).toBeNull()
+    expect(outlierScore({ ...base, plays: null })).toBeNull()
+    expect(outlierScore({ ...base, medianPlays: null })).toBeNull()
   })
 
   it('arredonda para duas casas', () => {
-    expect(outlierScore({ views: 1000, medianViews: 300, sampleSize: 10 })).toBe(3.33)
+    expect(outlierScore({ plays: 1000, medianPlays: 300, sampleSize: 10 })).toBe(3.33)
   })
 })
 
 describe('engagementRate', () => {
-  it('divide interação por view, não por seguidor', () => {
-    expect(engagementRate({ likes: 400, comments: 100, views: 10_000 })).toBe(0.05)
+  it('divide interação por play, não por seguidor', () => {
+    expect(engagementRate({ likes: 400, comments: 100, plays: 10_000 })).toBe(0.05)
   })
 
   it('trata curtida e comentário ausentes como zero', () => {
-    expect(engagementRate({ likes: null, comments: null, views: 100 })).toBe(0)
+    expect(engagementRate({ likes: null, comments: null, plays: 100 })).toBe(0)
   })
 
-  it('devolve nulo sem view', () => {
-    expect(engagementRate({ likes: 10, comments: 2, views: 0 })).toBeNull()
+  it('devolve nulo sem play', () => {
+    expect(engagementRate({ likes: 10, comments: 2, plays: 0 })).toBeNull()
   })
 })
 

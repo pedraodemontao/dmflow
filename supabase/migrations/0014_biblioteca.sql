@@ -101,11 +101,11 @@ create table public.tracked_profiles (
   is_active       boolean not null default true,
   last_scraped_at timestamptz,
   /**
-   * Régua do outlier: a MEDIANA de views deste perfil, refeita a cada raspagem.
+   * Régua do outlier: a MEDIANA de PLAYS deste perfil, refeita a cada raspagem.
    * Mediana e não média porque um único viral puxaria a média e passaria a
    * esconder todo outlier seguinte daquele mesmo perfil.
    */
-  median_views    bigint,
+  median_plays    bigint,
   created_at      timestamptz not null default now(),
   unique (account_id, username)
 );
@@ -128,7 +128,16 @@ create table public.library_items (
    * (migration 0012). Nunca trate como permanente; a tela precisa de fallback.
    */
   thumb_url     text,
+  /**
+   * O Instagram devolve DUAS contagens e elas divergem muito: num teste real,
+   * `videoViewCount` deu 4.719 e `videoPlayCount` deu 112.806 no mesmo vídeo —
+   * 24 vezes maior. "Plays" é o número que aparece publicamente no reel e o que
+   * o nicho usa para comparar; "views" é uma contagem mais restrita. Guardamos
+   * as duas e o outlier é calculado sobre `plays`, que é a régua que todo mundo
+   * enxerga. Gravar só uma delas tornaria impossível auditar a conta depois.
+   */
   views         bigint not null default 0,
+  plays         bigint not null default 0,
   likes         bigint not null default 0,
   comments      bigint not null default 0,
   duration_sec  int,
@@ -156,7 +165,7 @@ create table public.library_items (
 );
 
 create index library_items_outlier_idx on public.library_items (account_id, outlier desc nulls last);
-create index library_items_views_idx   on public.library_items (account_id, views desc);
+create index library_items_plays_idx   on public.library_items (account_id, plays desc);
 create index library_items_profile_idx on public.library_items (profile_id);
 -- Busca textual em português: é a base do RAG antes de existir embedding.
 create index library_items_fts_idx on public.library_items

@@ -36,44 +36,51 @@ export const MIN_AMOSTRA = 6
 /**
  * Quantas vezes o vídeo passou do normal daquele perfil.
  *
+ * Sobre PLAYS, não views: o Instagram devolve as duas contagens e elas divergem
+ * muito (num vídeo real, 4.719 views contra 112.806 plays). Plays é o número
+ * que aparece publicamente no reel e o que o nicho usa para comparar.
+ *
  * `null` quando não dá para afirmar: amostra pequena demais, mediana zero
- * (perfil sem view registrada) ou o próprio vídeo sem view. Devolver 1 nesses
+ * (perfil sem play registrado) ou o próprio vídeo sem play. Devolver 1 nesses
  * casos seria inventar "performou na média", que é uma afirmação, não uma
  * ausência de dado.
  */
 export function outlierScore(args: {
-  views: number | null | undefined
-  medianViews: number | null | undefined
+  plays: number | null | undefined
+  medianPlays: number | null | undefined
   sampleSize: number
 }): number | null {
-  const { views, medianViews, sampleSize } = args
+  const { plays, medianPlays, sampleSize } = args
 
   if (sampleSize < MIN_AMOSTRA) return null
-  if (!views || views <= 0) return null
-  if (!medianViews || medianViews <= 0) return null
+  if (!plays || plays <= 0) return null
+  if (!medianPlays || medianPlays <= 0) return null
 
-  return Number((views / medianViews).toFixed(2))
+  return Number((plays / medianPlays).toFixed(2))
 }
 
 /**
- * Engajamento: (curtidas + comentários) / views.
+ * Engajamento: (curtidas + comentários) / plays.
  *
- * Sobre VIEWS e não sobre seguidores, de propósito. Engajamento por seguidor
- * mede o quanto a base é fiel; por view mede o quanto o conteúdo prende quem
- * chegou — inclusive quem veio de fora. Num feed onde o alcance passou a vir
- * mais de recomendação que de quem segue, a segunda é a que orienta o que
- * escrever.
+ * Sobre alcance e não sobre seguidores, de propósito. Engajamento por seguidor
+ * mede o quanto a base é fiel; por play mede o quanto o conteúdo prende quem
+ * chegou — inclusive quem veio de fora. Num feed onde o alcance vem mais de
+ * recomendação que de quem segue, a segunda é a que orienta o que escrever.
+ *
+ * Plays e não views pelo mesmo motivo do outlier: é o número que a plataforma
+ * mostra publicamente, e misturar as duas réguas no mesmo card faria dois
+ * indicadores lado a lado falarem de bases diferentes.
  */
 export function engagementRate(args: {
   likes: number | null | undefined
   comments: number | null | undefined
-  views: number | null | undefined
+  plays: number | null | undefined
 }): number | null {
-  const { likes, comments, views } = args
-  if (!views || views <= 0) return null
+  const { likes, comments, plays } = args
+  if (!plays || plays <= 0) return null
 
   const interacoes = (likes ?? 0) + (comments ?? 0)
-  return Number((interacoes / views).toFixed(4))
+  return Number((interacoes / plays).toFixed(4))
 }
 
 /** A partir daqui o vídeo vale ser modelado. Abaixo é variação normal. */
