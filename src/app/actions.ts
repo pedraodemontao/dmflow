@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
+import { isDismissedError, markDismissed } from '@/lib/flow/dismissed'
 import { flowDefinitionSchema } from '@/lib/flow/types'
 import { checkFlowTexts, checkPublicReply, type VariationIssue } from '@/lib/flow/variation'
 import { assertUnderSendCap, logSend } from '@/lib/flow/send-cap'
@@ -601,6 +602,223 @@ export async function duplicateAutomation(triggerId: string): Promise<ActionResu
 
   revalidatePath('/automacoes')
   return { ok: true, triggerId: newTrigger.id }
+}
+
+// ---------------------------------------------------------------------------
+// Disparos falhados: as duas saídas do card de falhas do cockpit.
+//
+// Antes disto, `flow_runs.status = 'failed'` era um beco sem saída: o run nunca
+// mais anda sozinho e a única cura era editar o banco na mão. Uma falha antiga
+// (token morto por algumas horas, por exemplo) deixava o painel vermelho para
+// sempre — o menino que gritou lobo.
+// ---------------------------------------------------------------------------
+
+const runIdSchema = z.string().uuid('Disparo inválido.')
+
+/** Teto de uma ação em lote: o caso real é um punhado de falhas do mesmo período. */
+const BULK_LIMIT = 50
+
+interface FailedRunRow {
+  id: string
+  contact_id: string
+  current_node: string | null
+  error: string | null
+}
+
+/**
+ * Falhas da CONTA ATIVA — o id que vem do cliente nunca basta sozinho. Sem o
+ * `account_id` no filtro, um id chutado no formulário mexeria em run de outra
+ * conta (single-tenant hoje, mas o dado já é escopado assim no banco).
+ */
+async function loadFailedRuns(accountId: string, runId?: string): Promise<FailedRunRow[]> {
+  let query = supabaseAdmin
+    .from('flow_runs')
+    .select('id, contact_id, current_node, error')
+    .eq('account_id', accountId)
+    .eq('status', 'failed')
+
+  if (runId) query = query.eq('id', runId)
+
+  const { data } = await query.order('updated_at', { ascending: false }).limit(BULK_LIMIT)
+
+  // Dispensada não é candidata a nada: já saiu do card de propósito.
+  return ((data ?? []) as FailedRunRow[]).filter((row) => !isDismissedError(row.error))
+}
+
+/**
+ * Devolve um run falhado para a fila do cron.
+ *
+ * O estado é `sleeping` com `resume_at` vencido, NÃO `running`: quem retoma é
+ * `resumeSleepingRuns` (src/app/api/cron/tick/route.ts) e ele só procura
+ * `status = 'sleeping'` com `resume_at <= now()`. Um run em `running` não é
+ * varrido por ninguém — ficaria travado igual, e ainda ocuparia a vaga do
+ * índice único `flow_runs_active_idx` (um fluxo ativo por contato).
+ *
+ * `current_node` fica como está: é dali que o `resumeFlow` recomeça. Daí em
+ * diante a mensagem sai DE VERDADE — o cron ainda respeita pausa geral,
+ * horário de silêncio e cap de envios antes de retomar, então o disparo pode
+ * demorar mais que um tick, mas ele acontece.
+ *
+ * Devolve a mensagem de erro, ou null quando deu certo.
+ */
+async function requeueFailedRun(run: FailedRunRow, accountId: string): Promise<string | null> {
+  if (!run.current_node) {
+    return 'Esse disparo parou sem bloco atual — não existe de onde retomar. Dispense e dispare a automação de novo.'
+  }
+
+  // Índice único `flow_runs_active_idx`: um contato só tem um fluxo ativo por
+  // vez. Sem esta checagem o update estouraria com violação de unicidade crua.
+  const { data: active } = await supabaseAdmin
+    .from('flow_runs')
+    .select('id')
+    .eq('contact_id', run.contact_id)
+    .in('status', ['running', 'waiting_reply', 'sleeping'])
+    .maybeSingle()
+
+  if (active) {
+    return 'Esse contato já está com outro fluxo em andamento — espere ele terminar para reenviar este.'
+  }
+
+  const { error } = await supabaseAdmin
+    .from('flow_runs')
+    .update({ status: 'sleeping', resume_at: new Date().toISOString(), error: null })
+    .eq('id', run.id)
+    .eq('account_id', accountId)
+    .eq('status', 'failed')
+
+  return error ? error.message : null
+}
+
+/**
+ * Tenta o disparo de novo. ATENÇÃO: manda mensagem de verdade no próximo tick
+ * do cron — não é limpar a tela.
+ */
+export async function retryFailedRun(runId: string): Promise<ActionResult> {
+  const parsed = runIdSchema.safeParse(runId)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
+  }
+
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta do Instagram conectada.' }
+
+  const [run] = await loadFailedRuns(account.id, parsed.data)
+  if (!run) return { ok: false, error: 'Disparo não encontrado ou já fora da lista de falhas.' }
+
+  const failure = await requeueFailedRun(run, account.id)
+  if (failure) return { ok: false, error: failure }
+
+  revalidatePath('/')
+  return { ok: true }
+}
+
+/**
+ * Reconhece a falha sem reprocessar: sai do card e não volta. Nada é enviado.
+ * O porquê de marcar no texto do erro em vez de mexer no `status` está em
+ * `src/lib/flow/dismissed.ts`.
+ */
+export async function dismissFailedRun(runId: string): Promise<ActionResult> {
+  const parsed = runIdSchema.safeParse(runId)
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
+  }
+
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta do Instagram conectada.' }
+
+  const [run] = await loadFailedRuns(account.id, parsed.data)
+  if (!run) return { ok: false, error: 'Disparo não encontrado ou já fora da lista de falhas.' }
+
+  const { error } = await supabaseAdmin
+    .from('flow_runs')
+    .update({ error: markDismissed(run.error) })
+    .eq('id', run.id)
+    .eq('account_id', account.id)
+    .eq('status', 'failed')
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/')
+  return { ok: true }
+}
+
+export interface BulkActionResult extends ActionResult {
+  /** Quantos disparos a ação de fato mexeu. */
+  affected: number
+  /** Pulados: sem bloco atual, ou contato já rodando outro fluxo. */
+  skipped: number
+}
+
+/**
+ * O caso real é sempre um lote do mesmo período (token caído por algumas
+ * horas), então tratar um por um seria trabalho manual à toa. MANDA MENSAGEM
+ * DE VERDADE para todo mundo da lista — o cap de envios/hora continua valendo
+ * e segura o ritmo, mas o volume sai.
+ */
+export async function retryAllFailedRuns(): Promise<BulkActionResult> {
+  const account = await getAccount()
+  if (!account) {
+    return { ok: false, error: 'Nenhuma conta do Instagram conectada.', affected: 0, skipped: 0 }
+  }
+
+  const runs = await loadFailedRuns(account.id)
+
+  let affected = 0
+  let skipped = 0
+  let lastFailure: string | undefined
+
+  for (const run of runs) {
+    const failure = await requeueFailedRun(run, account.id)
+    if (failure) {
+      skipped += 1
+      lastFailure = failure
+    } else {
+      affected += 1
+    }
+  }
+
+  revalidatePath('/')
+  return {
+    // Só é fracasso quando NADA voltou para a fila tendo algo para voltar.
+    ok: affected > 0 || skipped === 0,
+    ...(skipped > 0 ? { error: `${skipped} não voltaram para a fila. ${lastFailure}` } : {}),
+    affected,
+    skipped,
+  }
+}
+
+export async function dismissAllFailedRuns(): Promise<BulkActionResult> {
+  const account = await getAccount()
+  if (!account) {
+    return { ok: false, error: 'Nenhuma conta do Instagram conectada.', affected: 0, skipped: 0 }
+  }
+
+  const runs = await loadFailedRuns(account.id)
+
+  let affected = 0
+  let lastFailure: string | undefined
+
+  for (const run of runs) {
+    const { error } = await supabaseAdmin
+      .from('flow_runs')
+      .update({ error: markDismissed(run.error) })
+      .eq('id', run.id)
+      .eq('account_id', account.id)
+      .eq('status', 'failed')
+
+    if (error) lastFailure = error.message
+    else affected += 1
+  }
+
+  const skipped = runs.length - affected
+
+  revalidatePath('/')
+  return {
+    ok: skipped === 0,
+    ...(skipped > 0 ? { error: `${skipped} não saíram do card. ${lastFailure}` } : {}),
+    affected,
+    skipped,
+  }
 }
 
 export async function deleteAutomation(triggerId: string): Promise<ActionResult> {

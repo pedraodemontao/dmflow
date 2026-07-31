@@ -13,6 +13,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 
+import { FailedRuns } from '@/components/painel/failed-runs'
 import { Badge, Card, EmptyState } from '@/components/ui'
 import type { CockpitData } from '@/lib/data'
 import type { RiskLevel } from '@/lib/risk/types'
@@ -125,7 +126,6 @@ export function Cockpit({ data }: { data: CockpitData }) {
   const { leadsTrend, leadSources, stuck, failedRuns, inboxCounts, riskReport } = data
 
   const waiting = inboxCounts['nao-lidas']
-  const hiddenFailures = Math.max(stuck.failed - failedRuns.length, 0)
   const riskElevated = riskReport && riskReport.level !== 'verde'
 
   const needsAction = failedRuns.length > 0 || waiting > 0 || stuck.total > 0 || riskElevated
@@ -158,32 +158,9 @@ export function Cockpit({ data }: { data: CockpitData }) {
                   tone="danger"
                   icon={<OctagonAlert className="size-4" />}
                   title={`${stuck.failed} ${stuck.failed === 1 ? 'disparo falhou' : 'disparos falharam'}`}
-                  description="flow_runs travado em “failed” não tenta de novo sozinho — sem isto aqui, só aparece consultando o banco na mão."
+                  description="flow_runs travado em “failed” não tenta de novo sozinho: ou volta para a fila do cron, ou é dispensado aqui."
                 >
-                  <ul className="mt-3 space-y-2 border-t border-danger/20 pt-3">
-                    {failedRuns.slice(0, 3).map((run) => (
-                      <li key={run.id} className="flex items-center justify-between gap-2">
-                        <div className="min-w-0">
-                          <p className="truncate text-xs font-medium text-foreground">{run.flowName}</p>
-                          <p className="truncate text-[11px] text-muted">
-                            {run.contactUsername ? `@${run.contactUsername} · ` : ''}
-                            {run.error ?? 'sem detalhe do erro'}
-                          </p>
-                        </div>
-                        {run.triggerId && (
-                          <Link
-                            href={`/automacoes/${run.triggerId}/metricas`}
-                            className="shrink-0 text-[11px] font-medium text-danger hover:underline"
-                          >
-                            ver
-                          </Link>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                  {hiddenFailures > 0 && (
-                    <p className="mt-2 text-[11px] text-muted">+{hiddenFailures} outra(s) falha(s)</p>
-                  )}
+                  <FailedRuns runs={failedRuns} total={stuck.failed} />
                 </ActionCard>
               )}
 
