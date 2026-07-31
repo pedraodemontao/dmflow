@@ -26,10 +26,10 @@ export function Sidebar({
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-border bg-surface">
       <div className="flex h-16 items-center gap-2.5 px-5">
-        <div className="flex size-8 items-center justify-center rounded-lg bg-accent">
-          <Zap className="size-4 text-white" />
+        <div className="flex size-8 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-accent-soft shadow-sm shadow-accent/30">
+          <Zap className="size-4 text-background" />
         </div>
-        <span className="text-sm font-semibold tracking-tight">dm-flow</span>
+        <span className="text-sm font-semibold tracking-tight text-foreground">dm-flow</span>
       </div>
 
       <nav className="flex flex-1 flex-col gap-0.5 px-3">
@@ -40,9 +40,10 @@ export function Sidebar({
               key={href}
               href={href}
               className={cn(
-                'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors',
+                'flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors duration-150',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
                 active
-                  ? 'bg-surface-2 font-medium text-foreground'
+                  ? 'bg-accent/12 font-medium text-accent ring-1 ring-inset ring-accent/20'
                   : 'text-muted hover:bg-surface-2 hover:text-foreground',
               )}
             >
@@ -61,16 +62,16 @@ export function Sidebar({
                 className={cn(
                   'flex size-7 items-center justify-center rounded-full',
                   tokenValid
-                    ? 'bg-gradient-to-br from-fuchsia-500 to-amber-400'
-                    : 'bg-danger/20',
+                    ? 'bg-gradient-to-br from-accent to-accent-soft'
+                    : 'bg-danger/20 ring-1 ring-inset ring-danger/30',
                 )}
               >
                 <AtSign
-                  className={cn('size-3.5', tokenValid ? 'text-white' : 'text-danger')}
+                  className={cn('size-3.5', tokenValid ? 'text-background' : 'text-danger')}
                 />
               </div>
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium">@{username}</p>
+                <p className="truncate text-xs font-medium text-foreground">@{username}</p>
                 <p className={cn('text-[11px]', tokenValid ? 'text-success' : 'text-danger')}>
                   {tokenValid ? 'conectado' : 'sessão expirada'}
                 </p>
@@ -81,7 +82,8 @@ export function Sidebar({
             <Link
               href="/api/auth/instagram"
               className={cn(
-                'flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors',
+                'flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors duration-150',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface',
                 tokenValid
                   ? 'text-muted hover:bg-surface-2 hover:text-foreground'
                   : 'bg-danger/15 font-medium text-danger hover:bg-danger/25',
@@ -94,7 +96,7 @@ export function Sidebar({
         ) : (
           <Link
             href="/api/auth/instagram"
-            className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2 text-xs text-muted hover:text-foreground"
+            className="flex items-center gap-2 rounded-lg bg-surface-2 px-3 py-2 text-xs text-muted transition-colors duration-150 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
           >
             <AtSign className="size-4" />
             Conectar Instagram

@@ -23,9 +23,9 @@ export default async function ContatosPage({
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center border-b border-border px-6">
-        <h1 className="text-sm font-semibold">Contatos</h1>
-        <span className="ml-2 text-xs text-muted">({contacts.length})</span>
+      <header className="flex h-16 shrink-0 items-center border-b border-border bg-surface px-6">
+        <h1 className="text-base font-semibold tracking-tight text-foreground">Contatos</h1>
+        <span className="ml-2 font-mono text-xs text-muted">({contacts.length})</span>
 
         <div className="ml-auto flex items-center gap-2">
           {contacts.length > 0 && <ResetTeste total={contacts.length} />}
@@ -76,10 +76,10 @@ export default async function ContatosPage({
               <Link
                 key={contact.id}
                 href={`/contatos/${contact.id}`}
-                className="flex items-center gap-4 p-4 transition-colors hover:bg-surface-2/60"
+                className="flex items-center gap-4 p-4 transition-colors duration-150 hover:bg-surface-2/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
+                  <p className="truncate text-sm font-medium text-foreground">
                     {contact.username ? `@${contact.username}` : contact.ig_user_id}
                   </p>
                   {contact.name && <p className="truncate text-xs text-muted">{contact.name}</p>}

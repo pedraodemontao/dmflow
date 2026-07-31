@@ -31,13 +31,13 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border px-6">
+      <header className="flex h-16 shrink-0 items-center gap-3 border-b border-border bg-surface px-6">
         <Link href="/contatos">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="size-4" />
           </Button>
         </Link>
-        <h1 className="text-sm font-semibold">
+        <h1 className="text-base font-semibold tracking-tight text-foreground">
           {contact.username ? `@${contact.username}` : contact.ig_user_id}
         </h1>
         {contact.name && <span className="text-xs text-muted">{contact.name}</span>}
@@ -64,7 +64,9 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
             </Card>
 
             <Card className="p-4">
-              <p className="mb-2 text-xs font-medium text-muted">Origem</p>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                Origem
+              </p>
               {contact.source_type === 'comment' && contact.source_id ? (
                 <div className="space-y-1">
                   <p className="text-xs">Comentou num post</p>
@@ -89,15 +91,17 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
             </Card>
 
             <Card className="p-4">
-              <p className="mb-2 text-xs font-medium text-muted">Fluxos que rodou</p>
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                Fluxos que rodou
+              </p>
               {runs.length === 0 ? (
                 <p className="text-[11px] text-muted">Nenhum fluxo ainda.</p>
               ) : (
                 <div className="space-y-1.5">
                   {runs.map((run) => (
                     <div key={run.id} className="flex items-center gap-2 text-[11px]">
-                      <span className="truncate">{run.flowName}</span>
-                      <span className="ml-auto shrink-0 text-muted">
+                      <span className="truncate text-foreground">{run.flowName}</span>
+                      <span className="ml-auto shrink-0 font-mono text-muted">
                         {RUN_LABEL[run.status] ?? run.status}
                       </span>
                     </div>
@@ -109,7 +113,9 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
 
           <Card className="flex max-h-[70vh] flex-col p-4">
             <div className="mb-3 flex items-center gap-2">
-              <p className="text-xs font-medium text-muted">Últimas mensagens</p>
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                Últimas mensagens
+              </p>
               <Link href="/conversas" className="ml-auto">
                 <Button size="sm" variant="outline">
                   Abrir no inbox
@@ -134,14 +140,16 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
                         'max-w-[75%] rounded-2xl px-3 py-1.5',
                         message.direction === 'in'
                           ? 'bg-surface-2 text-foreground'
-                          : 'bg-accent text-white',
+                          // Tinta escura sobre o accent — texto branco sobre laranja-cobre
+                          // não bate 4.5:1 de contraste (WCAG AA); esta combinação bate ~6.8:1.
+                          : 'bg-accent text-background',
                       )}
                     >
                       <p className="whitespace-pre-wrap text-xs">{message.text || '—'}</p>
                       <div
                         className={cn(
                           'mt-0.5 flex items-center gap-1 text-[10px]',
-                          message.direction === 'in' ? 'text-muted' : 'text-white/70',
+                          message.direction === 'in' ? 'text-muted' : 'text-background/70',
                         )}
                       >
                         {message.direction === 'out' &&

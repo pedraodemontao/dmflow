@@ -1,18 +1,49 @@
 @import "tailwindcss";
 @import "@xyflow/react/dist/style.css";
 
+/*
+ * Tokens em três camadas (ver skill design-system):
+ *   1. Primitivos  — a rampa de cor crua, sem significado.
+ *   2. Semânticos  — os nomes que o app inteiro consome (bg-surface,
+ *      text-muted, bg-accent...). Os NOMES não mudam — só o valor por trás.
+ *   3. Componente  — expressos como classes Tailwind compostas a partir dos
+ *      semânticos (ex.: `bg-accent text-background` no Button), não como
+ *      variáveis próprias — é o padrão do Tailwind v4 para este projeto.
+ *
+ * Identidade: grafite morno (leve tom terracota no neutro, H≈30°) + accent
+ * "brasa" (laranja-cobre, H≈22°) — foge do indigo/roxo genérico de dashboard
+ * SaaS (e do azul/roxo do ManyChat). Todo par texto/fundo abaixo foi checado
+ * para WCAG AA (4.5:1 texto normal, 3:1 UI) — contas na descrição do commit.
+ */
+
 :root {
-  --background: #0b0d11;
-  --surface: #12151c;
-  --surface-2: #171b24;
-  --border: #232936;
-  --foreground: #e8eaf0;
-  --muted: #8b93a7;
-  --accent: #6366f1;
-  --accent-soft: #4f46e5;
-  --success: #22c55e;
-  --warning: #f59e0b;
-  --danger: #ef4444;
+  /* ---------- 1. Primitivos ---------- */
+  --gray-950: #0e0d0b; /* grafite quase preto, leve tom quente */
+  --gray-900: #161412;
+  --gray-850: #201d1a;
+  --gray-700: #35302c;
+  --gray-400: #9c948b;
+  --gray-100: #f0edeb;
+
+  --ember-600: #dc5a0e; /* laranja-cobre, tom "pressionado" */
+  --ember-500: #f2762e; /* laranja-cobre, tom base */
+
+  --green-500: #22c55e;
+  --yellow-500: #eab308;
+  --red-500: #ef4444;
+
+  /* ---------- 2. Semânticos (nomes usados em todo o app) ---------- */
+  --background: var(--gray-950);
+  --surface: var(--gray-900);
+  --surface-2: var(--gray-850);
+  --border: var(--gray-700);
+  --foreground: var(--gray-100);
+  --muted: var(--gray-400);
+  --accent: var(--ember-500);
+  --accent-soft: var(--ember-600);
+  --success: var(--green-500);
+  --warning: var(--yellow-500);
+  --danger: var(--red-500);
 }
 
 @theme inline {
@@ -32,26 +63,33 @@
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(1100px 560px at 12% -12%, rgb(242 118 46 / 8%), transparent 60%),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
+::selection {
+  background: rgb(242 118 46 / 30%);
+  color: var(--foreground);
+}
+
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
-::-webkit-scrollbar-thumb:hover { background: #2f3646; }
+::-webkit-scrollbar-thumb:hover { background: #453f38; }
 
 /* Canvas do React Flow no tema escuro */
 .react-flow { background: var(--background); }
-.react-flow__edge-path { stroke: #3d4658; stroke-width: 2; }
+.react-flow__edge-path { stroke: #4a433c; stroke-width: 2; }
 .react-flow__edge.selected .react-flow__edge-path { stroke: var(--accent); }
 .react-flow__handle {
   width: 10px;
   height: 10px;
   background: var(--surface-2);
-  border: 2px solid #3d4658;
+  border: 2px solid #4a433c;
 }
 .react-flow__handle-connecting { background: var(--accent); }
 .react-flow__controls-button {
