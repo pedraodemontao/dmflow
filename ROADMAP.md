@@ -55,8 +55,8 @@ Legenda: ✅ pronto · 🟡 parcial · ❌ não existe
 | Campos personalizados | ✅ Bloco do fluxo grava, ficha edita |
 | Filtro por etiqueta | ✅ |
 | Ficha do contato (histórico, tags, campos, fluxos que rodou) | ✅ |
+| Exportar CSV | ✅ Respeita os filtros da tela, inclui campos personalizados |
 | Segmentos salvos | ❌ |
-| Exportar CSV | ❌ |
 
 ## 4. Chat ao vivo
 
@@ -105,9 +105,9 @@ a janela e o cap**, não uma metralhadora. Recomendo deixar por último e constr
 | Recurso | Estado |
 |---|---|
 | Pausar, duplicar e apagar automação | ✅ |
+| Horário de silêncio | ✅ Adia para a abertura, não descarta o lead |
+| Botão de pânico (travar tudo) | ✅ Sem desativar automação nenhuma |
 | Múltiplas contas do Instagram | ❌ Schema já isola por `account_id`; falta o seletor |
-| Horário de atendimento | ❌ |
-| Botão de pânico (pausar tudo) | ❌ |
 | Time e permissões | ❌ Hoje é senha única no painel |
 
 ---
@@ -121,10 +121,23 @@ a janela e o cap**, não uma metralhadora. Recomendo deixar por último e constr
 3. ~~**Métricas por bloco**~~ — ✅ feito: funil por bloco e taxa de conclusão.
 4. ~~**Origem por conteúdo**~~ — ✅ feito: ranking de posts que mais trazem lead, filtro de
    contatos por post e origem na ficha. Primeiro toque, só para quem chega comentando.
-5. **Gatilhos novos** — menção em story e ice breakers. ← próximo
-   `ref` e `ad_id` ficam junto com a investigação do webhook, porque dependem dele.
-6. **Chat ao vivo turbinado** — respostas prontas, resolvida/adiar, notas internas, filtros.
-7. **Blocos restantes** — carrossel de cards, vídeo/áudio, pular para outro fluxo.
-8. **Operação** — múltiplas contas, horário de atendimento, botão de pânico.
-9. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação.
-   O Pedro decidiu não priorizar; era exemplo, não pedido.
+5. ~~**Segurança e última milha**~~ — ✅ feito: botão de pânico, horário de silêncio,
+   exportação CSV.
+6. **Chat ao vivo turbinado** — respostas prontas, resolvida/adiar, notas internas,
+   filtros de não lidas. ← próximo
+7. **Gatilhos novos** — menção em story e ice breakers.
+8. **Blocos restantes** — carrossel de cards, vídeo/áudio, pular para outro fluxo.
+9. **Múltiplas contas** — o schema já isola por `account_id`; falta o seletor no painel.
+10. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação.
+    O Pedro decidiu não priorizar; era exemplo, não pedido.
+
+### Sobre o webhook
+
+**Não é prioridade.** O polling entrega comentário e DM, e a blindagem anti-spam já adia
+comentário em 30–120s de propósito — então o webhook não deixaria a resposta mais rápida
+na prática. O que ele destrava é só atribuição de `ref` e de anúncio, que só importa quando
+houver tráfego pago.
+
+O que vale acompanhar: cada tick faz ~12 chamadas à API (1 de mídias + 10 de comentários +
+1 de conversas), ou seja ~17 mil por dia. Com mais posts ou mais contas isso cresce e um dia
+vira o motivo real para resolver o webhook — não a latência.
