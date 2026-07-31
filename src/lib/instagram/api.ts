@@ -87,6 +87,57 @@ export function sendButtons(args: {
   })
 }
 
+export interface CarouselCard {
+  title: string
+  subtitle?: string
+  imageUrl?: string
+  buttons?: Array<{ title: string; url?: string; payload?: string }>
+}
+
+function carouselElements(cards: CarouselCard[]) {
+  return cards.slice(0, 10).map((card) => ({
+    title: card.title,
+    ...(card.subtitle ? { subtitle: card.subtitle } : {}),
+    ...(card.imageUrl ? { image_url: card.imageUrl } : {}),
+    ...(card.buttons?.length
+      ? {
+          buttons: card.buttons.slice(0, 3).map((b) =>
+            b.url
+              ? { type: 'web_url', url: b.url, title: b.title }
+              : { type: 'postback', title: b.title, payload: b.payload ?? b.title },
+          ),
+        }
+      : {}),
+  }))
+}
+
+/**
+ * Carrossel de cards (generic template): até 10, cada um com título, subtítulo,
+ * imagem por URL pública e até 3 botões. É o formato que o Instagram herda do
+ * template genérico do Messenger — não existe um "carousel" próprio na API.
+ */
+export function sendCarousel(args: {
+  igUserId: string
+  accessToken: string
+  recipientId: string
+  cards: CarouselCard[]
+}) {
+  return send({
+    igUserId: args.igUserId,
+    accessToken: args.accessToken,
+    recipient: { id: args.recipientId },
+    message: {
+      attachment: {
+        type: 'template',
+        payload: {
+          template_type: 'generic',
+          elements: carouselElements(args.cards),
+        },
+      },
+    },
+  })
+}
+
 /** Imagem por URL pública — a Meta busca o arquivo, não subimos binário. */
 export function sendImage(args: {
   igUserId: string
@@ -116,9 +167,32 @@ export async function sendPrivateReply(args: {
   text: string
   buttons?: Array<{ title: string; url?: string; payload?: string }>
   quickReplies?: QuickReply[]
+  cards?: CarouselCard[]
 }) {
   const recipient = { comment_id: args.commentId }
   const base = { igUserId: args.igUserId, accessToken: args.accessToken, recipient }
+
+  // Carrossel como abertura de comentário: se a Meta recusar template nesta
+  // private reply, cai para texto — perder o formato ainda é melhor que
+  // perder o lead.
+  if (args.cards?.length) {
+    try {
+      return await send({
+        ...base,
+        message: {
+          attachment: {
+            type: 'template',
+            payload: {
+              template_type: 'generic',
+              elements: carouselElements(args.cards),
+            },
+          },
+        },
+      })
+    } catch (error) {
+      console.error('[dm-flow] private reply com carrossel falhou, caindo para texto:', error)
+    }
+  }
 
   // Botão na private reply é o que destrava fluxo de comentário: clicar num
   // botão de postback conta como mensagem da pessoa e ABRE a janela de 24h.

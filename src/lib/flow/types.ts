@@ -32,6 +32,20 @@ const buttonsNodeSchema = z.object({
   next: z.string().nullable().optional(),
 })
 
+const carouselCardSchema = z.object({
+  title: z.string().min(1).max(80),
+  subtitle: z.string().max(80).optional(),
+  imageUrl: z.string().url().optional(),
+  buttons: z.array(buttonSchema).max(3).optional(),
+})
+
+/** Carrossel do Instagram (generic template): até 10 cards, cada um com título, subtítulo, imagem e até 3 botões. */
+const carouselNodeSchema = z.object({
+  type: z.literal('carousel'),
+  cards: z.array(carouselCardSchema).min(1).max(10),
+  next: z.string().nullable().optional(),
+})
+
 /** Pausa o fluxo até o contato responder. A resposta vai para context.vars[saveAs]. */
 const waitReplyNodeSchema = z.object({
   type: z.literal('wait_reply'),
@@ -125,6 +139,34 @@ const unsubscribeNodeSchema = z.object({
   next: z.string().nullable().optional(),
 })
 
+/**
+ * Pula para outro fluxo: encerra o caminho atual e a execução continua na
+ * definição do fluxo de destino, com o mesmo `context` (vars, tags já ficam
+ * no contato). O engine troca o `flow_id` do `flow_run`; MAX_STEPS segue
+ * sendo a trava contra dois fluxos que pulam um para o outro em ciclo.
+ */
+const gotoFlowNodeSchema = z.object({
+  type: z.literal('goto_flow'),
+  flowId: z.string().uuid(),
+})
+
+const bubbleSchema = z.object({
+  text: z.string().min(1),
+})
+
+/**
+ * Várias mensagens curtas em sequência, com pausa breve entre elas — imita o
+ * ritmo de digitação humana em vez de um parágrafo só. Cada bolha passa por
+ * spintax e cap de envio próprios, como se fosse um bloco `message` por bolha.
+ */
+const bubblesNodeSchema = z.object({
+  type: z.literal('bubbles'),
+  bubbles: z.array(bubbleSchema).min(2).max(5),
+  /** Pausa entre bolhas, em ms. Curta de propósito — isto não é o bloco de delay. */
+  pauseMs: z.number().int().min(300).max(4000).default(1200),
+  next: z.string().nullable().optional(),
+})
+
 const endNodeSchema = z.object({
   type: z.literal('end'),
 })
@@ -132,6 +174,8 @@ const endNodeSchema = z.object({
 export const flowNodeSchema = z.discriminatedUnion('type', [
   messageNodeSchema,
   buttonsNodeSchema,
+  carouselNodeSchema,
+  bubblesNodeSchema,
   imageNodeSchema,
   askNodeSchema,
   waitReplyNodeSchema,
@@ -141,6 +185,7 @@ export const flowNodeSchema = z.discriminatedUnion('type', [
   setFieldNodeSchema,
   randomizeNodeSchema,
   httpNodeSchema,
+  gotoFlowNodeSchema,
   unsubscribeNodeSchema,
   endNodeSchema,
 ])

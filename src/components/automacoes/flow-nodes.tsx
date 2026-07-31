@@ -5,15 +5,18 @@ import {
   BellOff,
   Clock,
   Flag,
+  GalleryHorizontal,
   GitBranch,
   HelpCircle,
   Image as ImageIcon,
+  MessagesSquare,
   MessageSquare,
   MousePointerClick,
   Shuffle,
   Tag,
   Variable,
   Webhook,
+  Workflow,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -35,6 +38,24 @@ export const NODE_META: Record<
     icon: MousePointerClick,
     color: 'text-violet-400',
     description: 'Card com até 3 botões de link ou resposta',
+  },
+  carousel: {
+    label: 'Carrossel',
+    icon: GalleryHorizontal,
+    color: 'text-orange-300',
+    description: 'Até 10 cards com título, subtítulo, imagem e botões',
+  },
+  bubbles: {
+    label: 'Várias mensagens',
+    icon: MessagesSquare,
+    color: 'text-sky-300',
+    description: 'Manda mensagens curtas em sequência, com pausa entre elas',
+  },
+  goto_flow: {
+    label: 'Pular para outro fluxo',
+    icon: Workflow,
+    color: 'text-lime-400',
+    description: 'Encerra este fluxo e continua a conversa em outro',
   },
   image: {
     label: 'Imagem',
@@ -115,6 +136,12 @@ function preview(data: FlowNode): string {
       return truncate(data.text || 'Sem texto ainda')
     case 'buttons':
       return truncate(data.text || 'Sem texto ainda')
+    case 'carousel':
+      return `${data.cards.length} ${data.cards.length === 1 ? 'card' : 'cards'}`
+    case 'bubbles':
+      return `${data.bubbles.length} mensagens, pausa de ${(data.pauseMs / 1000).toFixed(1)}s`
+    case 'goto_flow':
+      return data.flowId ? `Fluxo ${truncate(data.flowId, 24)}` : 'Escolha o fluxo de destino'
     case 'image':
       return data.url && data.url !== 'https://' ? truncate(data.url, 40) : 'Sem imagem ainda'
     case 'ask': {
@@ -213,6 +240,32 @@ export function BuilderNode({ data, selected }: NodeProps) {
             ))}
           </div>
         ) : null}
+
+        {node.type === 'carousel' && node.cards.length ? (
+          <div className="mt-2 flex gap-1 overflow-hidden">
+            {node.cards.slice(0, 4).map((card, i) => (
+              <span
+                key={i}
+                className="truncate rounded-md border border-border px-2 py-1 text-[10px]"
+              >
+                {truncate(card.title, 16)}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {node.type === 'bubbles' && node.bubbles.length ? (
+          <div className="mt-2 flex flex-col gap-1">
+            {node.bubbles.map((b, i) => (
+              <span
+                key={i}
+                className="truncate rounded-md border border-border px-2 py-1 text-[10px]"
+              >
+                {truncate(b.text, 30)}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {node.type === 'condition' ? (
@@ -254,7 +307,7 @@ export function BuilderNode({ data, selected }: NodeProps) {
             </div>
           ))}
         </div>
-      ) : node.type !== 'end' ? (
+      ) : node.type !== 'end' && node.type !== 'goto_flow' ? (
         <Handle type="source" position={Position.Bottom} />
       ) : null}
     </div>
