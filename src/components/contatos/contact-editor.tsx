@@ -2,9 +2,10 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { Plus, Trash2 } from 'lucide-react'
+import { Loader2, Plus, Trash2 } from 'lucide-react'
 
 import {
+  deleteContact,
   removeContactField,
   saveContactField,
   setContactSubscribed,
@@ -130,6 +131,49 @@ export function ContactFields({
           <Plus className="size-3.5" />
         </Button>
       </form>
+    </div>
+  )
+}
+
+export function DeleteContact({ contactId, name }: { contactId: string; name: string }) {
+  const router = useRouter()
+  const [pending, start] = useTransition()
+  const [confirming, setConfirming] = useState(false)
+
+  if (!confirming) {
+    return (
+      <Button size="sm" variant="ghost" onClick={() => setConfirming(true)}>
+        <Trash2 className="size-3.5" />
+        Apagar contato
+      </Button>
+    )
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border border-danger/40 bg-danger/10 p-3">
+      <p className="text-[11px] text-muted">
+        Apagar <span className="font-medium text-foreground">{name}</span> leva junto todo o
+        histórico de mensagens e os fluxos que ele rodou. Não tem como desfazer.
+      </p>
+      <div className="flex gap-2">
+        <Button
+          size="sm"
+          variant="danger"
+          disabled={pending}
+          onClick={() =>
+            start(async () => {
+              await deleteContact(contactId)
+              router.push('/contatos')
+              router.refresh()
+            })
+          }
+        >
+          {pending ? <Loader2 className="size-3.5 animate-spin" /> : 'Apagar mesmo assim'}
+        </Button>
+        <Button size="sm" variant="ghost" onClick={() => setConfirming(false)}>
+          Cancelar
+        </Button>
+      </div>
     </div>
   )
 }

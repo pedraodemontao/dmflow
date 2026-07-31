@@ -392,6 +392,44 @@ export async function removeContactField(contactId: string, key: string): Promis
   return { ok: true }
 }
 
+/**
+ * Apaga o contato. A cascata leva mensagens, execuções de fluxo e eventos de
+ * métrica junto — é o histórico inteiro daquela pessoa.
+ */
+export async function deleteContact(contactId: string): Promise<ActionResult> {
+  const { error } = await supabaseAdmin.from('contacts').delete().eq('id', contactId)
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/contatos')
+  revalidatePath('/conversas')
+  revalidatePath('/')
+  return { ok: true }
+}
+
+/**
+ * Zera contatos e fila para começar um teste limpo. Não toca em automações,
+ * fluxos, atalhos nem na conta conectada.
+ *
+ * `send_log` fica de fora de propósito: é o livro-caixa do cap de envios por
+ * hora, e limpá-lo seria uma forma de furar a própria blindagem anti-flag.
+ */
+export async function resetTestData(): Promise<ActionResult> {
+  const impossible = '00000000-0000-0000-0000-000000000000'
+
+  const [contacts, events] = await Promise.all([
+    supabaseAdmin.from('contacts').delete().neq('id', impossible).select('id'),
+    supabaseAdmin.from('webhook_events').delete().neq('id', impossible).select('id'),
+  ])
+
+  if (contacts.error) return { ok: false, error: contacts.error.message }
+  if (events.error) return { ok: false, error: events.error.message }
+
+  revalidatePath('/contatos')
+  revalidatePath('/conversas')
+  revalidatePath('/')
+  return { ok: true }
+}
+
 export async function setContactSubscribed(
   contactId: string,
   subscribed: boolean,

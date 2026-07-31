@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Download, Users } from 'lucide-react'
 
 import { ContactFilters } from '@/components/contatos/contact-filters'
+import { ResetTeste } from '@/components/contatos/reset-teste'
 import { Badge, Button, Card, EmptyState } from '@/components/ui'
 import { getAllTags, getContacts } from '@/lib/data'
 
@@ -26,9 +27,13 @@ export default async function ContatosPage({
         <h1 className="text-sm font-semibold">Contatos</h1>
         <span className="ml-2 text-xs text-muted">({contacts.length})</span>
 
+        <div className="ml-auto flex items-center gap-2">
+          {contacts.length > 0 && <ResetTeste total={contacts.length} />}
+        </div>
+
         {contacts.length > 0 && (
           <a
-            className="ml-auto"
+            className="ml-2"
             href={`/api/contatos/export?${new URLSearchParams({
               ...(busca ? { busca } : {}),
               ...(etiqueta ? { etiqueta } : {}),

@@ -5,6 +5,7 @@ import { ArrowLeft, Bot, User } from 'lucide-react'
 import {
   ContactFields,
   ContactTags,
+  DeleteContact,
   SubscriptionToggle,
 } from '@/components/contatos/contact-editor'
 import { Badge, Button, Card } from '@/components/ui'
@@ -53,6 +54,13 @@ export default async function ContatoPage({ params }: { params: Promise<{ id: st
               <SubscriptionToggle contactId={contact.id} subscribed={contact.subscribed} />
               <ContactTags contactId={contact.id} tags={contact.tags} />
               <ContactFields contactId={contact.id} fields={contact.fields} />
+
+              <div className="border-t border-border pt-3">
+                <DeleteContact
+                  contactId={contact.id}
+                  name={contact.username ? `@${contact.username}` : contact.ig_user_id}
+                />
+              </div>
             </Card>
 
             <Card className="p-4">
