@@ -173,6 +173,205 @@ export function NodeInspector({ node, isEntry, onChange, onDelete, onClose }: Pr
           </div>
         )}
 
+        {node.type === 'carousel' && (
+          <div>
+            <Label>Cards (máximo 10)</Label>
+            <div className="space-y-3">
+              {node.cards.map((card, i) => (
+                <div key={i} className="rounded-lg border border-border p-2.5">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[11px] text-muted">Card {i + 1}</span>
+                    <button
+                      type="button"
+                      className="text-muted hover:text-danger"
+                      onClick={() => patch({ cards: node.cards.filter((_, j) => j !== i) })}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                  <Input
+                    className="mb-2"
+                    value={card.title}
+                    maxLength={80}
+                    placeholder="Título do card"
+                    onChange={(e) => {
+                      const cards = [...node.cards]
+                      cards[i] = { ...cards[i], title: e.target.value }
+                      patch({ cards })
+                    }}
+                  />
+                  <Input
+                    className="mb-2"
+                    value={card.subtitle ?? ''}
+                    maxLength={80}
+                    placeholder="Subtítulo (opcional)"
+                    onChange={(e) => {
+                      const cards = [...node.cards]
+                      cards[i] = { ...cards[i], subtitle: e.target.value || undefined }
+                      patch({ cards })
+                    }}
+                  />
+                  <Input
+                    className="mb-2"
+                    value={card.imageUrl ?? ''}
+                    placeholder="https://exemplo.com/imagem.jpg"
+                    onChange={(e) => {
+                      const cards = [...node.cards]
+                      cards[i] = { ...cards[i], imageUrl: e.target.value || undefined }
+                      patch({ cards })
+                    }}
+                  />
+
+                  <div className="space-y-2">
+                    {(card.buttons ?? []).map((b, j) => (
+                      <div key={j} className="flex gap-2">
+                        <Input
+                          className="w-24"
+                          value={b.title}
+                          maxLength={20}
+                          placeholder="Botão"
+                          onChange={(e) => {
+                            const cards = [...node.cards]
+                            const buttons = [...(cards[i].buttons ?? [])]
+                            buttons[j] = { ...buttons[j], title: e.target.value }
+                            cards[i] = { ...cards[i], buttons }
+                            patch({ cards })
+                          }}
+                        />
+                        <Input
+                          value={b.url ?? ''}
+                          placeholder="https://link (vazio = resposta)"
+                          onChange={(e) => {
+                            const cards = [...node.cards]
+                            const buttons = [...(cards[i].buttons ?? [])]
+                            buttons[j] = { ...buttons[j], url: e.target.value || undefined }
+                            cards[i] = { ...cards[i], buttons }
+                            patch({ cards })
+                          }}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          onClick={() => {
+                            const cards = [...node.cards]
+                            cards[i] = {
+                              ...cards[i],
+                              buttons: (cards[i].buttons ?? []).filter((_, k) => k !== j),
+                            }
+                            patch({ cards })
+                          }}
+                        >
+                          <Trash2 className="size-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                    {(card.buttons ?? []).length < 3 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        type="button"
+                        className="w-full"
+                        onClick={() => {
+                          const cards = [...node.cards]
+                          cards[i] = {
+                            ...cards[i],
+                            buttons: [...(cards[i].buttons ?? []), { title: 'Ver mais' }],
+                          }
+                          patch({ cards })
+                        }}
+                      >
+                        <Plus className="size-3.5" />
+                        Adicionar botão
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {node.cards.length < 10 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  className="w-full"
+                  onClick={() =>
+                    patch({ cards: [...node.cards, { title: `Card ${node.cards.length + 1}` }] })
+                  }
+                >
+                  <Plus className="size-3.5" />
+                  Adicionar card
+                </Button>
+              )}
+            </div>
+            <p className="mt-1.5 text-[11px] text-muted">
+              Imagem precisa ser um link público. Sem link no botão, ele vira resposta — e o
+              clique abre a janela de 24h, igual ao bloco de botões.
+            </p>
+          </div>
+        )}
+
+        {node.type === 'bubbles' && (
+          <>
+            <div>
+              <Label>Mensagens (2 a 5, cada uma vira uma bolha)</Label>
+              <div className="space-y-2">
+                {node.bubbles.map((bubble, i) => (
+                  <div key={i} className="flex gap-2">
+                    <Textarea
+                      rows={2}
+                      value={bubble.text}
+                      placeholder={`Bolha ${i + 1}`}
+                      onChange={(e) => {
+                        const bubbles = [...node.bubbles]
+                        bubbles[i] = { text: e.target.value }
+                        patch({ bubbles })
+                      }}
+                    />
+                    {node.bubbles.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        type="button"
+                        onClick={() => patch({ bubbles: node.bubbles.filter((_, j) => j !== i) })}
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                {node.bubbles.length < 5 && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    type="button"
+                    className="w-full"
+                    onClick={() => patch({ bubbles: [...node.bubbles, { text: '' }] })}
+                  >
+                    <Plus className="size-3.5" />
+                    Adicionar bolha
+                  </Button>
+                )}
+              </div>
+              <p className="mt-1.5 text-[11px] text-muted">
+                Cada bolha passa por spintax própria e sai como mensagem separada — mais parecido
+                com gente digitando do que um parágrafo só.
+              </p>
+            </div>
+            <div>
+              <Label>Pausa entre bolhas</Label>
+              <Select
+                value={String(node.pauseMs)}
+                onChange={(e) => patch({ pauseMs: Number(e.target.value) })}
+              >
+                <option value="600">Rápida (0,6s)</option>
+                <option value="1200">Normal (1,2s)</option>
+                <option value="2000">Devagar (2s)</option>
+                <option value="3000">Bem devagar (3s)</option>
+              </Select>
+            </div>
+          </>
+        )}
+
         {node.type === 'image' && (
           <>
             <div>
@@ -366,6 +565,23 @@ export function NodeInspector({ node, isEntry, onChange, onDelete, onClose }: Pr
             </div>
             <p className="mt-1.5 text-[11px] text-muted">
               Ligue cada saída a um caminho diferente no canvas para comparar versões.
+            </p>
+          </div>
+        )}
+
+        {node.type === 'goto_flow' && (
+          <div>
+            <Label>ID do fluxo de destino</Label>
+            <Input
+              value={node.flowId}
+              placeholder="00000000-0000-0000-0000-000000000000"
+              onChange={(e) => patch({ flowId: e.target.value.trim() })}
+            />
+            <p className="mt-1.5 text-[11px] text-muted">
+              Cole o ID (UUID) do fluxo. Ainda não há seletor visual aqui — confira o ID na
+              tabela <code className="text-accent">flows</code> do Supabase. Este fluxo termina e
+              a conversa continua na definição do fluxo de destino, mantendo tags e variáveis já
+              coletadas.
             </p>
           </div>
         )}
