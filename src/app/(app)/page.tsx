@@ -37,7 +37,13 @@ function Stat({
   )
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ erro?: string; conectado?: string }>
+}) {
+  const { erro, conectado } = await searchParams
+
   if (!hasEnv()) {
     return (
       <main className="p-8">
@@ -74,6 +80,31 @@ export default async function Home() {
       </header>
 
       <main className="flex-1 space-y-6 overflow-y-auto p-6">
+        {/* O callback do OAuth volta para cá com ?erro= ou ?conectado=. Sem
+            mostrar, uma reconexão que falhou parece ter dado certo. */}
+        {erro && (
+          <div className="flex items-start gap-3 rounded-xl border border-danger/40 bg-danger/10 p-4">
+            <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-danger">A conexão com o Instagram falhou</p>
+              <p className="mt-1 break-words text-xs text-muted">{erro}</p>
+              <p className="mt-1 text-[11px] text-muted">
+                {erro === 'state-invalido'
+                  ? 'O login começou num endereço e terminou noutro. Comece sempre por dm.nocodepedro.site.'
+                  : 'Se falar em URI de redirecionamento, a URL de produção precisa estar cadastrada no app do Instagram, na Meta.'}
+              </p>
+            </div>
+          </div>
+        )}
+
+        {conectado && !erro && (
+          <div className="rounded-xl border border-success/40 bg-success/10 p-4">
+            <p className="text-sm font-medium text-success">
+              Instagram reconectado: @{conectado}
+            </p>
+          </div>
+        )}
+
         {health?.status === 'token_invalido' && (
           <div className="flex items-start gap-3 rounded-xl border border-danger/40 bg-danger/10 p-4">
             <TriangleAlert className="mt-0.5 size-4 shrink-0 text-danger" />
