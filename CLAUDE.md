@@ -28,6 +28,9 @@ supabase/            migrations/0001_init.sql, seed.sql (fluxo de exemplo)
 - **Janela de 24h**: DM comum só dentro dela. Só a private reply (de comentário) escapa,
   e só uma vez por comentário.
 - **Comentário não seta `last_inbound_at`** — comentar não abre a janela de DM.
+  **Clique em botão postback seta.** É o que destrava fluxo de várias mensagens a partir de
+  comentário: a private reply leva botão, o toque abre a janela, e daí a conversa é livre.
+  Por isso `deliver()` nunca pode descartar `payload.buttons` quando há `pendingCommentId`.
 - **`dedup_key` em `webhook_events`** é o que impede processar duas vezes. A Meta reentrega.
 - **Webhook exige DUAS assinaturas independentes.** No app (`POST /{app-id}/subscriptions`, com o
   App Secret do *Facebook* App) e na conta (`POST /me/subscribed_apps`, com o token da conta).
@@ -40,6 +43,20 @@ supabase/            migrations/0001_init.sql, seed.sql (fluxo de exemplo)
   (`process_after` na fila) e cap de envios/hora (`send_log` + `SEND_HOURLY_CAP`; estourou
   = fluxo dorme 5 min e retenta sozinho). Resposta idêntica e instantânea em volume é o que
   o filtro de spam do Instagram derruba. Não remova nenhuma das três camadas.
+- **O cap falha fechado.** Erro ao consultar `send_log` conta como cap estourado
+  (`src/lib/flow/send-cap.ts`). Banco fora do ar não pode virar licença para disparar sem trava.
+- **Variação é obrigatória para ativar.** `saveAutomation` recusa ativar automação cuja
+  resposta pública tenha menos de 3 variantes de spintax, ou cujo texto de fluxo tenha menos
+  de 2 (`src/lib/flow/variation.ts`). Não é preferência de estilo: texto único repetido é
+  exatamente o padrão que o filtro pega.
+- **Todo comentário é respondido, nem que demore.** Comentário acima do cap por post vai para
+  `pending_public_replies` e o tick drena no ritmo seguro — nunca é descartado. A DM continua
+  instantânea; só a resposta pública espera.
+- **A varredura é por cursor, não por janela fixa.** `comments_cursor` / `messages_cursor` em
+  `accounts`, com `CURSOR_OVERLAP_MS` de sobreposição e paginação (`src/lib/webhook/poll.ts`).
+  Sem isso, comentário que chega durante uma queda do cron some para sempre.
+- **Tick que falhou responde 503.** Erro de polling não pode terminar em 200: o cron do
+  Supabase é a única coisa que avisa que a automação parou.
 - **O OAuth tem que começar e terminar no mesmo domínio.** O `state` vive num cookie; iniciar
   em `localhost` com `redirect_uri` apontando para o túnel dá `state-invalido`. Sempre acesse
   o app pela URL pública.
@@ -54,6 +71,14 @@ Em modo de desenvolvimento, a conta só autoriza se tiver a função **Testador 
 (Funções do app → Mais → Testadores do Instagram) **e** aceitar o convite em
 Instagram → Configurações → Apps e sites → Convites do testador. Sem isso o OAuth falha com
 "Função de desenvolvedor é insuficiente".
+
+**Trocar a senha do Facebook invalida o token do Instagram.** Aconteceu em 30/07/2026 e deixou
+a automação morta por 22 horas sem nenhum sinal além de `OAuthException code 1` nos `flow_runs`.
+Depois de qualquer mexida em senha ou segurança da conta, reconecte pelo painel.
+
+**Nunca use automação de navegador em site da Meta** (developers.facebook.com,
+business.facebook.com, facebook.com, instagram.com) com a sessão logada — foi isso que
+disparou a restrição de jul/2026. Chamada à Graph API por `curl` é aceitável, com parcimônia.
 
 ## Autenticação
 
