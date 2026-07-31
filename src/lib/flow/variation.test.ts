@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { checkFlowTexts, checkPublicReply, variantCount } from '@/lib/flow/variation'
+import { checkFlowTexts, checkPublicReply, variantCount, splitVariations, joinVariations } from '@/lib/flow/variation'
 
 describe('variantCount', () => {
   it('texto sem spintax produz uma frase só', () => {
@@ -69,5 +69,57 @@ describe('checkFlowTexts', () => {
       { id: 'c', label: 'Fechamento', text: 'Valeu!' },
     ])
     expect(issues.map((i) => i.where)).toEqual(['Abertura', 'Fechamento'])
+  })
+})
+
+describe('splitVariations', () => {
+  it('quebra um grupo que cobre o texto inteiro', () => {
+    expect(splitVariations('{Mandei no direct|Chegou no privado|Te respondi}')).toEqual([
+      'Mandei no direct',
+      'Chegou no privado',
+      'Te respondi',
+    ])
+  })
+
+  it('devolve nulo para texto simples', () => {
+    expect(splitVariations('Mandei no direct')).toBeNull()
+  })
+
+  it('devolve nulo para spintax no meio da frase', () => {
+    // Caso avançado: cabe no motor, não cabe numa lista de campos. A tela
+    // precisa saber disso para cair no modo bruto em vez de destruir o texto.
+    expect(splitVariations('Oi {fulano|amigo}, chegou')).toBeNull()
+  })
+
+  it('devolve nulo para grupo de uma opção só', () => {
+    expect(splitVariations('{só uma}')).toBeNull()
+  })
+
+  it('preserva opção vazia no meio, que o motor entende como "às vezes nada"', () => {
+    expect(splitVariations('{a||b}')).toEqual(['a', '', 'b'])
+  })
+})
+
+describe('joinVariations', () => {
+  it('junta em spintax', () => {
+    expect(joinVariations(['a', 'b', 'c'])).toBe('{a|b|c}')
+  })
+
+  it('uma opção só não vira grupo', () => {
+    // `{a}` sairia literal para o contato, com as chaves e tudo.
+    expect(joinVariations(['só uma'])).toBe('só uma')
+  })
+
+  it('descarta campo vazio e espaço em volta', () => {
+    expect(joinVariations(['  a  ', '', '  b'])).toBe('{a|b}')
+  })
+
+  it('lista vazia vira texto vazio', () => {
+    expect(joinVariations(['', '  '])).toBe('')
+  })
+
+  it('ida e volta preserva o conteúdo', () => {
+    const original = ['Mandei no direct 📩', 'Chegou no privado ✨', 'Te respondi 😉']
+    expect(splitVariations(joinVariations(original))).toEqual(original)
   })
 })

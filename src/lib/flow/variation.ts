@@ -73,3 +73,51 @@ export function checkFlowTexts(nodes: TextNode[]): VariationIssue[] {
     ]
   })
 }
+
+/**
+ * Ponte entre o que a pessoa escreve na tela e a sintaxe de spintax.
+ *
+ * A trava de variação existe desde a restrição de jul/2026, mas a interface
+ * nunca deu como cumpri-la: era um campo de texto só, e o dono teria que
+ * digitar `{a|b|c}` de cabeça. Trava que o usuário não consegue satisfazer não
+ * é proteção, é beco — ele tentou empilhar uma frase embaixo da outra, que é a
+ * leitura natural, e a ferramenta recusou sem ensinar.
+ *
+ * O modelo simples cobre o caso real: o texto INTEIRO é um grupo de variações.
+ * Spintax no meio da frase ("Oi {fulano|amigo}, chegou") continua válido e é
+ * mais poderoso, mas não cabe numa lista de campos — por isso `splitVariations`
+ * devolve `null` nesse caso, e a tela cai no modo avançado em vez de destruir
+ * o que já estava escrito.
+ */
+
+/** O texto é um grupo único cobrindo a string toda? Aí vira lista de opções. */
+const WHOLE_GROUP = /^\{([^{}]*)\}$/
+
+/**
+ * Quebra `{a|b|c}` em `['a','b','c']`. Devolve `null` quando o texto não é um
+ * grupo único — texto simples, spintax no meio da frase, ou grupos aninhados.
+ */
+export function splitVariations(text: string): string[] | null {
+  const clean = text.trim()
+  if (!clean) return null
+
+  const match = clean.match(WHOLE_GROUP)
+  if (!match) return null
+
+  const parts = match[1].split('|')
+  if (parts.length < 2) return null
+
+  return parts
+}
+
+/**
+ * Junta a lista de volta em spintax. Uma opção só não vira grupo: `{a}` não é
+ * spintax, é texto com chaves em volta, e sairia literal para o contato.
+ */
+export function joinVariations(variations: string[]): string {
+  const clean = variations.map((v) => v.trim()).filter(Boolean)
+  if (clean.length === 0) return ''
+  if (clean.length === 1) return clean[0]
+
+  return `{${clean.join('|')}}`
+}

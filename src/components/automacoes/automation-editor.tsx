@@ -8,7 +8,8 @@ import Link from 'next/link'
 import { saveAutomation } from '@/app/actions'
 import { FlowBuilder } from '@/components/automacoes/flow-builder'
 import { PostPicker } from '@/components/automacoes/post-picker'
-import { Badge, Button, Card, Input, Label, Select, Textarea } from '@/components/ui'
+import { VariationsField } from '@/components/automacoes/variations-field'
+import { Badge, Button, Card, Input, Label, Select } from '@/components/ui'
 import { useToast } from '@/components/ui/toast'
 import type { FlowOption } from '@/lib/data'
 import { emptyDefinition } from '@/lib/flow/transform'
@@ -291,20 +292,18 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
               </div>
 
               {triggerType === 'comment' && (
-                <div>
-                  <Label>Resposta pública no comentário (opcional)</Label>
-                  <Textarea
-                    rows={2}
-                    value={publicReply}
-                    onChange={(e) => setPublicReply(e.target.value)}
-                    placeholder="{Mandei no seu direct! 📩|Chegou no privado! ✨|Te respondi no direct 😉}"
-                  />
-                  <p className="mt-1.5 text-[11px] text-muted">
-                    Responder publicamente aumenta o alcance do post e mostra prova social. Escreva
-                    variações entre chaves — {'{opção1|opção2|opção3}'} — para cada resposta sair
-                    diferente: texto idêntico repetido é o que o filtro de spam do Instagram remove.
-                  </p>
-                </div>
+                <VariationsField
+                  label="Resposta pública no comentário (opcional)"
+                  value={publicReply}
+                  onChange={setPublicReply}
+                  min={3}
+                  placeholders={[
+                    'Mandei no seu direct! 📩',
+                    'Chegou no privado! ✨',
+                    'Te respondi no direct 😉',
+                  ]}
+                  hint="Responder publicamente aumenta o alcance do post e mostra prova social. Como a resposta aparece várias vezes no MESMO post, ela é a mais exposta ao filtro de spam — por isso o mínimo aqui é maior que no resto do fluxo."
+                />
               )}
             </Card>
 
