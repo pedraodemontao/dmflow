@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { fetchContactProfile, replyToComment } from '@/lib/instagram/api'
+import { resolveButtonSource, type FlowDefinitionRow } from '@/lib/flow/button-source'
 import { resumeFlow, startFlow } from '@/lib/flow/engine'
 import { assertUnderSendCap, isUnderPublicReplyCap, logSend } from '@/lib/flow/send-cap'
 import { isQuiet, nextOpening } from '@/lib/flow/quiet-hours'
@@ -236,6 +237,51 @@ async function loadFlow(flowId: string): Promise<Flow | null> {
 }
 
 /**
+ * Grava QUAL botão a pessoa apertou.
+ *
+ * O funil por bloco (`flow_node_events`) já sabia que ela passou pelo bloco de
+ * botões, e não qual das opções escolheu — mas é justamente a diferença entre
+ * "Quero o mapa" e "Depois eu vejo" que diz o que escrever no próximo post.
+ *
+ * A origem (fluxo + nó) é reconstruída a partir do payload, porque a Meta
+ * manda só ele. Payload sem origem clara ainda registra o clique com os campos
+ * nulos: perder a linha seria pior que não saber de onde ela veio (ver a regra
+ * completa em `resolveButtonSource`).
+ *
+ * Nunca lança. Métrica é acessório, entrega não — mesmo contrato do registro
+ * de nó no engine. É também o que faz este código sobreviver enquanto a tabela
+ * `button_clicks` não existe no banco: o erro do PostgREST vira log e o
+ * webhook segue entregando.
+ */
+async function recordButtonClick(args: {
+  account: Account
+  contact: Contact
+  payload: string
+  /** Rótulo que a própria Meta devolve no postback. Só vale se a definição não souber. */
+  fallbackTitle?: string
+}): Promise<void> {
+  const { data } = await supabaseAdmin
+    .from('flows')
+    .select('id, definition')
+    .eq('account_id', args.account.id)
+
+  const source = resolveButtonSource((data ?? []) as FlowDefinitionRow[], args.payload)
+
+  const { error } = await supabaseAdmin.from('button_clicks').insert({
+    account_id: args.account.id,
+    contact_id: args.contact.id,
+    flow_id: source.flowId,
+    node_id: source.nodeId,
+    payload: args.payload,
+    // Copiado da definição AGORA: se o texto do botão mudar amanhã, o
+    // histórico continua contando o que estava escrito no momento do clique.
+    title: source.title ?? args.fallbackTitle ?? null,
+  })
+
+  if (error) console.error('[dm-flow] clique de botão não registrado:', error.message)
+}
+
+/**
  * Detecta o tipo de gatilho de um evento de messaging: menção em story
  * (anexo `story_mention`), resposta de story (`reply_to.story`) ou palavra
  * comum em DM. Exportada para teste — é a peça que nunca foi validada
@@ -279,6 +325,20 @@ export async function handleMessaging(account: Account, value: MessagingValue) {
     },
     { onConflict: 'mid', ignoreDuplicates: true },
   )
+
+  // Toque em botão: registra a escolha sem bloquear o caminho da entrega.
+  // Vale mesmo para o contato em atendimento humano e para o payload que não
+  // casa gatilho nenhum — apertar o botão é o fato, e ele aconteceu.
+  const clickedPayload: string | undefined =
+    value.message?.quick_reply?.payload ?? value.postback?.payload
+  if (clickedPayload) {
+    void recordButtonClick({
+      account,
+      contact,
+      payload: clickedPayload,
+      fallbackTitle: value.postback?.title,
+    }).catch((error) => console.error('[dm-flow] clique de botão não registrado:', error))
+  }
 
   // Sem texto e sem ser menção não há o que casar contra gatilho — mesmo
   // tratamento de sempre para figurinha/imagem sem legenda.
