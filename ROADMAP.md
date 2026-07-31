@@ -66,10 +66,11 @@ Legenda: ✅ pronto · 🟡 parcial · ❌ não existe
 | Responder na mão | ✅ Respeita janela de 24h e o cap de envios |
 | Assumir conversa (pausa a automação do contato) | ✅ |
 | Marcar como lida / contador de não lidas | ✅ |
-| Respostas prontas (atalhos) | ❌ |
-| Marcar como resolvida / adiar | ❌ |
-| Notas internas no contato | ❌ |
-| Filtros (não lidas, em atendimento) | ❌ |
+| Respostas prontas (atalhos) | ✅ Inserem no rascunho, não enviam direto |
+| Marcar como resolvida / adiar | ✅ Adiada vencida volta sozinha para abertas |
+| Notas internas no contato | ✅ |
+| Filtros (abertas, não lidas, adiadas, resolvidas) | ✅ Com contador por fila |
+| Atribuir a um atendente | ❌ Só faz sentido com time |
 
 ## 5. Envio em massa — **cuidado aqui**
 
@@ -123,9 +124,9 @@ a janela e o cap**, não uma metralhadora. Recomendo deixar por último e constr
    contatos por post e origem na ficha. Primeiro toque, só para quem chega comentando.
 5. ~~**Segurança e última milha**~~ — ✅ feito: botão de pânico, horário de silêncio,
    exportação CSV.
-6. **Chat ao vivo turbinado** — respostas prontas, resolvida/adiar, notas internas,
-   filtros de não lidas. ← próximo
-7. **Gatilhos novos** — menção em story e ice breakers.
+6. ~~**Chat ao vivo turbinado**~~ — ✅ feito: respostas prontas, resolver/adiar, notas
+   internas, filas com contador.
+7. **Gatilhos novos** — menção em story e ice breakers. ← próximo
 8. **Blocos restantes** — carrossel de cards, vídeo/áudio, pular para outro fluxo.
 9. **Múltiplas contas** — o schema já isola por `account_id`; falta o seletor no painel.
 10. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação.
