@@ -241,3 +241,131 @@ export function TimeSeries({
     </figure>
   )
 }
+
+export interface Series {
+  id: string
+  label: string
+  tone: Tone
+  points: SeriesPoint[]
+}
+
+const STROKE: Record<Tone, string> = {
+  ink: 'stroke-muted',
+  accent: 'stroke-accent',
+  warning: 'stroke-warning',
+  danger: 'stroke-danger',
+}
+
+const DOT: Record<Tone, string> = {
+  ink: 'fill-muted',
+  accent: 'fill-accent',
+  warning: 'fill-warning',
+  danger: 'fill-danger',
+}
+
+/**
+ * Várias séries no mesmo par de eixos.
+ *
+ * A `TimeSeries` de barras responde "quanto, quando". Esta responde "quanto de
+ * CADA COISA, quando" — que é a pergunta que separa "60 envios ontem" de "60
+ * envios, sendo 50 resposta pública", e a segunda é a que diz se o
+ * comportamento está ficando arriscado.
+ *
+ * Linha aqui e barra lá não é gosto: barra é para balde discreto de contagem
+ * baixa, onde ligar dois inteiros sugeriria um valor intermediário que não
+ * existe. Quando são várias séries sobrepostas, barra vira parede ilegível e a
+ * linha mostra o formato de cada uma. A régua vertical é compartilhada, senão
+ * duas séries em escalas diferentes mentiriam lado a lado.
+ *
+ * SVG na mão em vez de biblioteca: o que existe pronto traz curva suavizada,
+ * gradiente sob a linha e tooltip flutuante — a gramática oposta à daqui.
+ */
+export function LineSeries({
+  series,
+  height = 160,
+  className,
+  'aria-label': ariaLabel,
+}: {
+  series: Series[]
+  height?: number
+  className?: string
+  'aria-label'?: string
+}) {
+  const largura = Math.max(...series.map((s) => s.points.length), 2)
+  const max = Math.max(1, ...series.flatMap((s) => s.points.map((p) => p.value)))
+  const eixo = series[0]?.points ?? []
+
+  // Coordenadas num espaço 0–100 nos dois eixos: o SVG escala sozinho para a
+  // largura do card, e nenhuma medida vira número mágico em pixel.
+  const caminho = (points: SeriesPoint[]) =>
+    points
+      .map((point, index) => {
+        const x = (index / Math.max(largura - 1, 1)) * 100
+        const y = 100 - (point.value / max) * 100
+        return `${index === 0 ? 'M' : 'L'} ${x.toFixed(2)} ${y.toFixed(2)}`
+      })
+      .join(' ')
+
+  return (
+    <figure className={cn('m-0', className)} aria-label={ariaLabel}>
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+        {series.map((s) => (
+          <span key={s.id} className="flex items-center gap-1.5">
+            <span className={cn('size-2 rounded-[2px]', FILL[s.tone])} />
+            <span className="label text-[9px] text-muted">{s.label}</span>
+          </span>
+        ))}
+        <span className="label ml-auto text-[9px] text-muted tabular-nums">pico {max}</span>
+      </div>
+
+      <div className="relative" style={{ height }}>
+        {/* Grade: quatro fios horizontais. Sem eles a linha flutua e não dá
+            para estimar valor nenhum de relance. */}
+        {[0, 25, 50, 75, 100].map((pct) => (
+          <div
+            key={pct}
+            className="absolute inset-x-0 border-t border-border/60"
+            style={{ top: `${pct}%` }}
+          />
+        ))}
+
+        <svg
+          viewBox="0 0 100 100"
+          preserveAspectRatio="none"
+          className="absolute inset-0 size-full overflow-visible"
+          role="presentation"
+        >
+          {series.map((s) => (
+            <g key={s.id}>
+              <path
+                d={caminho(s.points)}
+                fill="none"
+                className={STROKE[s.tone]}
+                strokeWidth={1.5}
+                vectorEffect="non-scaling-stroke"
+                strokeLinejoin="round"
+              />
+              {s.points.map((point, index) => (
+                <circle
+                  key={index}
+                  cx={(index / Math.max(largura - 1, 1)) * 100}
+                  cy={100 - (point.value / max) * 100}
+                  r={2}
+                  className={DOT[s.tone]}
+                  vectorEffect="non-scaling-stroke"
+                >
+                  <title>{`${s.label} · ${point.label}: ${point.value}`}</title>
+                </circle>
+              ))}
+            </g>
+          ))}
+        </svg>
+      </div>
+
+      <figcaption className="label mt-2 flex justify-between text-[9px] text-muted">
+        <span>{eixo[0]?.label}</span>
+        <span>{eixo[eixo.length - 1]?.label}</span>
+      </figcaption>
+    </figure>
+  )
+}

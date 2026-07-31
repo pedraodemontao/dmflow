@@ -742,6 +742,42 @@ export async function getSendsSeries(hours = SENDS_SERIES_HOURS): Promise<{
   }
 }
 
+export interface KindSeries {
+  dm: SeriesBucket[]
+  privateReply: SeriesBucket[]
+  publicReply: SeriesBucket[]
+}
+
+/**
+ * Envios por dia, SEPARADOS POR TIPO.
+ *
+ * O total sozinho não conta a história que importa: "60 envios ontem" e "60
+ * envios, sendo 50 resposta pública" são situações muito diferentes, e a
+ * segunda é a que chama atenção do filtro de spam — proporção alta de resposta
+ * pública é o primeiro sinal do relatório de risco. Ver a blindagem anti-spam
+ * no CLAUDE.md.
+ */
+export async function getSendsByKindSeries(days = LEADS_SERIES_DAYS): Promise<KindSeries> {
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString()
+
+  const { data } = await supabaseAdmin
+    .from('send_log')
+    .select('kind, created_at')
+    .gte('created_at', since)
+    .order('created_at', { ascending: true })
+    .limit(SERIES_ROW_LIMIT)
+
+  const rows = (data ?? []) as Array<{ kind: string; created_at: string }>
+  const por = (kind: string) =>
+    dailyBuckets(rows.filter((row) => row.kind === kind).map((row) => row.created_at), days)
+
+  return {
+    dm: por('dm'),
+    privateReply: por('private_reply'),
+    publicReply: por('public_reply'),
+  }
+}
+
 /** Depois desse tanto sem resposta a janela de 24h já fechou — a conversa não reabre sozinha. */
 const STALE_WAITING_REPLY_MS = 24 * 60 * 60 * 1000
 /**
@@ -959,6 +995,7 @@ export async function getFailedAutomations(limit = 5): Promise<FailedRun[]> {
 }
 
 export interface CockpitData {
+  sendsByKind: KindSeries
   dropped: DroppedEvent[]
   droppedTotal: number
   leadsSeries: SeriesBucket[]
@@ -979,6 +1016,7 @@ export interface CockpitData {
 export async function getCockpitData(): Promise<CockpitData> {
   const [
     leadsTrend,
+    sendsByKind,
     dropped,
     droppedTotal,
     leadsSeries,
@@ -990,6 +1028,7 @@ export async function getCockpitData(): Promise<CockpitData> {
     riskReport,
   ] = await Promise.all([
     getLeadsTrend(),
+    getSendsByKindSeries(),
     getDroppedEvents(),
     countDroppedEvents(),
     getLeadsSeries(),
@@ -1003,6 +1042,7 @@ export async function getCockpitData(): Promise<CockpitData> {
 
   return {
     leadsTrend,
+    sendsByKind,
     dropped,
     droppedTotal,
     leadsSeries,

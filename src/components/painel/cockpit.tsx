@@ -17,7 +17,7 @@ import { DroppedEvents } from '@/components/painel/dropped-events'
 import { FailedRuns } from '@/components/painel/failed-runs'
 import { Risco } from '@/components/painel/risco'
 import { Badge, Card, EmptyState } from '@/components/ui'
-import { RankBars, TimeSeries } from '@/components/ui/chart'
+import { LineSeries, RankBars, TimeSeries } from '@/components/ui/chart'
 import type { CockpitData } from '@/lib/data'
 import type { RiskLevel } from '@/lib/risk/types'
 import { cn } from '@/lib/utils'
@@ -121,6 +121,7 @@ function TrendBadge({ delta, deltaPercent }: { delta: number; deltaPercent: numb
 export function Cockpit({ data }: { data: CockpitData }) {
   const {
     leadsTrend,
+    sendsByKind,
     dropped,
     droppedTotal,
     leadsSeries,
@@ -315,6 +316,40 @@ export function Cockpit({ data }: { data: CockpitData }) {
             )}
           </Card>
         </div>
+
+        {/* Total sozinho não conta a história: "60 envios ontem" e "60 envios,
+            sendo 50 resposta pública" são situações diferentes, e a segunda é a
+            que o filtro de spam lê. Separar por tipo é o que deixa isso visível
+            antes de virar restrição de conta. */}
+        <Card className="mt-4 p-4">
+          <div className="mb-4">
+            <span className="label text-[10px] text-muted">Envios por dia, por tipo · 30 dias</span>
+            <p className="mt-1 text-xs leading-relaxed text-muted">
+              Resposta pública subindo mais rápido que DM é o primeiro sinal de risco — é ela que
+              aparece repetida no mesmo post.
+            </p>
+          </div>
+
+          <LineSeries
+            height={170}
+            aria-label="Envios por dia separados por tipo, nos últimos 30 dias"
+            series={[
+              { id: 'dm', label: 'DM', tone: 'accent', points: sendsByKind.dm },
+              {
+                id: 'private',
+                label: 'Private reply',
+                tone: 'ink',
+                points: sendsByKind.privateReply,
+              },
+              {
+                id: 'public',
+                label: 'Resposta pública',
+                tone: 'warning',
+                points: sendsByKind.publicReply,
+              },
+            ]}
+          />
+        </Card>
 
         {/* Envios por hora é o gráfico mais operacional do painel: o cap e o
             relatório de risco dizem "0 de 60 na última hora" sem mostrar o
