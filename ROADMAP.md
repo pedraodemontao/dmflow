@@ -1,9 +1,10 @@
 # ROADMAP — o que falta para ter o núcleo do ManyChat
 
 > Comparação honesta com o ManyChat para Instagram. Marca o que já existe, o que falta e
-> em que ordem vale construir. Atualizado em 2026-07-31 — a fase 7 ("Gatilhos novos") saiu
-> do papel: resposta de story ganhou teste de ponta a ponta, menção em story e ice breakers
-> foram implementados (ver notas na tabela). O que sobrou continua listado como ❌ abaixo.
+> em que ordem vale construir. Atualizado em 2026-07-31 — a fase 8 ("Blocos restantes") saiu
+> do papel: carrossel, vídeo/áudio/arquivo, pular para outro fluxo e sequência de bolhas
+> foram implementados. Nada disso foi testado contra o Instagram de verdade ainda; passa no
+> schema e nos testes, o que não é a mesma coisa que a Meta aceitar o payload.
 
 Legenda: ✅ pronto · 🟡 parcial · ❌ não existe
 
@@ -42,9 +43,10 @@ Legenda: ✅ pronto · 🟡 parcial · ❌ não existe
 | Gravar campo personalizado | ✅ Escreve em `contacts.fields` |
 | Sorteio / teste A/B | ✅ 2 a 4 caminhos |
 | Descadastrar o contato | ✅ `startFlow` respeita `subscribed` |
-| **Vídeo, áudio, arquivo** | ❌ |
-| **Carrossel / galeria de cards** | ❌ |
-| **Pular para outro fluxo** | ❌ |
+| Vídeo, áudio, arquivo | 🟡 Por URL pública, mesmo caminho da imagem. **Nunca testado contra o Instagram real** |
+| Carrossel / galeria de cards | 🟡 **Nunca testado contra o Instagram real** |
+| Pular para outro fluxo | ✅ `goto_flow`, escopado por `account_id`, com `MAX_STEPS` valendo na travessia |
+| Sequência de bolhas (2 a 5 mensagens em ritmo humano) | ✅ Não existe no ManyChat. Cada bolha passa por spintax e cap próprios |
 | **Avisar o admin** (DM, e-mail, webhook) | ❌ Dá para resolver com o bloco Webhook |
 
 ## 3. Contatos e público
@@ -130,10 +132,21 @@ a janela e o cap**, não uma metralhadora. Recomendo deixar por último e constr
 7. ~~**Gatilhos novos**~~ — ✅ feito: resposta de story testada, ice breakers publicáveis pelo
    painel, menção em story com código pronto (aguarda o webhook ou uma extensão do polling
    para disparar de verdade — ver nota da linha na tabela acima).
-8. **Blocos restantes** — carrossel de cards, vídeo/áudio, pular para outro fluxo. ← próximo
+8. ~~**Blocos restantes**~~ — ✅ feito: carrossel, vídeo/áudio/arquivo, pular para outro fluxo e
+   sequência de bolhas. Falta a prova real: nenhum deles passou por um envio de verdade.
 9. **Múltiplas contas** — o schema já isola por `account_id`; falta o seletor no painel.
 10. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação.
     O Pedro decidiu não priorizar; era exemplo, não pedido.
+
+### Dívida conhecida
+
+- **Bloco novo nunca enviado de verdade.** Carrossel, vídeo, áudio e arquivo passam no schema
+  e nos testes, mas ninguém confirmou que a Meta aceita o payload. Enquanto isso não for
+  testado com um envio real, tratar como não pronto.
+- **Foto de perfil expira.** `contacts.profile_pic_url` é URL assinada de horas/dias. O cache
+  se revalida sozinho no próximo DM do contato (`PROFILE_REFRESH_MS` em
+  `src/lib/webhook/process.ts`); entre uma revalidação e outra o cliente cai nas iniciais.
+  Quem só comentou nunca tem foto — comentário não dá consentimento de perfil.
 
 ### Sobre o webhook
 
