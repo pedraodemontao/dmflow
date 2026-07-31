@@ -24,28 +24,33 @@ export default async function IceBreakersPage() {
 
   return (
     <>
-      <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
-        <h1 className="text-base font-semibold tracking-tight text-foreground">Ice breakers</h1>
+      <header className="glass-chrome flex h-16 shrink-0 items-center justify-between border-b border-white/[0.06] px-6">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Ice breakers</h1>
       </header>
 
       <main className="flex-1 overflow-y-auto p-6">
-        {!account ? (
-          <Card className="max-w-xl p-6">
-            <p className="text-sm text-muted">
-              Conecte uma conta do Instagram para configurar os ice breakers.
-            </p>
-          </Card>
-        ) : (
-          <div className="mx-auto max-w-2xl space-y-3">
-            {outOfSync && (
-              <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
-                O que está publicado na Meta agora é diferente do que está salvo aqui. Salve de
-                novo para sincronizar.
+        <div className="canon mx-auto w-full max-w-2xl">
+          {!account ? (
+            <Card className="p-6">
+              <p className="text-sm text-muted">
+                Conecte uma conta do Instagram para configurar os ice breakers.
               </p>
-            )}
-            <IceBreakers initial={account.ice_breakers} syncedAt={account.ice_breakers_synced_at} />
-          </div>
-        )}
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {outOfSync && (
+                <p className="rounded-lg border border-warning/30 bg-warning/10 px-3 py-2 text-xs text-warning">
+                  O que está publicado na Meta agora é diferente do que está salvo aqui. Salve de
+                  novo para sincronizar.
+                </p>
+              )}
+              <IceBreakers
+                initial={account.ice_breakers}
+                syncedAt={account.ice_breakers_synced_at}
+              />
+            </div>
+          )}
+        </div>
       </main>
     </>
   )

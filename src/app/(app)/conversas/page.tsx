@@ -36,7 +36,7 @@ export default async function ConversasPage({
   return (
     <>
       <header className="glass-chrome flex h-16 shrink-0 items-center border-b border-white/[0.06] px-6">
-        <h1 className="text-base font-semibold tracking-tight text-foreground">Conversas</h1>
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Conversas</h1>
         <span className="ml-2 text-xs text-muted">
           {counts.abertas} {counts.abertas === 1 ? 'aberta' : 'abertas'}
           {counts['nao-lidas'] > 0 && ` · ${counts['nao-lidas']} não lidas`}
@@ -45,11 +45,13 @@ export default async function ConversasPage({
 
       {counts.abertas === 0 && counts.resolvidas === 0 && counts.adiadas === 0 ? (
         <main className="flex-1 overflow-y-auto p-6">
-          <EmptyState
-            icon={<MessagesSquare className="size-8" />}
-            title="Nenhuma conversa ainda"
-            description="Quando alguém comentar ou mandar DM, a conversa aparece aqui para você acompanhar e responder na mão."
-          />
+          <div className="canon mx-auto w-full max-w-3xl">
+            <EmptyState
+              icon={<MessagesSquare className="size-8" />}
+              title="Nenhuma conversa ainda"
+              description="Quando alguém comentar ou mandar DM, a conversa aparece aqui para você acompanhar e responder na mão."
+            />
+          </div>
         </main>
       ) : (
         <Inbox

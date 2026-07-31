@@ -18,10 +18,34 @@
  *      string gigante em cada arquivo, então viram classe CSS de verdade,
  *      igual a qualquer outro token de componente compartilhado.
  *
- * Identidade: grafite morno (leve tom terracota no neutro, H≈30°) + accent
- * "brasa" (laranja-cobre, H≈22°) — foge do indigo/roxo genérico de dashboard
- * SaaS (e do azul/roxo do ManyChat). Todo par texto/fundo abaixo foi checado
- * para WCAG AA (4.5:1 texto normal, 3:1 UI) — contas na descrição do commit.
+ * Direção (revisão 3 — diagnóstico completo na descrição do commit):
+ * o problema das duas tentativas anteriores não era material nem paleta —
+ * era excesso de cor e timidez tipográfica. Esta revisão muda três coisas:
+ *
+ *   a) Preto quase real como base (antes: grafite). As superfícies emergem
+ *      por um degrau sutil de luminância + `.surface-panel`/`.glass-*`
+ *      (sombra e fio de luz), não por borda de 1px em todo canto. `--border`
+ *      continua existindo (Input, Select, outline do Button, divisores de
+ *      lista) mas de propósito discreto — decoração de limite, não a fonte
+ *      da hierarquia visual.
+ *   b) Parcimônia radical de cor: o accent (laranja-cobre) fica reservado
+ *      para UMA coisa — o Button `primary`, que é sempre a ação principal da
+ *      tela — e para link de texto (convenção universal de "isto é
+ *      clicável"). Badge, ícone decorativo, borda de card e barra de
+ *      progresso viram neutros com peso/opacidade variando. Estado (sucesso,
+ *      alerta, perigo) continua colorido porque é informação, não decoração
+ *      — isso não mudou.
+ *   c) Tipografia com mais confiança: títulos de página maiores, mais
+ *      pesados, tracking mais fechado (aplicado nas próprias páginas, ver
+ *      `src/app/(app)/**`), e a assinatura tátil do botão principal
+ *      (`.cta-signature` abaixo) — sombra dura deslocada, não difusa.
+ *
+ * Todo par texto/fundo abaixo foi checado para WCAG AA (4.5:1 texto normal,
+ * 3:1 UI) — contas na descrição do commit. Exceção documentada: `--border`
+ * contra as superfícies fica abaixo de 3:1 de propósito (era assim antes
+ * desta revisão também) — é um traço decorativo, não o único jeito de
+ * identificar o limite de Input/Select/Button (que têm preenchimento
+ * distinto do fundo E anel de foco colorido, esse sim ≥3:1).
  *
  * Vidro é seletivo, não decorativo (decisão registrada no commit): só onde a
  * função é flutuar sobre conteúdo — sidebar, cabeçalho de página, o inspetor
@@ -35,10 +59,10 @@
 
 :root {
   /* ---------- 1. Primitivos ---------- */
-  --gray-950: #0e0d0b; /* grafite quase preto, leve tom quente */
-  --gray-900: #161412;
-  --gray-850: #201d1a;
-  --gray-700: #35302c;
+  --gray-950: #050403; /* preto quase real, leve tom quente residual */
+  --gray-900: #110e0b;
+  --gray-850: #1d1812;
+  --gray-700: #352d24;
   --gray-400: #9c948b;
   --gray-100: #f0edeb;
 
@@ -65,12 +89,14 @@
   /* ---------- 3. Material — vidro (chrome flutuante) ---------- */
   /* Preenchimento "vidro fumê": a própria cor de superfície, translúcida —
      não vidro branco. Um branco a 6-10% sobre conteúdo claro (ex. thumbnail
-     de post) explode em contraste; a cor de superfície a 70-85% nunca fica
+     de post) explode em contraste; a cor de superfície a 74-88% nunca fica
      mais clara que o token original, então todo par já validado como AA
      continua AA — o desfoque só acrescenta o material, não muda a luminância
-     de base. */
-  --glass-fill: rgb(22 20 18 / 70%); /* sidebar, cabeçalhos, inspetor */
-  --glass-fill-pop: rgb(22 20 18 / 84%); /* popovers — flutuam sobre conteúdo variável */
+     de base. Opacidade um pouco mais alta que na revisão anterior porque o
+     fundo agora é quase plano (sem a malha multicolor de antes) e precisa de
+     mais preenchimento próprio para não ler como "cinza lavado". */
+  --glass-fill: rgb(17 14 11 / 74%); /* sidebar, cabeçalhos, inspetor */
+  --glass-fill-pop: rgb(17 14 11 / 88%); /* popovers — flutuam sobre conteúdo variável */
   --glass-edge-light: rgb(255 255 255 / 14%); /* refração: luz batendo em cima */
   --glass-edge-dark: rgb(0 0 0 / 46%); /* refração: sombra acumulada embaixo */
   --glass-blur: 22px;
@@ -81,6 +107,9 @@
   --surface-shadow:
     0 1px 2px 0 rgb(0 0 0 / 30%),
     0 16px 32px -20px rgb(0 0 0 / 65%);
+
+  /* ---------- 3. Material — guia estrutural (cânone da página) ---------- */
+  --canon-guide: rgb(255 255 255 / 8%);
 }
 
 @theme inline {
@@ -100,17 +129,17 @@
 }
 
 /*
- * Malha de fundo: três orbes radiais, fixos, bem discretos. Ela não é o
- * efeito — ela é o combustível do efeito. Sem algo colorido atrás, o vidro
- * dos elementos `.glass-chrome`/`.glass-pop` não tem o que refratar e vira
- * só um desfoque cinza. `background-attachment: fixed` mantém a malha parada
- * quando o `main` de cada página rola por baixo do cabeçalho.
+ * Fundo quase plano — de propósito. As três versões anteriores usavam uma
+ * malha de três orbes coloridos (laranja + verde-azulado + rosa) atrás de
+ * tudo; isso é exatamente o clichê visual de "template de SaaS de IA" que o
+ * dono apontou. Um único glow, na mesma cor do accent, bem discreto, dá ao
+ * vidro do chrome algo mínimo para refratar sem pintar a tela inteira.
+ * `background-attachment: fixed` mantém o glow parado quando o `main` de
+ * cada página rola por baixo do cabeçalho.
  */
 body {
   background:
-    radial-gradient(900px 620px at 6% -10%, rgb(242 118 46 / 11%), transparent 60%),
-    radial-gradient(760px 640px at 100% 8%, rgb(31 122 118 / 6%), transparent 62%),
-    radial-gradient(820px 700px at 55% 112%, rgb(180 69 107 / 6%), transparent 60%),
+    radial-gradient(1100px 620px at 50% -14%, rgb(242 118 46 / 5%), transparent 62%),
     var(--background);
   background-attachment: fixed;
   color: var(--foreground);
@@ -126,15 +155,15 @@ body {
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 6px; }
-::-webkit-scrollbar-thumb:hover { background: #453f38; }
+::-webkit-scrollbar-thumb:hover { background: #4a4030; }
 
 /*
  * .glass-chrome — vidro estrutural: sidebar, cabeçalho de página, inspetor de
  * bloco do builder. Elementos fixos/dockados que não sobrepõem conteúdo (são
- * vizinhos dele no layout), então o que refratam é a malha de fundo.
+ * vizinhos dele no layout), então o que refratam é o fundo por trás.
  */
 .glass-chrome {
-  background: linear-gradient(180deg, var(--glass-fill), rgb(22 20 18 / 58%));
+  background: linear-gradient(180deg, var(--glass-fill), rgb(17 14 11 / 62%));
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   box-shadow:
@@ -166,6 +195,61 @@ body {
 .surface-panel {
   background: var(--surface);
   box-shadow: inset 0 1px 0 var(--surface-edge-light), var(--surface-shadow);
+}
+
+/*
+ * .canon — guias verticais tracejadas que delimitam o cânone da página
+ * (espírito Profound: "isto é engenharia com régua, não um template solto").
+ * Não define largura nem margem — cada página combina `canon` com as
+ * próprias classes Tailwind de `max-w-*`/`mx-auto`, senão a regra abaixo
+ * (que vem depois do `@import "tailwindcss"` no arquivo, logo vence no
+ * empate de especificidade) atropelaria o `max-w-*` de cada tela. As linhas
+ * ficam na borda externa do container — o padding interno de cada página
+ * abre o respiro entre a guia e o conteúdo de verdade.
+ */
+.canon {
+  position: relative;
+}
+.canon::before,
+.canon::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 1px dashed var(--canon-guide);
+  pointer-events: none;
+}
+.canon::before { left: 0; }
+.canon::after { right: 0; }
+
+/*
+ * .cta-signature — a assinatura tátil do botão principal (espírito Koyeb):
+ * sombra dura deslocada em vez da sombra difusa colorida que o `Button`
+ * `primary` já tem por padrão (definido em `components/ui/index.tsx`, fora
+ * do escopo desta revisão). Aplicada via `className` só na ação primária de
+ * cada tela — nunca em toda ocorrência de botão — porque o ponto é ser rara.
+ * O `!important` aqui é deliberado: sem ele, a sombra difusa do componente
+ * (mesma especificidade, gerada depois no `@theme`) venceria no empate.
+ */
+.cta-signature {
+  box-shadow: 3px 3px 0 0 var(--accent-soft) !important;
+  transition:
+    transform 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 150ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 150ms ease;
+}
+.cta-signature:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 0 var(--accent-soft) !important;
+}
+.cta-signature:active {
+  transform: translate(0, 0);
+  box-shadow: 1px 1px 0 0 var(--accent-soft) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .cta-signature:hover,
+  .cta-signature:active { transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
