@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Plus, Trash2, Wand2 } from 'lucide-react'
 
 import { Button, Label, Textarea } from '@/components/ui'
@@ -43,17 +43,46 @@ export function VariationsField({
   /** Exemplos, um por linha, para o dono ver o tom esperado. */
   placeholders?: string[]
 }) {
-  const parsed = splitVariations(value)
   // Texto com spintax no meio da frase não vira lista — abre no modo bruto.
-  const complexo = Boolean(value.trim()) && parsed === null && value.includes('{')
+  const complexo = Boolean(value.trim()) && splitVariations(value) === null && value.includes('{')
   const [raw, setRaw] = useState(complexo)
 
-  const variations = parsed ?? (value.trim() ? [value] : [''])
+  /**
+   * A lista vive AQUI, não é derivada de `value` a cada render.
+   *
+   * Derivar parecia mais limpo e estava errado: `joinVariations` descarta
+   * campo vazio (senão `{a|}` viraria uma variação em branco saindo para o
+   * contato), então o campo recém-criado desaparecia no mesmo instante — o
+   * botão "adicionar versão" não fazia nada visível. Campo vazio é estado de
+   * edição, não conteúdo; ele precisa sobreviver até a pessoa digitar.
+   */
+  const [items, setItems] = useState<string[]>(
+    () => splitVariations(value) ?? (value.trim() ? [value] : ['']),
+  )
+
+  /**
+   * O que este componente emitiu por último. Serve para distinguir "o valor
+   * mudou porque eu mudei" de "mudou por fora" (carregar outra automação,
+   * trocar de bloco no inspetor). Sem isso, ressincronizar a cada mudança de
+   * `value` reintroduziria o bug do campo vazio sumindo.
+   */
+  const emitido = useRef(value)
+
+  useEffect(() => {
+    if (value === emitido.current) return
+    emitido.current = value
+    setItems(splitVariations(value) ?? (value.trim() ? [value] : ['']))
+  }, [value])
+
+  const variations = items
   const total = variantCount(value)
   const falta = Math.max(min - total, 0)
 
   function commit(next: string[]) {
-    onChange(joinVariations(next))
+    setItems(next)
+    const serializado = joinVariations(next)
+    emitido.current = serializado
+    onChange(serializado)
   }
 
   return (
