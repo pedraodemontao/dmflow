@@ -16,7 +16,9 @@ src/lib/instagram/   oauth.ts (login + token), api.ts (envio), signature.ts (HMA
 src/lib/flow/        types.ts (schema Zod dos nós), engine.ts (state machine), triggers.ts (matcher)
 src/lib/webhook/     process.ts (fila + roteamento de evento)
 src/app/api/         webhooks/instagram, auth/instagram(+callback), cron/tick
-supabase/            migrations/0001_init.sql, seed.sql (fluxo de exemplo)
+supabase/            migrations/0001..0013, seed.sql (fluxo de exemplo)
+src/lib/series.ts    agrupamento em balde de dia/hora (puro), alimenta os gráficos
+src/components/ui/   index.tsx (primitivos), chart.tsx (BigNumber, Meter, RankBars, TimeSeries)
 ```
 
 ## Invariantes — quebrar isso quebra a automação
@@ -89,6 +91,25 @@ e o cron não fazem login — e cada uma tem autenticação própria (HMAC, `sta
 
 As páginas do painel vivem em `src/app/(app)/`, que é onde mora a sidebar. `/login` e
 `/privacidade` ficam fora do grupo de propósito.
+
+## Métrica: qual tabela responde o quê
+
+- **`flow_node_events`** conta PASSAGEM por bloco. É o funil. Uma linha por
+  contato por nó visitado.
+- **`button_clicks`** conta ESCOLHA. Tabela separada de propósito: linha de
+  clique dentro de `flow_node_events` inflaria o funil, com a mesma pessoa
+  aparecendo duas vezes no mesmo nó.
+- **`send_log`** é o cap e o gráfico de envios por hora. Não é histórico de
+  mensagem — isso é `messages`.
+- Toda escrita de métrica é disparada sem `await` bloqueante, com erro indo
+  para `console.error`. Métrica é acessório; entrega não. É também o que faz o
+  código sobreviver a uma tabela que ainda não existe no banco.
+
+## Migration
+
+Não há CLI nem `psql` na máquina: a migration é colada no SQL Editor do
+Supabase, na ordem dos arquivos. Escreva o arquivo, avise o dono, e só então
+suba o código que depende dela.
 
 ## Convenções
 
