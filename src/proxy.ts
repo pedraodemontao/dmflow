@@ -15,6 +15,12 @@ const PUBLIC_PATHS = [
   '/api/cron',
   // A página de captura avisa a conversão daqui; defesa é o CONVERSION_SECRET.
   '/api/conversao',
+  // Página pública da entrega (o link que a DM manda). Defesa: só GET (é
+  // página, sem mutação), só serve `status = 'published'` (rascunho é 404,
+  // nunca 403 — 403 confirmaria que o slug existe), slug não enumerável
+  // (kebab-do-título + 6 caracteres aleatórios), e não há dado sensível —
+  // é material de marketing feito para ser distribuído.
+  '/e',
 ]
 
 export function proxy(request: NextRequest) {

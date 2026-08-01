@@ -157,3 +157,13 @@ export const deliverySchema = z.object({
  * — não a linha inteira, que também tem `id`, `slug`, `status` etc.
  */
 export type DeliveryContent = z.infer<typeof deliverySchema>
+
+/**
+ * `deliveries.blocks` é `jsonb` — o banco aceita qualquer coisa ali. Linha
+ * malformada vira lista vazia em vez de derrubar a página pública — mesmo
+ * padrão de `parseNamedMechanisms` (`build-system-prompt.ts`).
+ */
+export function parseDeliveryBlocks(raw: unknown): DeliveryBlock[] {
+  const parsed = z.array(deliveryBlockSchema).safeParse(raw)
+  return parsed.success ? parsed.data : []
+}

@@ -35,6 +35,20 @@ const schema = z.object({
   PUBLIC_REPLY_PER_POST_CAP: z.coerce.number().int().positive().default(8),
   /** Protege POST /api/conversao. Sem ela, a rota recusa tudo. */
   CONVERSION_SECRET: z.string().min(16).optional(),
+  /**
+   * Assina o `?c=<token>` do link de entrega (`/e/[slug]`) — segredo próprio,
+   * não reaproveita `PANEL_PASSWORD`: são superfícies diferentes, uma
+   * autentica o dono, a outra só marca quem abriu um link público.
+   *
+   * Declarada aqui como documentação e validação, mas `src/lib/delivery/token.ts`
+   * recebe o segredo por parâmetro em vez de ler `env.DELIVERY_TOKEN_SECRET` —
+   * mesmo motivo do bloco da Anthropic acima: o `env` Proxy valida o schema
+   * INTEIRO no primeiro acesso, o que quebraria o teste do token e a página
+   * pública em máquina sem as variáveis do Instagram. Sem o segredo, token
+   * nenhum valida — a página serve o conteúdo do mesmo jeito, só sem saber
+   * quem abriu (ver Fase 3 do card 01: token ausente não bloqueia).
+   */
+  DELIVERY_TOKEN_SECRET: z.string().min(16).optional(),
 })
 
 type Env = z.infer<typeof schema>
@@ -60,6 +74,7 @@ function load(): Env {
     // Configuração que mente em silêncio é pior que configuração inexistente.
     PUBLIC_REPLY_PER_POST_CAP: process.env.PUBLIC_REPLY_PER_POST_CAP,
     CONVERSION_SECRET: process.env.CONVERSION_SECRET,
+    DELIVERY_TOKEN_SECRET: process.env.DELIVERY_TOKEN_SECRET,
   })
 
   if (!parsed.success) {
