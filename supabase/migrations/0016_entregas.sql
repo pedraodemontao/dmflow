@@ -47,6 +47,10 @@ alter table public.flows
 create index if not exists deliveries_account_idx on public.deliveries (account_id, created_at desc);
 -- Contagem e listagem de visitas por entrega.
 create index if not exists delivery_views_delivery_idx on public.delivery_views (delivery_id, created_at desc);
+-- Mesmo padrão de `messages_contact_idx` (migration 0001): sem isso,
+-- `resetTestData` apagando todos os `contacts` de uma vez varre
+-- `delivery_views` inteira sem índice a cada `on delete set null`.
+create index if not exists delivery_views_contact_idx on public.delivery_views (contact_id);
 
 alter table public.deliveries enable row level security;
 alter table public.delivery_views enable row level security;
