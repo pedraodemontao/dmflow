@@ -323,7 +323,15 @@ function finish(
 
   const mensagens: Record<ScrapePhase, string> = {
     'sem-perfil': 'Nenhum perfil acompanhado. Importe a lista inicial antes de raspar.',
-    raspando: `A Apify ainda está raspando. Faltam ${restantes} perfis — clique de novo em instantes para continuar de onde parou.`,
+    // "Faltam 0 perfis" enquanto uma rodada está no ar é a frase que fez o
+    // dono achar que nada tinha acontecido em 01/08/2026: a rodada TINHA
+    // começado, mas a Apify leva 1 a 2 minutos e o orçamento da nossa chamada
+    // é de 50 segundos. Zero na fila não significa "nada a fazer", significa
+    // "nada mais a COMEÇAR — o que falta é esperar".
+    raspando:
+      restantes === 0
+        ? 'A Apify está raspando agora. Leva um a dois minutos: espere e clique de novo para trazer o resultado.'
+        : `A Apify está raspando. Ainda faltam ${restantes} perfis — clique de novo em instantes para continuar de onde parou.`,
     concluida:
       restantes === 0 && report.received === 0 && report.runsStarted === 0
         ? 'Tudo já foi raspado nas últimas 12 horas. Nada novo a buscar.'

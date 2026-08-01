@@ -33,6 +33,10 @@ export function RunScrape({
   const [report, setReport] = useState<ScrapeActionResult | null>(null)
 
   const faltam = report?.profilesRemaining ?? 0
+  // Uma rodada no ar exige um segundo clique para COLHER, mesmo sem perfil
+  // nenhum na fila. Sem isto o botão voltava a dizer "Raspar agora" e parecia
+  // que a primeira tentativa não tinha feito nada.
+  const colhendo = report?.phase === 'raspando'
 
   return (
     <div className="flex flex-col items-center gap-3">
@@ -49,7 +53,13 @@ export function RunScrape({
         }
       >
         <Radar className="size-4" />
-        {pending ? 'raspando…' : faltam > 0 ? `Continuar (${faltam} na fila)` : 'Raspar agora'}
+        {pending
+          ? 'raspando…'
+          : colhendo
+            ? 'Trazer o resultado'
+            : faltam > 0
+              ? `Continuar (${faltam} na fila)`
+              : 'Raspar agora'}
       </Button>
 
       <p className="label text-[9px] text-muted">
