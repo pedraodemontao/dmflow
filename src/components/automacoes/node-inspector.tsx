@@ -794,6 +794,7 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
                   >
                     <option value="last_input">A última resposta</option>
                     <option value="tags">As etiquetas</option>
+                    <option value="follows">Se a pessoa segue a conta</option>
                   </Select>
                   <div className="flex gap-2">
                     <Select
@@ -811,16 +812,41 @@ export function NodeInspector({ node, isEntry, flowOptions, onChange, onDelete, 
                       <option value="has_tag">tem a etiqueta</option>
                       <option value="exists">existe</option>
                     </Select>
-                    <Input
-                      value={branch.value ?? ''}
-                      placeholder="sim"
-                      onChange={(e) => {
-                        const next = [...node.cases]
-                        next[i] = { ...next[i], value: e.target.value }
-                        patch({ cases: next })
-                      }}
-                    />
+                    {/* "Segue a conta" tem valores fechados: digitar livre aqui
+                        deixaria alguém escrever "Sim" com maiúscula ou "true" e
+                        o caminho nunca casaria, sem erro nenhum na tela. */}
+                    {branch.source === 'follows' ? (
+                      <Select
+                        value={branch.value ?? 'sim'}
+                        onChange={(e) => {
+                          const next = [...node.cases]
+                          next[i] = { ...next[i], value: e.target.value }
+                          patch({ cases: next })
+                        }}
+                      >
+                        <option value="sim">segue</option>
+                        <option value="nao">não segue</option>
+                      </Select>
+                    ) : (
+                      <Input
+                        value={branch.value ?? ''}
+                        placeholder="sim"
+                        onChange={(e) => {
+                          const next = [...node.cases]
+                          next[i] = { ...next[i], value: e.target.value }
+                          patch({ cases: next })
+                        }}
+                      />
+                    )}
                   </div>
+
+                  {branch.source === 'follows' && (
+                    <p className="mt-2 text-[11px] leading-relaxed text-muted">
+                      Quem só comentou ainda não dá para verificar — comentar não libera o perfil
+                      para a gente. Essa pessoa cai no “senão”, e é lá que vale pedir para seguir,
+                      não deixar no silêncio.
+                    </p>
+                  )}
                 </div>
               ))}
               <Button
