@@ -142,6 +142,37 @@ describe('fetchMediaInsights', () => {
     expect(spy).toHaveBeenCalled()
   })
 
+  it('degrada em MAIS de um estágio quando a Meta cita métricas incompatíveis aos poucos', async () => {
+    // Reproduz o comportamento real medido em 01/08/2026: com as 11 juntas a
+    // Meta só cita link_clicks; tirando ela, só então cita follows e
+    // profile_visits. Um retry único ficaria preso no segundo estágio.
+    silence()
+    setResponse(
+      'insights:m1',
+      { ok: false, body: { error: { message: 'The metric link_clicks is not available on this endpoint.' } } },
+      {
+        ok: false,
+        body: {
+          error: {
+            message:
+              'The Media Insights API does not support the follows, profile_visits metric for this media product type.',
+          },
+        },
+      },
+      {
+        ok: true,
+        body: { data: [datum('views', 488), datum('reach', 144), datum('total_interactions', 6)] },
+      },
+    )
+
+    const snapshot = await fetchMediaInsights({ mediaId: 'm1', accessToken: 'tok' })
+
+    expect(snapshot.views).toBe(488)
+    expect(snapshot.link_clicks).toBeNull()
+    expect(snapshot.follows).toBeNull()
+    expect(snapshot.profile_visits).toBeNull()
+  })
+
   it('erro que não cita nenhuma métrica nossa sobe em vez de virar retry silencioso', async () => {
     setResponse('insights:m1', { ok: false, body: { error: { message: 'Error validating access token' } } })
 

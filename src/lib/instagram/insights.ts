@@ -45,18 +45,32 @@ async function requestInsights(mediaId: string, accessToken: string, metrics: Me
   return { ok: res.ok, json }
 }
 
+function toSnapshot(data: InsightDatum[]): MediaInsightsSnapshot {
+  const byName = new Map(data.map((d) => [d.name, d.values?.[0]?.value ?? null]))
+  const snapshot = {} as MediaInsightsSnapshot
+  for (const [metric, column] of Object.entries(METRIC_COLUMN) as [MetricName, ColumnName][]) {
+    snapshot[column] = byName.has(metric) ? (byName.get(metric) as number) : null
+  }
+  return snapshot
+}
+
 /**
  * Insights de uma mídia, pedidos em lote. A Meta recusa a CHAMADA INTEIRA
  * quando uma métrica não vale para o tipo daquela mídia — confirmado por curl
  * contra a conta real em 01/08/2026: todo REELS da conta (100% do conteúdo
- * hoje) recusa `follows`, `profile_visits` e `link_clicks`, com a métrica
- * citada por nome na mensagem de erro ("does not support the follows,
- * profile_visits metric..." / "the metric link_clicks is not available on
- * this endpoint"). Por isso a degradação aqui: tenta o lote inteiro e, se a
- * Meta recusar citando métrica(s), tira só as citadas e tenta de novo uma
- * vez — sem hardcodar por tipo de mídia, porque um erro genérico (token
- * morto, mídia apagada) não cita métrica nenhuma e não deve virar retry
- * silencioso.
+ * hoje) recusa `follows`, `profile_visits` e `link_clicks`.
+ *
+ * A Meta reporta isso EM ESTÁGIOS, não tudo de uma vez: pedindo as 11 juntas,
+ * a mensagem de erro cita só `link_clicks` ("not available on this
+ * endpoint"); tirando ela, a próxima resposta só então cita `follows,
+ * profile_visits` ("does not support ... for this media product type") —
+ * confirmado batendo as duas chamadas contra a conta real. Um retry único
+ * (tira o que a primeira mensagem citou e para) fica preso no segundo
+ * estágio para sempre: teria devolvido erro em toda coleta, de todo Reel,
+ * indefinidamente. Por isso é um LOOP, tira as métricas citadas e tenta de
+ * novo até a Meta aceitar ou parar de citar métrica nova — sem hardcodar por
+ * tipo de mídia, porque um erro genérico (token morto, mídia apagada) não
+ * cita métrica nenhuma e não deve virar retry silencioso.
  *
  * Métrica que a Meta OMITE do array `data` (não manda zero) vira `null` —
  * nunca zero, que seria indistinguível de "ninguém viu".
@@ -66,9 +80,22 @@ export async function fetchMediaInsights(args: {
   accessToken: string
 }): Promise<MediaInsightsSnapshot> {
   let metrics = ALL_METRICS
-  let attempt = await requestInsights(args.mediaId, args.accessToken, metrics)
+  const dropped: MetricName[] = []
 
-  if (!attempt.ok) {
+  // Cada volta remove ao menos uma métrica, então o teto de tentativas é o
+  // próprio total de métricas — não há como o loop rodar para sempre.
+  for (let round = 0; round < ALL_METRICS.length; round++) {
+    const attempt = await requestInsights(args.mediaId, args.accessToken, metrics)
+
+    if (attempt.ok) {
+      if (dropped.length > 0) {
+        console.error(
+          `[dm-flow] insights de mídia ${args.mediaId}: Meta recusou ${dropped.join(', ')} para este tipo de mídia, coletado sem elas`,
+        )
+      }
+      return toSnapshot(attempt.json.data ?? [])
+    }
+
     const message = attempt.json.error?.message ?? ''
     const unsupported = metrics.filter((m) => message.includes(m))
     if (unsupported.length === 0) {
@@ -76,23 +103,15 @@ export async function fetchMediaInsights(args: {
     }
 
     metrics = metrics.filter((m) => !unsupported.includes(m))
-    attempt = await requestInsights(args.mediaId, args.accessToken, metrics)
-    if (!attempt.ok) {
+    dropped.push(...unsupported)
+    if (metrics.length === 0) {
       throw new Error(
-        `Insights de mídia falharam (${args.mediaId}) mesmo após tirar ${unsupported.join(', ')}: ${attempt.json.error?.message ?? 'resposta sem corpo'}`,
+        `Insights de mídia falharam (${args.mediaId}): nenhuma métrica sobrou depois de tirar ${dropped.join(', ')}`,
       )
     }
-    console.error(
-      `[dm-flow] insights de mídia ${args.mediaId}: Meta recusou ${unsupported.join(', ')} para este tipo de mídia, coletado sem elas`,
-    )
   }
 
-  const byName = new Map((attempt.json.data ?? []).map((d) => [d.name, d.values?.[0]?.value ?? null]))
-  const snapshot = {} as MediaInsightsSnapshot
-  for (const [metric, column] of Object.entries(METRIC_COLUMN) as [MetricName, ColumnName][]) {
-    snapshot[column] = byName.has(metric) ? (byName.get(metric) as number) : null
-  }
-  return snapshot
+  throw new Error(`Insights de mídia falharam (${args.mediaId}): degradação excedeu o número de métricas`)
 }
 
 async function fetchMediaTimestamp(mediaId: string, accessToken: string): Promise<string | null> {
