@@ -18,6 +18,10 @@ const FLOW_B_ID = '22222222-2222-4222-8222-222222222222'
 const MISSING_FLOW_ID = '33333333-3333-4333-8333-333333333333'
 
 const sent: Array<{ kind: string; text: string }> = []
+
+/** O que a Meta responde na consulta de perfil, e quantas vezes foi chamada. */
+let profileResponse: { is_user_follow_business?: boolean } | null = null
+let profileCalls = 0
 const runUpdates: Array<Record<string, unknown>> = []
 
 type FlowRow = { id: string; account_id: string; name: string; definition: unknown }
@@ -100,6 +104,10 @@ vi.mock('@/lib/instagram/api', () => ({
   sendPrivateReply: async (args: { text: string }) => {
     sent.push({ kind: 'private_reply', text: args.text })
     return {}
+  },
+  fetchContactProfile: async () => {
+    profileCalls += 1
+    return profileResponse
   },
 }))
 
@@ -457,5 +465,73 @@ describe('condição "segue a conta"', () => {
 
     expect(sent.some((s) => s.text === 'Me manda oi que eu confiro')).toBe(true)
     expect(sent.some((s) => s.text === 'Me segue que eu libero')).toBe(false)
+  })
+})
+
+describe('reconferir o follow no portão', () => {
+  /** O padrão do ManyChat: quem não segue recebe um botão que VOLTA à condição. */
+  const definition = {
+    entry: 'checa',
+    nodes: {
+      checa: {
+        type: 'condition',
+        cases: [{ source: 'follows', op: 'equals', value: 'sim', next: 'entrega' }],
+        fallback: 'pede_follow',
+      },
+      entrega: { type: 'message', text: 'Toma o presente', next: null },
+      pede_follow: { type: 'message', text: 'Me segue e clica aqui', next: null },
+    },
+  }
+
+  beforeEach(() => {
+    flows['flow-a'].definition = definition as never
+  })
+
+  it('quem seguiu agora recebe, mesmo com o cache dizendo que não seguia', async () => {
+    // É ISTO que faz o laço do ManyChat terminar. Sem a reconferência, a
+    // pessoa segue, aperta "já estou seguindo", e a condição relê o cache de
+    // 24h — que ainda diz "não segue". A ferramenta acusaria de não seguir
+    // justamente quem acabou de seguir, para sempre.
+    profileResponse = { is_user_follow_business: true }
+
+    await startFlow({
+      account: account as never,
+      flow: flows['flow-a'] as never,
+      contact: contact({
+        follows_account: false,
+        follows_checked_at: new Date(Date.now() - 60_000).toISOString(),
+      }) as never,
+    })
+
+    expect(sent.some((s) => s.text === 'Toma o presente')).toBe(true)
+  })
+
+  it('não gasta chamada com quem já consta como seguidor', async () => {
+    profileResponse = { is_user_follow_business: true }
+    profileCalls = 0
+
+    await startFlow({
+      account: account as never,
+      flow: flows['flow-a'] as never,
+      contact: contact({ follows_account: true }) as never,
+    })
+
+    expect(profileCalls).toBe(0)
+    expect(sent.some((s) => s.text === 'Toma o presente')).toBe(true)
+  })
+
+  it('perfil indisponível não vira "não segue"', async () => {
+    // Quem só comentou não dá consentimento: a Meta não responde. Continua
+    // sendo "não dá para saber", e o fluxo manda para o senão em vez de
+    // afirmar algo falso.
+    profileResponse = null
+
+    await startFlow({
+      account: account as never,
+      flow: flows['flow-a'] as never,
+      contact: contact({ follows_account: null }) as never,
+    })
+
+    expect(sent.some((s) => s.text === 'Me segue e clica aqui')).toBe(true)
   })
 })

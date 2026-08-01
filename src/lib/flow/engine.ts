@@ -6,6 +6,7 @@ import {
   sendPrivateReply,
   sendText,
   type MediaKind,
+  fetchContactProfile,
 } from '@/lib/instagram/api'
 import { flowDefinitionSchema, type FlowContext, type FlowNode } from '@/lib/flow/types'
 import { assertUnderSendCap, logSend, SendCapError } from '@/lib/flow/send-cap'
@@ -48,6 +49,54 @@ export function interpolate(text: string, contact: Contact, ctx: FlowContext): s
     if (key === 'contact_id') return contact.id
     return ctx.vars[key] ?? ''
   })
+}
+
+/**
+ * Espera mínima entre duas reconsultas de "segue?" do mesmo contato.
+ *
+ * Curta de propósito: o caso real é a pessoa seguir e apertar o botão em
+ * segundos. Só existe para o botão apertado várias vezes seguidas não virar
+ * uma chamada à Meta por toque.
+ */
+const FOLLOW_RECHECK_MS = 20_000
+
+/**
+ * Reconsulta o "segue a conta" quando ele ainda pode virar SIM.
+ *
+ * Muta o `contact` em memória para a condição logo abaixo enxergar o valor
+ * novo sem outra leitura no banco. Falha de rede não derruba o fluxo: fica com
+ * o que já se sabia, que é o comportamento de antes desta função existir.
+ */
+async function refreshFollowStatus(account: Account, contact: Contact): Promise<void> {
+  if (contact.follows_account === true) return
+
+  const checadoEm = contact.follows_checked_at
+    ? new Date(contact.follows_checked_at).getTime()
+    : 0
+  if (Date.now() - checadoEm < FOLLOW_RECHECK_MS) return
+
+  try {
+    const profile = await fetchContactProfile({
+      accessToken: account.access_token,
+      contactIgId: contact.ig_user_id,
+    })
+
+    // Perfil indisponível é o caso de quem só comentou: sem consentimento, a
+    // Meta não conta. Deixa como está — nulo continua significando "não dá
+    // para saber", e nunca vira "não segue".
+    if (!profile || profile.is_user_follow_business === undefined) return
+
+    const segue = profile.is_user_follow_business
+    contact.follows_account = segue
+    contact.follows_checked_at = new Date().toISOString()
+
+    await supabaseAdmin
+      .from('contacts')
+      .update({ follows_account: segue, follows_checked_at: contact.follows_checked_at })
+      .eq('id', contact.id)
+  } catch (error) {
+    console.error('[dm-flow] não consegui reconferir o follow:', String(error))
+  }
 }
 
 function resolveSource(source: string, contact: Contact, ctx: FlowContext): string {
@@ -385,6 +434,23 @@ async function executeNode(
       }
 
     case 'condition': {
+      // Se algum caminho pergunta se a pessoa segue, e o que está guardado NÃO
+      // é "segue", vale reconsultar a Meta antes de decidir.
+      //
+      // Sem isto o padrão do ManyChat não funciona: lá o caminho de "não
+      // segue" manda "me segue e clica aqui" com um botão que VOLTA para a
+      // condição. A pessoa segue de verdade, aperta o botão — e a condição
+      // releria o cache de 24h, que ainda diz "não segue". Laço infinito, com
+      // a ferramenta acusando de não seguir quem acabou de seguir.
+      //
+      // Só reconsulta quando pode MUDAR alguma coisa: quem já consta como
+      // seguidor não gera chamada, e quem deixou de seguir também não é
+      // reavaliado aqui — o portão existe para liberar, não para caçar quem
+      // saiu.
+      if (node.cases.some((branch) => branch.source === 'follows')) {
+        await refreshFollowStatus(account, contact)
+      }
+
       for (const branch of node.cases) {
         const actual = resolveSource(branch.source, contact, ctx).toLowerCase()
         const expected = (branch.value ?? '').toLowerCase()
