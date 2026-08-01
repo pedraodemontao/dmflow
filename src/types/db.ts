@@ -81,6 +81,13 @@ export interface Contact {
   follower_count?: number | null
   is_verified?: boolean
   profile_synced_at?: string | null
+  /**
+   * Segue a conta? NULO = ainda não deu para verificar (só comentou, e
+   * comentário não dá consentimento de perfil). NUNCA trate nulo como falso —
+   * barraria quem segue. Ver migration 0015.
+   */
+  follows_account?: boolean | null
+  follows_checked_at?: string | null
   inbox_status: InboxStatus
   snooze_until: string | null
   notes: string | null

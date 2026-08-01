@@ -53,6 +53,20 @@ export function interpolate(text: string, contact: Contact, ctx: FlowContext): s
 function resolveSource(source: string, contact: Contact, ctx: FlowContext): string {
   if (source === 'last_input') return ctx.lastInput ?? ''
   if (source === 'tags') return contact.tags.join(',')
+  /**
+   * TRÊS estados, não dois: 'sim', 'nao' e '' (vazio = ainda não deu para
+   * saber). O vazio acontece com quem só comentou — comentar não dá
+   * consentimento de perfil, então a Meta não conta se a pessoa segue.
+   *
+   * Tratar o desconhecido como 'nao' barraria gente que segue de verdade, que
+   * é o pior erro possível aqui: o lead já pediu o material e sai sem nada.
+   * Por isso o valor vazio existe e o fluxo pode decidir o que fazer com ele.
+   */
+  if (source === 'follows') {
+    if (contact.follows_account === true) return 'sim'
+    if (contact.follows_account === false) return 'nao'
+    return ''
+  }
   if (source.startsWith('vars.')) return ctx.vars[source.slice('vars.'.length)] ?? ''
   return ctx.vars[source] ?? ''
 }

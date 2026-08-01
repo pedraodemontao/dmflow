@@ -177,6 +177,11 @@ function profileFields(profile: NonNullable<Awaited<ReturnType<typeof fetchConta
     follower_count: profile.follower_count ?? null,
     is_verified: profile.is_verified_user ?? false,
     profile_synced_at: new Date().toISOString(),
+    // Guardado aqui porque a checagem acontece no meio do fluxo, onde
+    // consultar a Meta somaria latência a toda passagem e a indisponibilidade
+    // dela viraria fluxo travado. Ver migration 0015.
+    follows_account: profile.is_user_follow_business ?? null,
+    follows_checked_at: new Date().toISOString(),
   }
 }
 

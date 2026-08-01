@@ -400,3 +400,62 @@ describe.each([
     ).rejects.toThrow(/Janela de 24h/)
   })
 })
+
+describe('condição "segue a conta"', () => {
+  /** Fluxo de presente: entrega só para quem segue, e ensina quem não segue. */
+  const definition = {
+    entry: 'checa',
+    nodes: {
+      checa: {
+        type: 'condition',
+        cases: [
+          { source: 'follows', op: 'equals', value: 'sim', next: 'entrega' },
+          { source: 'follows', op: 'equals', value: 'nao', next: 'pede_follow' },
+        ],
+        fallback: 'nao_sei',
+      },
+      entrega: { type: 'message', text: 'Toma o presente', next: null },
+      pede_follow: { type: 'message', text: 'Me segue que eu libero', next: null },
+      nao_sei: { type: 'message', text: 'Me manda oi que eu confiro', next: null },
+    },
+  }
+
+  beforeEach(() => {
+    flows['flow-a'].definition = definition as never
+  })
+
+  it('entrega para quem segue', async () => {
+    await startFlow({
+      account: account as never,
+      flow: flows['flow-a'] as never,
+      contact: contact({ follows_account: true }) as never,
+    })
+
+    expect(sent.some((s) => s.text === 'Toma o presente')).toBe(true)
+  })
+
+  it('pede o follow de quem não segue, em vez de calar', async () => {
+    await startFlow({
+      account: account as never,
+      flow: flows['flow-a'] as never,
+      contact: contact({ follows_account: false }) as never,
+    })
+
+    expect(sent.some((s) => s.text === 'Me segue que eu libero')).toBe(true)
+    expect(sent.some((s) => s.text === 'Toma o presente')).toBe(false)
+  })
+
+  it('desconhecido NÃO conta como "não segue"', async () => {
+    // Quem só comentou tem o campo nulo: comentar não dá consentimento de
+    // perfil. Tratar nulo como falso barraria gente que segue de verdade — o
+    // lead já pediu o material e sairia sem nada.
+    await startFlow({
+      account: account as never,
+      flow: flows['flow-a'] as never,
+      contact: contact({ follows_account: null }) as never,
+    })
+
+    expect(sent.some((s) => s.text === 'Me manda oi que eu confiro')).toBe(true)
+    expect(sent.some((s) => s.text === 'Me segue que eu libero')).toBe(false)
+  })
+})

@@ -484,6 +484,11 @@ export interface ContactProfile {
    */
   profile_pic?: string
   follower_count?: number
+  /**
+   * A pessoa segue a conta? Vem de graça na mesma chamada — nenhuma requisição
+   * a mais. É o que permite entregar o material só para quem segue.
+   */
+  is_user_follow_business?: boolean
   is_verified_user?: boolean
 }
 
@@ -500,7 +505,7 @@ export async function fetchContactProfile(args: {
   contactIgId: string
 }): Promise<ContactProfile | null> {
   const params = new URLSearchParams({
-    fields: 'name,username,profile_pic,follower_count,is_verified_user',
+    fields: 'name,username,profile_pic,follower_count,is_verified_user,is_user_follow_business',
   })
   const res = await fetch(`${GRAPH}/${args.contactIgId}?${params}`, {
     headers: { authorization: `Bearer ${args.accessToken}` },
