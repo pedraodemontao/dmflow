@@ -49,6 +49,17 @@ const schema = z.object({
    * quem abriu (ver Fase 3 do card 01: token ausente não bloqueia).
    */
   DELIVERY_TOKEN_SECRET: z.string().min(16).optional(),
+  /**
+   * Base pública do app (`https://dm.nocodepedro.site`, sem barra final) —
+   * é com ela que `{{presente}}` (`src/lib/flow/engine.ts`) monta a URL
+   * completa da entrega. Opcional, e não `.default(...)`: um valor chutado
+   * geraria link errado em silêncio, e isso é pior que `{{presente}}` virar
+   * string vazia (que pelo menos é visível na hora de testar). Lida por
+   * `process.env` direto em `engine.ts`, mesmo motivo do `DELIVERY_TOKEN_SECRET`
+   * acima — o Proxy `env` quebraria os testes do engine, que não montam as
+   * variáveis do Instagram/Supabase.
+   */
+  APP_URL: z.string().url().optional(),
 })
 
 type Env = z.infer<typeof schema>
@@ -75,6 +86,7 @@ function load(): Env {
     PUBLIC_REPLY_PER_POST_CAP: process.env.PUBLIC_REPLY_PER_POST_CAP,
     CONVERSION_SECRET: process.env.CONVERSION_SECRET,
     DELIVERY_TOKEN_SECRET: process.env.DELIVERY_TOKEN_SECRET,
+    APP_URL: process.env.APP_URL,
   })
 
   if (!parsed.success) {

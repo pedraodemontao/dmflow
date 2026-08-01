@@ -8,6 +8,7 @@ import {
   type MediaKind,
   fetchContactProfile,
 } from '@/lib/instagram/api'
+import { signDeliveryToken } from '@/lib/delivery/token'
 import { flowDefinitionSchema, type FlowContext, type FlowNode } from '@/lib/flow/types'
 import { assertUnderSendCap, logSend, SendCapError } from '@/lib/flow/send-cap'
 import { spin } from '@/lib/flow/spintax'
@@ -633,6 +634,46 @@ async function walk(
 }
 
 /**
+ * A URL que `{{presente}}` interpola: base pública + slug da entrega
+ * vinculada ao fluxo + token assinado do contato (`src/lib/delivery/token.ts`,
+ * mesmo par `signSession`/`isValidSession` de `src/lib/auth.ts`, segredo
+ * próprio). Calculada UMA vez, no início do run, e guardada em
+ * `ctx.vars.presente` — não em `interpolate()` — porque construir a URL
+ * exige consultar `deliveries`, e `interpolate()` é síncrona e chamada várias
+ * vezes por mensagem (texto, botões, quick replies). `interpolate()` não
+ * precisa de um caso especial para `presente`: o fallback genérico que já
+ * existe (`ctx.vars[key] ?? ''`) resolve a variável assim que ela está em
+ * `vars`, do mesmo jeito que resolve qualquer variável de `set_field` ou
+ * `ask`. Ela sobrevive a retomada e a retentativa porque `ctx` inteiro é
+ * persistido em `flow_runs.context` a cada checkpoint do `walk()` — o link
+ * não muda no meio da conversa.
+ *
+ * Sem entrega vinculada, ou sem `APP_URL`/`DELIVERY_TOKEN_SECRET`
+ * configurados, resolve para string vazia: degrada, não derruba o fluxo.
+ * Automação sem entrega vinculada já avisa NO EDITOR (Fase 5, `leaks.ts`) —
+ * aqui não é o lugar de travar quem já está em produção.
+ */
+async function resolvePresenteUrl(flow: Flow, contact: Contact): Promise<string> {
+  if (!flow.delivery_id) return ''
+
+  const appUrl = process.env.APP_URL
+  const secret = process.env.DELIVERY_TOKEN_SECRET
+  if (!appUrl || !secret) return ''
+
+  const { data } = await supabaseAdmin
+    .from('deliveries')
+    .select('slug')
+    .eq('id', flow.delivery_id)
+    .maybeSingle()
+
+  const slug = (data as { slug: string } | null)?.slug
+  if (!slug) return ''
+
+  const token = signDeliveryToken(contact.id, secret)
+  return `${appUrl.replace(/\/$/, '')}/e/${slug}?c=${token}`
+}
+
+/**
  * Inicia um fluxo para um contato. Se ele já estiver rodando outro, o novo trigger
  * é ignorado — evita dois fluxos disparando DM ao mesmo tempo.
  */
@@ -699,7 +740,7 @@ export async function startFlow(args: {
 
   const definition = flowDefinitionSchema.parse(args.flow.definition)
   const ctx: FlowContext = {
-    vars: {},
+    vars: { presente: await resolvePresenteUrl(args.flow, args.contact) },
     lastInput: args.input,
     ...(args.commentId ? { pendingCommentId: args.commentId } : {}),
   }
