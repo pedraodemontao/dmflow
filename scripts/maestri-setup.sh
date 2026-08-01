@@ -7,7 +7,16 @@
 # Requer Maestro Mode ligado neste terminal (é o que libera criar andar).
 # Use --no-brief para só montar o time, sem já mandar a primeira tarefa.
 #
-# Seguro para repetir: papel, andar e recruta que já existem apenas reclamam.
+# Seguro para repetir: recruta que já existe tem o MODELO TROCADO no lugar,
+# com as conexões preservadas — papel e andar que já existem apenas reclamam.
+#
+# Modelo por papel (o porquê está em maestri-lib.sh):
+#   Regente        fable    — lê um quadro; token quase nenhum, modelo bom sai de graça
+#   Implementador  sonnet   — lê código o dia inteiro; é aqui que a conta acontece
+#   Revisor        sonnet   — lê diff; barato economiza centavos e custa bug
+#
+# Trocar sem editar o script:
+#   MODELO_IMPLEMENTADOR=opus bash scripts/maestri-setup.sh
 #
 # HISTÓRICO: a versão anterior deste script montava um time para o carrossel e
 # para o redesign da UI — os dois entregues em 31/07. Ela também mandava um
@@ -18,15 +27,9 @@ set -uo pipefail
 BRIEF=1
 [ "${1:-}" = "--no-brief" ] && BRIEF=0
 
-PROJ="/Users/pedro/projects/dm-flow"
-
-M="$(command -v maestri || true)"
-[ -z "$M" ] && M="${MAESTRI_CLI:-}"
-if [ -z "$M" ] || ! "$M" list >/dev/null 2>&1; then
-  echo "❌ O CLI do Maestri não respondeu."
-  echo "   Este script só funciona dentro de um terminal aberto pela canvas do Maestri."
-  exit 1
-fi
+source "$(dirname "$0")/maestri-lib.sh"
+M="$(maestri_bin)"
+exigir_maestri
 
 if ! "$M" floor list >/dev/null 2>&1; then
   echo "❌ Maestro Mode parece desligado neste terminal."
@@ -104,12 +107,12 @@ echo "=== criando andares isolados (clone git em branch própria) ==="
 "$M" floor create "Insights" --branch feat/insights-do-video || echo "  (andar já existia, mantido)"
 
 echo
-echo "=== recrutando ==="
+echo "=== recrutando (modelo barato em quem queima token) ==="
 # --dir explícito: o workspace "DM FLOW" está registrado em /Users/pedro, não
 # no projeto. Enquanto isso não for corrigido na interface, todo recruit precisa.
-"$M" recruit "Estafeta" --role "dmflow-entrega"  --floor "Entrega"  --dir "$PROJ" || echo "  (recruta já existia, mantido)"
-"$M" recruit "Sonar"    --role "dmflow-insights" --floor "Insights" --dir "$PROJ" || echo "  (recruta já existia, mantido)"
-"$M" recruit "Peneira"  --role "dmflow-revisor"  --dir "$PROJ" || echo "  (recruta já existia, mantido)"
+recrutar "Estafeta" "dmflow-entrega"  "$MODELO_IMPLEMENTADOR" --floor "Entrega"
+recrutar "Sonar"    "dmflow-insights" "$MODELO_IMPLEMENTADOR" --floor "Insights"
+recrutar "Peneira"  "dmflow-revisor"  "$MODELO_REVISOR"
 
 "$M" connect "Estafeta" "Peneira" || true
 "$M" connect "Sonar"    "Peneira" || true
@@ -131,9 +134,11 @@ fi
 
 echo
 echo "✅ Time montado."
-echo "   Estafeta → card 01, a entrega     · andar Entrega  (branch feat/entrega-do-presente)"
-echo "   Sonar    → card 02, os insights   · andar Insights (branch feat/insights-do-video)"
-echo "   Peneira  → revisor, não edita nada · andar térreo"
+echo "   Estafeta → card 01, a entrega      · andar Entrega  · modelo $MODELO_IMPLEMENTADOR"
+echo "   Sonar    → card 02, os insights    · andar Insights · modelo $MODELO_IMPLEMENTADOR"
+echo "   Peneira  → revisor, não edita nada · andar térreo   · modelo $MODELO_REVISOR"
+echo
+echo "   Falta o Regente (modelo $MODELO_REGENTE):  bash scripts/maestri-orquestra.sh"
 echo
 echo "   Acompanhar:  maestri check \"Estafeta\""
 echo "   Delegar:     maestri ask \"Sonar\" \"...\""
