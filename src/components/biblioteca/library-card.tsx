@@ -5,6 +5,7 @@ import { useState, useTransition, type ReactNode } from 'react'
 import { ArrowUpRight, Check, Eye, Heart, MessageCircle, Play } from 'lucide-react'
 
 import { setLibraryItemWatched } from '@/app/(app)/biblioteca/actions'
+import { GenerateScript } from '@/components/biblioteca/generate-script'
 import type { LibraryCardItem } from '@/app/(app)/biblioteca/queries'
 import { getInitials } from '@/components/ui'
 import { useToast } from '@/components/ui/toast'
@@ -107,6 +108,12 @@ export function LibraryCard({ item }: { item: LibraryCardItem }) {
           </div>
         </dl>
 
+        {/* As duas ações do card, lado a lado: a que fecha o ciclo do produto
+            (virar roteiro) e a de organização. Gerar vem primeiro porque é o
+            motivo de a biblioteca existir — sem ele a tela é só um acervo. */}
+        <div className="grid grid-cols-[1fr_auto] gap-2">
+          <GenerateScript itemId={item.id} autor={item.owner_handle} />
+
         <button
           type="button"
           onClick={toggleWatched}
@@ -122,8 +129,11 @@ export function LibraryCard({ item }: { item: LibraryCardItem }) {
           )}
         >
           {watched ? <Check className="size-3.5" /> : <Eye className="size-3.5" />}
-          {watched ? 'assistido' : 'marcar assistido'}
+          <span className="sr-only sm:not-sr-only">
+            {watched ? 'assistido' : 'marcar assistido'}
+          </span>
         </button>
+        </div>
       </div>
     </article>
   )
