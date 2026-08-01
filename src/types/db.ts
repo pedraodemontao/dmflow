@@ -298,3 +298,26 @@ export interface DeliveryView {
   contact_id: string | null
   created_at: string
 }
+
+/**
+ * Snapshot de insights de uma mídia, capturado do Instagram. Linha nova a
+ * cada coleta — nunca sobrescreve (ver migration 0017). Métrica que a Meta
+ * omitiu ou recusou para o tipo da mídia fica null; nunca vira zero.
+ */
+export interface MediaInsight {
+  id: number
+  account_id: string
+  media_id: string
+  captured_at: string
+  views: number | null
+  reach: number | null
+  follows: number | null
+  profile_visits: number | null
+  total_interactions: number | null
+  saved: number | null
+  shares: number | null
+  link_clicks: number | null
+  avg_watch_time_ms: number | null
+  total_watch_time_ms: number | null
+  skip_rate: number | null
+}

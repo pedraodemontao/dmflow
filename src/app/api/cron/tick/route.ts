@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 
 import { env } from '@/lib/env'
 import { refreshLongLivedToken } from '@/lib/instagram/oauth'
+import { collectMediaInsights } from '@/lib/instagram/insights'
 import { resumeFlow } from '@/lib/flow/engine'
 import { isQuiet } from '@/lib/flow/quiet-hours'
 import { assertUnderSendCap, isUnderPublicReplyCap, logSend } from '@/lib/flow/send-cap'
@@ -265,7 +266,16 @@ export async function GET(request: NextRequest) {
   const refreshed = await refreshExpiringTokens()
   const publicReplies = await drainPublicReplies()
 
-  const body = { polled, requeued, processed, resumed, refreshed, publicReplies }
+  // Métrica é acessório, entrega não: coleta de insights nunca pode responder
+  // 503. Erro aqui é console.error — o 503 abaixo é exclusivo do polling.
+  let mediaInsights = { collected: 0, skipped: 0 }
+  try {
+    mediaInsights = await collectMediaInsights()
+  } catch (error) {
+    console.error('[dm-flow] coleta de insights de mídia falhou:', error)
+  }
+
+  const body = { polled, requeued, processed, resumed, refreshed, publicReplies, mediaInsights }
 
   // Não conseguir varrer NENHUMA conta é o sistema parado, não um tick
   // tranquilo. Em 30/07 isso durou 22h reportando 200 e "succeeded" no
