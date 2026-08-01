@@ -660,11 +660,15 @@ async function resolvePresenteUrl(flow: Flow, contact: Contact): Promise<string>
   const secret = process.env.DELIVERY_TOKEN_SECRET
   if (!appUrl || !secret) return ''
 
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('deliveries')
     .select('slug')
     .eq('id', flow.delivery_id)
     .maybeSingle()
+
+  // Sem isto, uma falha transitória de banco vira link vazio indistinguível
+  // de "sem entrega vinculada" — e ninguém percebe até um lead reclamar.
+  if (error) console.error('[dm-flow] falha ao buscar entrega para {{presente}}:', error.message)
 
   const slug = (data as { slug: string } | null)?.slug
   if (!slug) return ''
