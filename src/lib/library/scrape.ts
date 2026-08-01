@@ -39,6 +39,7 @@ import {
 } from '@/lib/library/apify'
 import { costOfResults, DEFAULT_POSTS_PER_PROFILE } from '@/lib/library/cost'
 import { ingestScrapedPosts, recomputeProfileMetrics } from '@/lib/library/ingest'
+import { backfillThumbs } from '@/lib/library/thumbs'
 import { loadActiveProfiles, type ActiveProfile } from '@/lib/library/profiles'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
@@ -228,6 +229,18 @@ export async function runLibraryScrape(options: ScrapeOptions): Promise<ScrapeRe
         profileIds: ingest.profileIds,
       })
       report.errors.push(...recompute.errors)
+
+      // Guarda a cópia das capas DEPOIS de gravar, nunca antes: a rodada da
+      // Apify já foi paga e não pode ficar refém do download de imagem. O que
+      // não baixar agora volta na próxima raspagem — a busca só pega quem
+      // ainda aponta para fora. Ver `thumbs.ts` para o porquê de não linkar
+      // direto (oito de dez capas voltavam 503 no navegador).
+      const capas = await backfillThumbs({
+        accountId,
+        supabaseUrl: process.env.SUPABASE_URL ?? '',
+      })
+      const falharam = capas.filter((capa) => !capa.ok).length
+      if (falharam > 0) report.errors.push(`${falharam} capa(s) não foram guardadas`)
     } catch (error) {
       report.errors.push(
         `coleta da rodada ${run.id}: ${error instanceof Error ? error.message : String(error)}`,
