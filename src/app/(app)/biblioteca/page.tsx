@@ -2,6 +2,7 @@ import { LibraryCard } from '@/components/biblioteca/library-card'
 import { LibraryEmpty, type LibraryEmptyKind } from '@/components/biblioteca/library-empty'
 import { LibraryFilters } from '@/components/biblioteca/library-filters'
 import { LibraryStats } from '@/components/biblioteca/library-stats'
+import { ProfileManager } from '@/components/biblioteca/profile-manager'
 import { summarize } from '@/components/biblioteca/format'
 import { parseOrder, parseStatus } from '@/components/biblioteca/query-params'
 
@@ -111,6 +112,15 @@ export default async function BibliotecaPage({
         {/* Mesmo cânone das outras telas: a régua tracejada delimita a coluna,
             senão a grade se estica até a borda e a página perde a medida. */}
         <div className="canon mx-auto w-full max-w-7xl">
+          {/* Sempre visível, menos quando a tabela nem existe: é daqui que se
+              adiciona perfil, importa a lista e dispara a raspagem. Deixar
+              essas ações só dentro do estado vazio fazia elas sumirem assim
+              que o primeiro perfil entrava — e perfil ruim conta como "não
+              vazio" para a tela e como "vazio" para quem usa. */}
+          {emptyKind !== 'sem-tabela' && (
+            <ProfileManager profiles={data.profiles} custoEstimado={custo.usd} />
+          )}
+
           {acervoVazio && emptyKind ? (
             <LibraryEmpty kind={emptyKind} profiles={data.profiles} custoEstimado={custo.usd} />
           ) : (

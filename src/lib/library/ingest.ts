@@ -76,6 +76,50 @@ function isoOrNull(value: string | null | undefined): string | null {
  *
  * Primeiro a chegar vence: o dataset vem do mais recente para o mais antigo.
  */
+/**
+ * A Apify devolve o erro DENTRO do dataset, misturado com os posts.
+ *
+ * Quando o perfil não existe mais, ela entrega `{url, error: 'not_found',
+ * errorDescription: 'Post does not exist'}` no lugar dos posts. Descartar isso
+ * em silêncio — que era o que acontecia — custou uma rodada paga e um
+ * diagnóstico genérico: o dono viu "confira os @" quando o sistema tinha a
+ * resposta exata na mão. Aconteceu de verdade com @maxcarrau.ia em 01/08/2026,
+ * perfil que existia na curadoria de julho e foi renomeado ou apagado desde
+ * então.
+ */
+const apifyErrorSchema = z.object({
+  url: z.string().nullish(),
+  username: z.string().nullish(),
+  error: z.string(),
+  errorDescription: z.string().nullish(),
+})
+
+export interface ApifyItemError {
+  handle: string | null
+  reason: string
+}
+
+/** Erros por item, para a tela dizer QUAL perfil falhou e por quê. */
+export function parseApifyErrors(raw: unknown[]): ApifyItemError[] {
+  return raw.flatMap((entry) => {
+    const parsed = apifyErrorSchema.safeParse(entry)
+    if (!parsed.success) return []
+
+    const { url, username, error, errorDescription } = parsed.data
+    const doUrl = url?.match(/instagram\.com\/([^/?]+)/)?.[1] ?? null
+
+    return [
+      {
+        handle: username ?? doUrl,
+        reason:
+          error === 'not_found'
+            ? 'não existe mais (renomeado ou apagado)'
+            : (errorDescription ?? error),
+      },
+    ]
+  })
+}
+
 export function parseApifyPosts(raw: unknown[]): ScrapedItem[] {
   const porUrl = new Map<string, ScrapedItem>()
 
@@ -311,6 +355,13 @@ export async function ingestScrapedPosts(args: {
   const errors: string[] = []
 
   const items = parseApifyPosts(raw)
+
+  // Erro por item vira mensagem nomeando o perfil. A rodada foi paga; o
+  // diagnóstico que veio junto é a parte mais barata de aproveitar.
+  for (const falha of parseApifyErrors(raw)) {
+    errors.push(`@${falha.handle ?? '?'}: ${falha.reason}`)
+  }
+
   const porHandle = new Map(profiles.map((profile) => [profile.username.toLowerCase(), profile]))
 
   const alvos = items.flatMap((item) => {

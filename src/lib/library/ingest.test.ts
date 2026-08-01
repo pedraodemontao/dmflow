@@ -103,6 +103,7 @@ const {
   parseApifyPosts,
   profileMetrics,
   recomputeProfileMetrics,
+  parseApifyErrors,
 } = await import('@/lib/library/ingest')
 
 const ACCOUNT_ID = 'acc-1'
@@ -394,5 +395,44 @@ describe('recomputeProfileMetrics', () => {
     // Sem item, a mediana é nula e ninguém explode.
     expect(result.errors).toHaveLength(0)
     expect(result.items).toBe(0)
+  })
+})
+
+describe('parseApifyErrors', () => {
+  it('nomeia o perfil que não existe mais', () => {
+    // Caso real de 01/08/2026: @maxcarrau.ia estava na curadoria de julho e foi
+    // renomeado ou apagado. A Apify avisou; o pipeline descartava em silêncio.
+    const erros = parseApifyErrors([
+      {
+        url: 'https://www.instagram.com/maxcarrau.ia/',
+        username: 'maxcarrau.ia',
+        error: 'not_found',
+        errorDescription: 'Post does not exist',
+      },
+    ])
+
+    expect(erros).toHaveLength(1)
+    expect(erros[0].handle).toBe('maxcarrau.ia')
+    expect(erros[0].reason).toContain('não existe mais')
+  })
+
+  it('tira o @ da URL quando o campo username não vem', () => {
+    const erros = parseApifyErrors([
+      { url: 'https://www.instagram.com/algum.perfil/', error: 'not_found' },
+    ])
+
+    expect(erros[0].handle).toBe('algum.perfil')
+  })
+
+  it('repassa a descrição para erro que não é not_found', () => {
+    const erros = parseApifyErrors([
+      { url: 'https://www.instagram.com/x/', error: 'private', errorDescription: 'Conta privada' },
+    ])
+
+    expect(erros[0].reason).toBe('Conta privada')
+  })
+
+  it('ignora post normal', () => {
+    expect(parseApifyErrors([{ url: 'https://instagram.com/p/abc', type: 'Video' }])).toHaveLength(0)
   })
 })

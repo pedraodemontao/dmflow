@@ -91,3 +91,33 @@ export async function addTrackedProfile(rawUsername: string): Promise<LibraryAct
   revalidatePath('/biblioteca')
   return { ok: true }
 }
+
+/**
+ * Desliga um perfil sem apagar o que ele já trouxe.
+ *
+ * Desativar e não deletar porque `library_items.profile_id` é `on delete set
+ * null`: apagar o perfil deixaria os vídeos órfãos, sem régua de outlier e sem
+ * como recalcular. Perfil que caiu do Instagram — como @maxcarrau.ia em
+ * 01/08/2026 — precisa sair da fila de raspagem sem levar junto o histórico.
+ */
+export async function setProfileActive(
+  profileId: string,
+  isActive: boolean,
+): Promise<LibraryActionResult> {
+  const parsed = z.string().uuid('Perfil inválido.').safeParse(profileId)
+  if (!parsed.success) return { ok: false, error: 'Perfil inválido.' }
+
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta do Instagram conectada.' }
+
+  const { error } = await supabaseAdmin
+    .from('tracked_profiles')
+    .update({ is_active: isActive })
+    .eq('id', parsed.data)
+    .eq('account_id', account.id)
+
+  if (error) return { ok: false, error: error.message }
+
+  revalidatePath('/biblioteca')
+  return { ok: true }
+}
