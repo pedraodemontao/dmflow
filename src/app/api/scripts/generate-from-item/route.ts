@@ -2,13 +2,19 @@ import { z } from 'zod'
 
 import { loadModelingContext, type ContextProblem } from '@/lib/ai/context'
 import { generateScript } from '@/lib/ai/generate'
+import { generateDelivery } from '@/lib/ai/generate-delivery'
+import { generateDeliverySlug } from '@/lib/ai/slug'
 import { supabaseAdmin } from '@/lib/supabase/admin'
-import type { Script as ScriptRow } from '@/types/db'
+import type { Delivery, Script as ScriptRow } from '@/types/db'
 
 /**
  * "Gerar roteiro modelado": pega um vídeo da biblioteca que performou bem no
  * nicho e escreve um roteiro NOVO, na voz do dono, usando aquele vídeo como
- * molde.
+ * molde. Em seguida, uma SEGUNDA chamada ao modelo escreve a ENTREGA — o
+ * material que o CTA do roteiro prometeu — para fechar o funil:
+ * biblioteca → roteiro → entrega (página nossa) → automação manda o link.
+ * Roteiro e entrega usam prompts separados de propósito: um prompt só produz
+ * uma coisa morna que não serve para nenhum dos dois (ver card 01, Fase 2).
  *
  * Rota de servidor, e isso é requisito de segurança, não de arquitetura: a
  * `ANTHROPIC_API_KEY` só existe aqui. Ela não está em `PUBLIC_PATHS`, então o
@@ -109,5 +115,46 @@ export async function POST(request: Request) {
     )
   }
 
-  return Response.json({ ok: true, script: data as ScriptRow })
+  const script = data as ScriptRow
+
+  // Segunda chamada: a entrega cumpre a promessa LITERAL do CTA do roteiro,
+  // não o tema — se o vídeo prometeu "mapa de 7 passos", a entrega tem 7
+  // passos. Sempre nasce em 'draft': roteiro gerado nem sempre presta, e a
+  // entrega só fica no ar quando o dono publicar (Fase 5).
+  const generatedDelivery = await generateDelivery({
+    persona: context.persona,
+    stage: context.stage,
+    promise: generated.output.ctas.instagram.fala,
+  })
+
+  const { data: deliveryRow, error: deliveryError } = await supabaseAdmin
+    .from('deliveries')
+    .insert({
+      account_id: context.accountId,
+      script_id: script.id,
+      library_item_id: context.item.id,
+      slug: generateDeliverySlug(generatedDelivery.output.title),
+      title: generatedDelivery.output.title,
+      subtitle: generatedDelivery.output.subtitle ?? null,
+      blocks: generatedDelivery.output.blocks,
+      status: 'draft',
+    })
+    .select('*')
+    .single()
+
+  if (deliveryError) {
+    // Mesma regra do roteiro: a entrega existe mesmo que a gravação falhe.
+    // O roteiro JÁ foi salvo, então a resposta segue `ok: true` — só a
+    // entrega precisa ser gerada de novo, não o roteiro inteiro.
+    console.error('[deliveries] falha ao gravar entrega:', deliveryError.message)
+    return Response.json({
+      ok: true,
+      script,
+      delivery: null,
+      deliveryError: 'Entrega gerada, mas não foi possível salvar.',
+      deliveryOutput: generatedDelivery.output,
+    })
+  }
+
+  return Response.json({ ok: true, script, delivery: deliveryRow as Delivery })
 }

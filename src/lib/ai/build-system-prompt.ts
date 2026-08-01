@@ -109,6 +109,44 @@ ${mechanismsBlock}`,
  * `personas.cta_keyword` — é ela que liga o roteiro à automação de DM do
  * dm-flow: o lead comenta a palavra, o gatilho dispara, o fluxo responde.
  */
+/**
+ * Regra de copy da ENTREGA — texto LIDO, não falado. O roteiro tem a versão
+ * dele acima (`COPY_RULES`) porque as duas peças são lidas de formas
+ * diferentes: confundi-las produz um texto morno que não serve para nenhuma
+ * das duas (ver card 01, Fase 2).
+ */
+const DELIVERY_COPY_RULES = `# REGRA DE COPY DA ENTREGA (texto LIDO, não falado — siga à risca)
+- ESCANEÁVEL: quem abriu veio buscar o que foi prometido, não ler um texto corrido. Frases curtas, um parágrafo por ideia.
+- CUMPRA A PROMESSA LITERAL: o que o CTA do vídeo prometeu é o contrato. Prometeu 7 passos, entregue 7 passos — nem 5, nem 9.
+- SEM GANCHO, SEM REABRIR A VENDA: quem chegou aqui já está convencido. Vá direto ao conteúdo prometido.
+- ESPECÍFICO > vago: número concreto, nome da ferramenta, passo acionável.
+- BANIDOS (clichê de IA, nunca use): "cansado de", "a real é que", "o segredo é", "deixa eu te mostrar", "olha só", "imagina poder", "e o melhor", "simples assim", "acredite", "não vai acreditar".`
+
+/**
+ * Monta o system prompt da entrega a partir da persona — mesma fonte de
+ * verdade do roteiro (voz e proibições vêm de `personas`), regra de copy
+ * diferente porque a peça é diferente.
+ */
+export function buildDeliverySystemPrompt(persona: Persona): string {
+  const forbiddenBlock = bullets(persona.forbidden_rules, '(sem regras definidas)')
+
+  const sections = [
+    `Você escreve a página de entrega do creator ${persona.name} (nicho: ${persona.niche}) — o material que a DM promete depois que a pessoa comenta a palavra-chave no Reel. É LIDO na tela do celular, dentro do navegador do Instagram — não falado, não gravado.`,
+
+    `# VOZ (obrigatório)
+${persona.voice_prompt}`,
+
+    DELIVERY_COPY_RULES,
+
+    `# PROIBIDO (nunca)
+${forbiddenBlock}`,
+
+    'Gere SEMPRE em português do Brasil, estruturado em blocos — nunca HTML, nunca markdown.',
+  ]
+
+  return sections.filter((section) => section.trim() !== '').join('\n\n')
+}
+
 export function buildCtaBlock(persona: Persona): string {
   const keyword = persona.cta_keyword.trim() || 'EU QUERO'
 

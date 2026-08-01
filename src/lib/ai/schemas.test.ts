@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { toolInputSchema } from '@/lib/ai/anthropic'
-import { HOOK_VARIANTS, scriptSchema, type Script } from '@/lib/ai/schemas'
+import { HOOK_VARIANTS, deliverySchema, scriptSchema, type Script } from '@/lib/ai/schemas'
 
 /**
  * A trava entre o modelo e o banco.
@@ -96,5 +96,77 @@ describe('toolInputSchema', () => {
   it('leva as descrições, que são metade da instrução que o modelo lê', () => {
     expect(json.properties.headline.description).toBeTruthy()
     expect(json.properties.beats.description).toBeTruthy()
+  })
+})
+
+/**
+ * A trava entre o modelo e a página pública. Sem ela, HTML ou um tipo de
+ * bloco inventado pelo modelo entra em `deliveries.blocks` e ou quebra o
+ * componente de render, ou — no caso de HTML livre — vira XSS servido na
+ * própria página (ver migration 0016).
+ */
+describe('deliverySchema', () => {
+  function entrega(blocks: unknown[]) {
+    return { title: 'Mapa do Conteúdo', subtitle: 'em 7 passos', blocks }
+  }
+
+  it('aceita uma entrega com um bloco de cada um dos sete tipos', () => {
+    const blocks = [
+      { type: 'heading', text: 'Título' },
+      { type: 'paragraph', text: 'Texto corrido.' },
+      { type: 'list', items: ['item 1', 'item 2'] },
+      { type: 'checklist', items: ['marcar isto'] },
+      { type: 'steps', items: [{ title: 'Passo 1', text: 'faça isto' }] },
+      { type: 'quote', text: 'uma frase de destaque' },
+      { type: 'callout', text: 'atenção aqui' },
+    ]
+
+    expect(deliverySchema.safeParse(entrega(blocks)).success).toBe(true)
+  })
+
+  it('recusa bloco com type que não existe no catálogo', () => {
+    const blocks = [{ type: 'video', text: 'não é um bloco válido' }]
+
+    expect(deliverySchema.safeParse(entrega(blocks)).success).toBe(false)
+  })
+
+  it('recusa bloco sem o campo que o próprio type exige', () => {
+    const listaSemItems = [{ type: 'list' }]
+    const stepsSemTitulo = [{ type: 'steps', items: [{ text: 'sem título' }] }]
+
+    expect(deliverySchema.safeParse(entrega(listaSemItems)).success).toBe(false)
+    expect(deliverySchema.safeParse(entrega(stepsSemTitulo)).success).toBe(false)
+  })
+
+  it('recusa texto vazio — string em branco passa no tipo e não deveria virar bloco', () => {
+    const blocks = [{ type: 'paragraph', text: '' }]
+
+    expect(deliverySchema.safeParse(entrega(blocks)).success).toBe(false)
+  })
+
+  it('recusa entrega rala demais (menos que o mínimo de blocos)', () => {
+    const blocks = [{ type: 'heading', text: 'só isso' }]
+
+    expect(deliverySchema.safeParse(entrega(blocks)).success).toBe(false)
+  })
+
+  it('não obriga subtítulo — é opcional', () => {
+    const semSubtitulo = {
+      title: 'Mapa do Conteúdo',
+      blocks: [
+        { type: 'heading', text: 'Título' },
+        { type: 'paragraph', text: 'Texto.' },
+      ],
+    }
+
+    expect(deliverySchema.safeParse(semSubtitulo).success).toBe(true)
+  })
+
+  it('gera JSON Schema com input_schema para os sete tipos de bloco', () => {
+    const json = toolInputSchema(deliverySchema) as {
+      properties: { blocks: { items?: { oneOf?: unknown[] } } }
+    }
+
+    expect(json.properties.blocks.items?.oneOf).toHaveLength(7)
   })
 })
