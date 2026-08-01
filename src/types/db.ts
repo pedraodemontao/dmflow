@@ -114,6 +114,8 @@ export interface Flow {
   name: string
   definition: FlowDefinition
   is_active: boolean
+  /** Entrega que a variável `{{presente}}` interpola nesta automação. */
+  delivery_id: string | null
   created_at: string
   updated_at: string
 }
@@ -260,5 +262,39 @@ export interface Script {
   model_used: string | null
   tokens_in: number | null
   tokens_out: number | null
+  created_at: string
+}
+
+export type DeliveryStatus = 'draft' | 'published'
+
+/**
+ * O material que o roteiro prometeu, publicado em `/e/[slug]`. A forma dos
+ * blocos é definida pelo `DeliverySchema` (Zod) em `src/lib/ai/`, não aqui —
+ * mesmo padrão de `Script.output` e `Persona.named_mechanisms`. Ver migration 0016.
+ */
+export interface Delivery {
+  id: string
+  account_id: string
+  script_id: string | null
+  library_item_id: string | null
+  /** kebab-do-título + sufixo aleatório. Não enumerável — a página é pública. */
+  slug: string
+  title: string
+  subtitle: string | null
+  blocks: unknown
+  cta_label: string | null
+  cta_url: string | null
+  /** Só 'published' é servido pela rota pública. */
+  status: DeliveryStatus
+  published_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** Uma visita à página da entrega. `contact_id` nulo quando o token é inválido ou ausente. */
+export interface DeliveryView {
+  id: number
+  delivery_id: string
+  contact_id: string | null
   created_at: string
 }
