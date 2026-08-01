@@ -436,3 +436,21 @@ describe('parseApifyErrors', () => {
     expect(parseApifyErrors([{ url: 'https://instagram.com/p/abc', type: 'Video' }])).toHaveLength(0)
   })
 })
+
+describe('mediana com contagem par', () => {
+  it('arredonda, senão o Postgres recusa e o perfil fica sem régua', () => {
+    // `median_plays` é bigint. Mediana de lista par é a média dos dois do meio
+    // e pode sair com meio: `invalid input syntax for type bigint: "12157.5"`.
+    // O erro ia para o relatório e a coluna ficava nula — nenhum vídeo daquele
+    // perfil ganhava multiplicador. Pegou @maxcarrau.ia em 01/08/2026.
+    const rows = [
+      { id: 'a', plays: 12_000, likes: 0, comments: 0, outlier: null, engagement: null },
+      { id: 'b', plays: 12_315, likes: 0, comments: 0, outlier: null, engagement: null },
+    ]
+
+    const { medianPlays } = profileMetrics(rows as never)
+
+    expect(medianPlays).toBe(12_158)
+    expect(Number.isInteger(medianPlays)).toBe(true)
+  })
+})

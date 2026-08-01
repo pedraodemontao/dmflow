@@ -282,7 +282,25 @@ export interface ProfileMetrics {
  */
 export function profileMetrics(rows: MetricRow[]): ProfileMetrics {
   const plays = rows.map((row) => toNumber(row.plays) ?? 0)
-  const medianPlays = median(plays)
+  /**
+   * Arredondado porque `tracked_profiles.median_plays` é `bigint`.
+   *
+   * A mediana de uma lista PAR é a média dos dois do meio, então ela sai com
+   * meio — e o Postgres recusa: `invalid input syntax for type bigint:
+   * "12157.5"`. O erro ia para o relatório, mas a coluna ficava nula, e sem
+   * régua nenhum vídeo daquele perfil ganhava multiplicador. Falha silenciosa
+   * de meia dúzia de vídeos, que só aparece quando alguém repara que um perfil
+   * inteiro está "sem régua".
+   *
+   * Pegou @maxcarrau.ia em 01/08/2026 e não pegou @dfolloni por sorte: os dois
+   * centrais dele davam inteiro. Ou seja, quebrava em metade dos perfis com
+   * contagem par.
+   *
+   * Arredondar e não truncar: meia view não existe, e o erro de arredondamento
+   * é irrelevante contra uma mediana de milhares.
+   */
+  const medianaCrua = median(plays)
+  const medianPlays = medianaCrua === null ? null : Math.round(medianaCrua)
   const sampleSize = rows.length
 
   const changed: ProfileMetrics['changed'] = []
