@@ -6,6 +6,8 @@ import { ArrowLeft, Check, Image as ImageIcon, Loader2, MessageSquare, Workflow 
 import Link from 'next/link'
 
 import { saveAutomation } from '@/app/actions'
+import type { DeliveryOption } from '@/app/(app)/biblioteca/entregas/queries'
+import { DeliveryPicker } from '@/components/automacoes/delivery-picker'
 import { FlowBuilder } from '@/components/automacoes/flow-builder'
 import { PostPicker } from '@/components/automacoes/post-picker'
 import { VariationsField } from '@/components/automacoes/variations-field'
@@ -24,6 +26,8 @@ interface Props {
   mediaError?: string | null
   /** Opções para o bloco "pular para outro fluxo" — já sem o fluxo desta automação. */
   flowOptions: FlowOption[]
+  /** Entregas disponíveis para `{{presente}}`. Vazio enquanto nenhuma foi gerada. */
+  deliveryOptions?: DeliveryOption[]
   initial?: {
     name: string
     triggerType: TriggerType
@@ -33,6 +37,9 @@ interface Props {
     publicReply: string | null
     isActive: boolean
     definition: FlowDefinition
+    /** Entrega que `{{presente}}` interpola. Nula = a variável sai vazia na DM. */
+    deliveryId: string | null
+    flowId: string
   }
 }
 
@@ -44,7 +51,14 @@ const STEPS = [
 
 type StepId = (typeof STEPS)[number]['id']
 
-export function AutomationEditor({ triggerId, media, mediaError, flowOptions, initial }: Props) {
+export function AutomationEditor({
+  triggerId,
+  media,
+  mediaError,
+  flowOptions,
+  deliveryOptions = [],
+  initial,
+}: Props) {
   const router = useRouter()
   const toast = useToast()
   const [pending, startTransition] = useTransition()
@@ -61,6 +75,10 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
     initial?.definition ?? emptyDefinition(),
   )
   const [error, setError] = useState<string | null>(null)
+  // Vínculo da entrega salva na hora, fora do "Salvar" do resto do formulário:
+  // é uma escolha só, e `setFlowDelivery` já existe para isso. Automação nova
+  // ainda não tem `flowId`, então o seletor só aparece depois do primeiro save.
+  const [deliveryId, setDeliveryId] = useState<string | null>(initial?.deliveryId ?? null)
 
   const keywords = keywordsText
     .split(',')
@@ -323,7 +341,22 @@ export function AutomationEditor({ triggerId, media, mediaError, flowOptions, in
       )}
 
       {step === 'fluxo' && (
-        <FlowBuilder definition={definition} flowOptions={flowOptions} onChange={setDefinition} />
+        <FlowBuilder
+          definition={definition}
+          flowOptions={flowOptions}
+          hasDelivery={Boolean(deliveryId)}
+          onChange={setDefinition}
+          deliverySlot={
+            initial?.flowId ? (
+              <DeliveryPicker
+                flowId={initial.flowId}
+                options={deliveryOptions}
+                value={deliveryId}
+                onChange={setDeliveryId}
+              />
+            ) : null
+          }
+        />
       )}
     </div>
   )

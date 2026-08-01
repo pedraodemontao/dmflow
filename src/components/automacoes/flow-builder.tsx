@@ -66,10 +66,16 @@ const PALETTE: FlowNode['type'][] = [
 function Canvas({
   definition,
   flowOptions,
+  hasDelivery,
+  deliverySlot,
   onChange,
 }: {
   definition: FlowDefinition
   flowOptions: FlowOption[]
+  /** Se a automação tem entrega vinculada — decide se `{{presente}}` sem entrega vira aviso. */
+  hasDelivery: boolean
+  /** O seletor de entrega, montado pelo editor: só ele conhece o `flowId`. */
+  deliverySlot?: React.ReactNode
   onChange: (next: FlowDefinition) => void
 }) {
   // O canvas assume a posse do grafo no primeiro render; depois disso a fonte
@@ -88,7 +94,7 @@ function Canvas({
    * Onde o fluxo perde gente. Recalculado a cada mudança da definição, no
    * navegador — a análise é pura, então não custa ida ao servidor.
    */
-  const leaks = useMemo(() => findLeaks(definition), [definition])
+  const leaks = useMemo(() => findLeaks(definition, { hasDelivery }), [definition, hasDelivery])
 
   /** Toda mutação do grafo reflete de volta na definição que será salva. */
   const sync = useCallback(
@@ -216,11 +222,25 @@ function Canvas({
           <Controls className="bottom-4! left-4!" showInteractive={false} />
         </ReactFlow>
 
+        {deliverySlot && (
+          // No mesmo canto dos avisos e logo acima deles, porque é daqui que
+          // sai a resposta do aviso mais provável: "{{presente}} sem entrega
+          // vinculada". Conserto longe do alerta é conserto que não acontece.
+          <div className="pop-panel absolute right-4 top-4 z-10 w-80 rounded-md">
+            {deliverySlot}
+          </div>
+        )}
+
         {leaks.length > 0 && (
           // Fica no canto oposto à paleta e é clicável: cada aviso leva ao
           // bloco. Alerta que não leva ao lugar do problema vira ruído que a
           // pessoa aprende a ignorar.
-          <div className="pop-panel absolute right-4 top-4 z-10 w-80 rounded-md">
+          <div
+            className={cn(
+              'pop-panel absolute right-4 z-10 w-80 rounded-md',
+              deliverySlot ? 'top-32' : 'top-4',
+            )}
+          >
             <p className="label border-b border-border px-3 py-2 text-[9px] text-muted">
               {leaks.length} {leaks.length === 1 ? 'ponto a conferir' : 'pontos a conferir'}
             </p>
@@ -318,6 +338,8 @@ function Canvas({
 export function FlowBuilder(props: {
   definition: FlowDefinition
   flowOptions: FlowOption[]
+  hasDelivery: boolean
+  deliverySlot?: React.ReactNode
   onChange: (next: FlowDefinition) => void
 }) {
   return (

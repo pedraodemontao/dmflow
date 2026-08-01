@@ -1,3 +1,4 @@
+import { BibliotecaTabs } from '@/components/biblioteca/biblioteca-tabs'
 import { LibraryCard } from '@/components/biblioteca/library-card'
 import { LibraryEmpty, type LibraryEmptyKind } from '@/components/biblioteca/library-empty'
 import { LibraryFilters } from '@/components/biblioteca/library-filters'
@@ -7,6 +8,7 @@ import { summarize } from '@/components/biblioteca/format'
 import { parseOrder, parseStatus } from '@/components/biblioteca/query-params'
 
 import { estimateScrapeCost } from '@/lib/data'
+import { getDeliveriesByLibraryItem } from './entregas/queries'
 import { getLibraryScreen, LIBRARY_LIMIT } from './queries'
 
 /**
@@ -57,6 +59,10 @@ export default async function BibliotecaPage({
     estimateScrapeCost(),
   ])
 
+  // Depende dos ids que só existem depois de `getLibraryScreen` resolver —
+  // não dá para entrar no mesmo `Promise.all` de cima.
+  const deliveryBadges = await getDeliveriesByLibraryItem(data.items.map((item) => item.id))
+
   const summary = summarize(data.items)
   const scrapedAt = lastScrapeLabel(data.profiles.map((profile) => profile.lastScrapedAt))
 
@@ -89,6 +95,8 @@ export default async function BibliotecaPage({
             {data.total === 1 ? 'conteúdo' : 'conteúdos'}
           </p>
         </div>
+
+        <BibliotecaTabs active="biblioteca" />
 
         {/* Quando a raspagem rodou pela última vez fica no chrome, e não num
             card: é a validade do que a tela inteira mostra. Biblioteca de um
@@ -149,7 +157,11 @@ export default async function BibliotecaPage({
                 <>
                   <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {data.items.map((item) => (
-                      <LibraryCard key={item.id} item={item} />
+                      <LibraryCard
+                        key={item.id}
+                        item={item}
+                        delivery={deliveryBadges.get(item.id) ?? null}
+                      />
                     ))}
                   </div>
 

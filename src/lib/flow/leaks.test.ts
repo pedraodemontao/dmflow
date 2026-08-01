@@ -92,3 +92,73 @@ describe('findLeaks', () => {
     expect(findLeaks(ok)).toHaveLength(0)
   })
 })
+
+describe('{{presente}} sem entrega vinculada', () => {
+  const comPresente: FlowDefinition = {
+    entry: 'inicio',
+    nodes: {
+      inicio: { type: 'message', text: 'Toma o link: {{presente}}', next: 'fim' },
+      fim: { type: 'end' },
+    },
+  }
+
+  it('avisa por omissão — quem não informa hasDelivery não sabe se está tudo bem', () => {
+    const leaks = findLeaks(comPresente)
+    const aviso = leaks.find((leak) => leak.nodeId === 'inicio')
+
+    expect(aviso?.level).toBe('aviso')
+    expect(aviso?.message).toContain('{{presente}}')
+    expect(aviso?.message).toContain('entrega')
+  })
+
+  it('avisa explicitamente quando hasDelivery é false', () => {
+    expect(findLeaks(comPresente, { hasDelivery: false }).length).toBeGreaterThan(0)
+  })
+
+  it('não avisa quando há entrega vinculada', () => {
+    expect(findLeaks(comPresente, { hasDelivery: true })).toHaveLength(0)
+  })
+
+  it('não avisa fluxo que não usa {{presente}}', () => {
+    const semPresente: FlowDefinition = {
+      entry: 'inicio',
+      nodes: {
+        inicio: { type: 'message', text: 'Oi, tudo bem?', next: 'fim' },
+        fim: { type: 'end' },
+      },
+    }
+
+    expect(findLeaks(semPresente, { hasDelivery: false })).toHaveLength(0)
+  })
+
+  it('encontra {{presente}} em botão, carrossel, bolha, pergunta e legenda de mídia', () => {
+    const espalhado: FlowDefinition = {
+      entry: 'botao',
+      nodes: {
+        botao: {
+          type: 'buttons',
+          text: 'escolha',
+          buttons: [{ title: 'Toma {{presente}}', payload: 'x' }],
+          next: 'carrossel',
+        },
+        carrossel: {
+          type: 'carousel',
+          cards: [{ title: 'card', subtitle: '{{presente}}' }],
+          next: 'bolhas',
+        },
+        bolhas: {
+          type: 'bubbles',
+          bubbles: [{ text: 'primeira' }, { text: 'segunda {{presente}}' }],
+          pauseMs: 1200,
+          next: 'pergunta',
+        },
+        pergunta: { type: 'ask', text: 'me diz {{presente}}?', saveAs: 'x', expect: 'text', maxRetries: 2 },
+      },
+    } as unknown as FlowDefinition
+
+    const leaks = findLeaks(espalhado, { hasDelivery: false })
+    const nos = new Set(leaks.filter((l) => l.message.includes('{{presente}}')).map((l) => l.nodeId))
+
+    expect(nos).toEqual(new Set(['botao', 'carrossel', 'bolhas', 'pergunta']))
+  })
+})

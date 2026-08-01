@@ -73,9 +73,76 @@ function reachable(definition: FlowDefinition): Set<string> {
   return seen
 }
 
-export function findLeaks(definition: FlowDefinition): FlowLeak[] {
+/**
+ * Todo texto que pode ser interpolado neste bloco — os mesmos campos que
+ * `interpolate()` toca em `engine.ts`. Existe só para achar `{{presente}}`
+ * sem entrega vinculada (card 01, Fase 5); não é o texto exibido no canvas.
+ */
+function textsOf(node: FlowNode): string[] {
+  const textos: string[] = []
+
+  if (node.type === 'message') {
+    textos.push(node.text, ...(node.quickReplies?.map((quickReply) => quickReply.title) ?? []))
+  }
+
+  if (node.type === 'buttons') {
+    textos.push(node.text)
+    for (const button of node.buttons) {
+      textos.push(button.title)
+      if (button.url) textos.push(button.url)
+    }
+  }
+
+  if (node.type === 'carousel') {
+    for (const card of node.cards) {
+      textos.push(card.title)
+      if (card.subtitle) textos.push(card.subtitle)
+      if (card.imageUrl) textos.push(card.imageUrl)
+      for (const button of card.buttons ?? []) {
+        textos.push(button.title)
+        if (button.url) textos.push(button.url)
+      }
+    }
+  }
+
+  if (node.type === 'bubbles') {
+    textos.push(...node.bubbles.map((bubble) => bubble.text))
+  }
+
+  if (node.type === 'ask') {
+    textos.push(node.text)
+    if (node.retryText) textos.push(node.retryText)
+  }
+
+  if (
+    node.type === 'image' ||
+    node.type === 'video' ||
+    node.type === 'audio' ||
+    node.type === 'file'
+  ) {
+    if (node.caption) textos.push(node.caption)
+  }
+
+  if (node.type === 'set_field') {
+    textos.push(...node.fields.map((field) => field.value))
+  }
+
+  return textos
+}
+
+/**
+ * `hasDelivery` decide se `{{presente}}` sem entrega vinculada vira aviso.
+ * Falta por omissão (não `true`): quem chama sem informar não sabe se há
+ * entrega, e o padrão do arquivo inteiro é avisar, não presumir que está tudo
+ * bem — o mesmo motivo pelo qual o `senão` de uma condição vira nota.
+ */
+export function findLeaks(
+  definition: FlowDefinition,
+  options: { hasDelivery?: boolean } = {},
+): FlowLeak[] {
   const leaks: FlowLeak[] = []
   const vivos = reachable(definition)
+  const hasDelivery = options.hasDelivery ?? false
 
   for (const [id, node] of Object.entries(definition.nodes)) {
     if (!vivos.has(id)) {
@@ -136,6 +203,20 @@ export function findLeaks(definition: FlowDefinition): FlowLeak[] {
           message: `Aponta para um bloco que não existe mais ("${exit.next}").`,
         })
       }
+    }
+
+    // Mesmo erro silencioso que dá nome a este arquivo: nada falha, a pessoa
+    // recebe a DM com um link vazio no lugar do presente, e ninguém percebe
+    // até um lead reclamar (card 01, Fase 4 — `{{presente}}` sem
+    // `flows.delivery_id` interpola para string vazia).
+    if (!hasDelivery && textsOf(node).some((texto) => texto.includes('{{presente}}'))) {
+      leaks.push({
+        nodeId: id,
+        level: 'aviso',
+        message:
+          'Este bloco usa {{presente}}, mas a automação não tem entrega vinculada — o link sai ' +
+          'vazio. Escolha a entrega no topo da tela.',
+      })
     }
   }
 

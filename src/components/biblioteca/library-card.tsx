@@ -1,12 +1,14 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition, type ReactNode } from 'react'
-import { ArrowUpRight, Check, Eye, Heart, MessageCircle, Play } from 'lucide-react'
+import { ArrowUpRight, Check, Eye, Gift, Heart, MessageCircle, Play } from 'lucide-react'
 
 import { setLibraryItemWatched } from '@/app/(app)/biblioteca/actions'
 import { GenerateScript } from '@/components/biblioteca/generate-script'
 import type { LibraryCardItem } from '@/app/(app)/biblioteca/queries'
+import type { DeliveryBadge } from '@/app/(app)/biblioteca/entregas/queries'
 import { getInitials } from '@/components/ui'
 import { useToast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
@@ -26,7 +28,14 @@ import { compact, duration, humanize, outlierLabel, percent, shortDate } from '.
  * flutuante com gradiente.
  */
 
-export function LibraryCard({ item }: { item: LibraryCardItem }) {
+export function LibraryCard({
+  item,
+  delivery = null,
+}: {
+  item: LibraryCardItem
+  /** Entrega mais recente gerada a partir deste item, se houver. */
+  delivery?: DeliveryBadge | null
+}) {
   const router = useRouter()
   const toast = useToast()
   const [pending, start] = useTransition()
@@ -134,6 +143,20 @@ export function LibraryCard({ item }: { item: LibraryCardItem }) {
           </span>
         </button>
         </div>
+
+        {/* Só aparece quando "Gerar roteiro" já produziu uma entrega — leva
+            direto à linha dela na aba Entregas, em vez de deixar o dono
+            procurar na lista qual delivery é deste vídeo. */}
+        {delivery && (
+          <Link
+            href={`/biblioteca/entregas#${delivery.slug}`}
+            className="label flex h-8 items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2.5 text-[9.5px] text-muted transition-colors duration-150 hover:border-muted hover:text-foreground"
+          >
+            <Gift className="size-3.5 shrink-0" />
+            {delivery.status === 'published' ? 'entrega no ar' : 'entrega em rascunho'}
+            <ArrowUpRight className="ml-auto size-3 shrink-0" aria-hidden="true" />
+          </Link>
+        )}
       </div>
     </article>
   )
