@@ -56,6 +56,8 @@ recrutar "Regente" "dmflow-regente" "$MODELO_REGENTE"
 "$M" connect "Regente" "Sonar"    || true
 "$M" connect "Regente" "Peneira"  || true
 
+avisar_duplicados
+
 cat <<'FIM'
 
 === falta na tela: ligar as notas ===

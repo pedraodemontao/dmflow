@@ -133,6 +133,8 @@ if [ "$BRIEF" = "1" ]; then
 fi
 
 echo
+avisar_duplicados
+
 echo "✅ Time montado."
 echo "   Estafeta → card 01, a entrega      · andar Entrega  · modelo $MODELO_IMPLEMENTADOR"
 echo "   Sonar    → card 02, os insights    · andar Insights · modelo $MODELO_IMPLEMENTADOR"
