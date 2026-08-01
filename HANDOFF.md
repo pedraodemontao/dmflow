@@ -1,9 +1,10 @@
 # HANDOFF — dm-flow
 
-> Estado em 2026-07-31. Sistema em produção, entregando por polling.
+> Estado em 2026-08-01. Sistema em produção, entregando por polling.
 > Este documento é o primeiro dia de quem vai assumir: o que o produto faz, por onde o dado
 > entra, o que já quebrou de verdade e o que ainda não foi provado.
 > Regras invioláveis: `CLAUDE.md`. Como rodar e configurar: `README.md`. O que falta: `ROADMAP.md`.
+> Trabalho em fila, pronto para agente: `docs/maestri/`.
 
 ---
 
@@ -19,10 +20,17 @@ comentário → manda uma DM (private reply) → e a partir daí caminha por um 
 canvas visual (mensagem, botões, condição, delay, etiqueta, pergunta validada, mídia, webhook
 externo). Também dispara por palavra-chave na DM, por resposta de story e por ice breaker.
 
-Além do ManyChat, este projeto tem duas coisas que nasceram de dor própria e que valem mais
+Além do ManyChat, este projeto tem três coisas que nasceram de dor própria e que valem mais
 que qualquer bloco novo: **a blindagem anti-spam** (seção 4) e **o painel de risco**, que lê
 `send_log` e `messages` e diz por que o risco subiu (similaridade de texto, volume/hora,
-concentração em rajada, proporção de resposta pública, envio de madrugada).
+concentração em rajada, proporção de resposta pública, envio de madrugada) — e a **biblioteca
+de conteúdo** (seção 5.5), que raspa perfis do nicho, mede o que performou acima da mediana
+do próprio autor e escreve roteiro novo modelado no vencedor.
+
+A biblioteca não é enfeite: ela é a metade de cima do funil que a automação executa embaixo.
+O vídeo pede o comentário, a automação entrega. As duas features na fila (`docs/maestri/`)
+existem justamente para fechar esse laço — a entrega do presente nasce junto do roteiro, e os
+insights do post voltam para quem escreveu.
 
 Quem lê isto é programador. A parte difícil aqui não é o código — é a política da Meta e o
 filtro de spam do Instagram. Quase toda decisão estranha deste repositório tem uma data e um
@@ -314,6 +322,29 @@ bloco apagado e **toda condição que compara texto livre**, dizendo quais palav
 Não tenta adivinhar se o galho está errado: a tentativa de heurística acusou o fluxo já
 corrigido, e falso positivo em alerta é como se aprende a ignorar alerta.
 
+### 4.9 Mediana fracionária deixando um perfil inteiro sem régua — 01/08/2026
+
+Perfil com número **par** de vídeos produz mediana com `.5`. A coluna `median_plays` é `bigint`,
+e o Postgres recusava com `invalid input syntax for type bigint: "12157.5"`. O erro caía no array
+`errors` da raspagem, que a tela mostra em cinza claro e ninguém lê.
+
+O estrago era total e silencioso: sem mediana o perfil não tem régua, e **sem régua nenhum vídeo
+dele ganha multiplicador de outlier** — que é a única coisa que a biblioteca serve. @maxcarrau.ia
+ficou assim; @dfolloni escapou por ter número ímpar de vídeos. Consertado com `Math.round` e teste.
+
+A lição vale além deste bug: **erro que vai para uma lista em vez de subir é erro que não existe.**
+Se a raspagem tivesse falhado alto, teria sido visto no mesmo minuto.
+
+### 4.10 "Faltam 0 perfis" com a raspagem no ar — 01/08/2026
+
+A Apify leva um a dois minutos e o orçamento da nossa chamada é de 50 s (`SCRAPE_BUDGET_MS`),
+então a primeira tentativa **sempre** volta com a rodada ainda em voo e exige um segundo clique
+para colher. A tela dizia "Faltam 0 perfis" e o botão voltava a "Raspar agora".
+
+Zero na fila foi lido como "nada pendente", quando significava "nada mais a COMEÇAR — o que falta
+é esperar". O dono concluiu que a raspagem estava quebrada. Ela estava certa; a frase é que
+mentia. Hoje o botão diz **"Trazer o resultado"** enquanto houver rodada pendente.
+
 ---
 
 ## 5. O que está provado em produção × o que só passa em teste
@@ -331,6 +362,13 @@ que "a Meta aceitou o payload".
   várias mensagens a partir de comentário).
 - Polling de comentário e de DM, fila com dedup, cap, jitter, resposta pública enfileirada.
 - Chat ao vivo com envio manual, e `automation_paused` quando o humano assume.
+- **Condição "segue a conta"** (migration 0015). O campo `is_user_follow_business` vem de graça
+  na mesma chamada de perfil que já fazíamos, e voltou `true` para os dois contatos reais
+  conferidos em 01/08. O portão reconfere ao vivo antes de barrar (`FOLLOW_RECHECK_MS`, 20 s) —
+  sem isso o laço do ManyChat nunca fecha: a pessoa é barrada, vai seguir, volta, e seria barrada
+  de novo com o dado velho em cache.
+- **Biblioteca de conteúdo** (seção 5.5): 40 itens de 4 perfis raspados via Apify, medianas
+  calculadas, capas guardadas no nosso Storage.
 
 **Nunca enviado de verdade à Meta — tratar como não pronto:**
 
@@ -363,6 +401,41 @@ que "a Meta aceitou o payload".
 Regra prática para quem assumir: antes de vender ou depender de um bloco, mande um de verdade
 para a própria conta e olhe o direct. O schema mente com boa-fé.
 
+- **Gerador de roteiro.** A rota `/api/scripts/generate-from-item` está escrita, tem schema Zod
+  e devolve o roteiro mesmo quando falha ao gravar (o dono já pagou a geração; esconder o texto
+  o faria pagar de novo). **Nunca foi executado uma vez sequer** — `scripts` tem zero linhas.
+  A primeira execução é a validação que falta.
+
+---
+
+## 5.5 A biblioteca de conteúdo
+
+Portada do projeto `~/projects/paInel-nocode-pedro` em 01/08. Serve para responder "sobre o que
+eu gravo hoje" com dado em vez de palpite.
+
+**Como funciona:** `tracked_profiles` guarda perfis do nicho. A raspagem chama o ator
+`apify~instagram-scraper` (pay-per-result, **US$ 0,0027 por resultado** — medido, não estimado),
+grava em `library_items` e calcula a **mediana de plays do próprio autor**. O multiplicador de
+outlier é `plays ÷ mediana daquele perfil` — comparar um perfil com o outro não diria nada,
+porque a base de seguidores é diferente.
+
+**Duas armadilhas já pagas, ambas na seção 4:**
+
+- O Instagram devolve **dois contadores de view** para o mesmo vídeo: `videoViewCount` (4.719) e
+  `videoPlayCount` (112.806). O outlier é medido sobre **plays**. Trocar os dois muda o
+  multiplicador por um fator de 20.
+- **Capa de post é copiada para o nosso Storage** (bucket `library-thumbs`), nunca linkada do CDN
+  do Instagram. O navegador pede as dez capas de uma vez e o CDN derruba a maioria com 503 — oito
+  de dez, medido no log de rede. Não é referrer nem formato de URL: é rajada. Some a isso que a
+  URL assinada expira, e hotlink deixa de ser opção.
+
+**Estado real em 01/08:** 4 perfis rastreados (de 31 curados), 40 itens, 37 com multiplicador,
+medianas entre 12k e 26k plays. Zero roteiros gerados.
+
+**Custo:** plano grátis da Apify dá ~US$ 5/mês, o que compra cerca de 1.800 resultados. A tela
+mostra o custo estimado **antes** de rodar, de propósito: ferramenta que gasta dinheiro sem
+avisar é ferramenta que o dono desliga.
+
 ---
 
 ## 6. O que está bloqueado pela plataforma, não por nós
@@ -387,6 +460,31 @@ funcionar** enquanto a situação atual não mudar:
   comum fora dela; a tag `HUMAN_AGENT` estende para 7 dias, mas é para atendimento humano, não
   para campanha. Qualquer "broadcast" aqui será, na melhor das hipóteses, segmentado e dentro da
   janela.
+- **Curva de retenção segundo a segundo.** Não existe em API nenhuma da Meta — é exclusiva do app
+  do Instagram. O que a API dá é `ig_reels_avg_watch_time`, `ig_reels_video_view_total_time` e
+  `reels_skip_rate`: média e taxa de pulo, não a curva. Qualquer tela que prometa "o segundo em
+  que a pessoa saiu" está prometendo o que não pode entregar.
+
+**Bloqueado hoje, mas com o caminho conhecido — insights do próprio post.** Medido por `curl`
+contra a conta real em 01/08: **todas** as métricas de mídia respondem
+`Application does not have permission for this action`. A causa é o escopo — `SCOPES` em
+`src/lib/instagram/oauth.ts` pede três (`instagram_business_basic`, `..._manage_messages`,
+`..._manage_comments`) e falta `instagram_business_manage_insights`.
+
+A prova de que a limitação é de permissão e não de existência: pedindo uma métrica inválida, a
+própria Meta devolve a lista do que aceita. Vale registrar, porque é a documentação mais confiável
+que existe sobre isso:
+
+```
+mídia: impressions, shares, comments, likes, saved, replies, total_interactions, navigation,
+       follows, profile_visits, profile_activity, reach, ig_reels_video_view_total_time,
+       ig_reels_avg_watch_time, views, reels_skip_rate, link_clicks, total_views, …
+conta: reach, follower_count, website_clicks, profile_views, online_followers, accounts_engaged,
+       follows_and_unfollows, profile_links_taps, views, follower_demographics, …
+```
+
+`follows` por mídia é exatamente "quantos seguidores este vídeo trouxe". Está lá. Só falta o
+escopo e uma reconexão da conta pelo painel. Detalhe do plano em `docs/maestri/02-insights.md`.
 
 ---
 
@@ -449,12 +547,30 @@ vercel env ls --cwd ~/projects/dm-flow
 2. **URI de OAuth de produção** (`https://dm.nocodepedro.site/api/auth/instagram/callback`) nas
    configurações do login da empresa na Meta. Só importa para reconectar a conta.
 
-3. **Confirmar quais migrations estão aplicadas no banco.** São 13 arquivos e o processo é manual
-   (seção do README). A 0013 (`button_clicks`) **está aplicada** — conferida contra o banco em
-   31/07. A **0014 (`biblioteca`) está escrita e NÃO aplicada**: é a única pendente
-   na mensagem de commit, e não achei registro posterior de aplicação.
+3. **Migrations: 0001–0015 aplicadas e conferidas contra o banco em 01/08.** O processo é manual
+   (não há CLI nem `psql` na máquina; cola-se no SQL Editor). Como nada registra o que rodou além
+   do próprio banco, **migration aplicada é estado fora do repositório** — antes de confiar numa
+   tela nova, confirme que a tabela existe.
 
-4. **Backlog de produto** está no `ROADMAP.md`. Em resumo: múltiplas contas (o schema já isola
+4. **A automação `mapa` está ATIVA e manda um link que devolve 404.** `https://nocodepedro.site/mapa`
+   não existe. Quem comenta recebe a DM e cai no nada — está perdendo lead agora. É o argumento
+   mais forte a favor da feature 1 (`docs/maestri/01-entrega.md`): entrega hospedada por nós não
+   tem como apontar para o vazio.
+
+5. **Trocar o token da Apify.** Foi colado no chat durante o desenvolvimento. Está em
+   `APIFY_TOKEN`, na Vercel e no `.env.local`.
+
+6. **O fluxo "Presente com follow" (palavra-chave `aula`) está pausado.** Foi montado em 01/08 com
+   a condição nova, e nunca rodou com gente de verdade.
+
+7. **Rodar o gerador de roteiro uma vez.** Zero linhas em `scripts` — é a única parte da biblioteca
+   que nunca foi exercitada.
+
+8. **Importar o resto dos perfis curados.** 4 dos 31 estão rastreados. O botão de importar a lista
+   só aparece quando não há perfil nenhum (`ProfileManager`) — vale mover para fora do estado
+   vazio, que é exatamente o bug que já aconteceu uma vez ali.
+
+9. **Backlog de produto** está no `ROADMAP.md`. Em resumo: múltiplas contas (o schema já isola
    por `account_id`, falta o seletor), segmentos salvos e broadcast segmentado — este último por
    último e com trava, pelos motivos da seção 4.1.
 
@@ -467,6 +583,7 @@ src/app/(app)/              páginas do painel; o layout monta a navegação do 
   page.tsx                    cockpit: falhas, gente esperando, travados, tendência, risco
   automacoes/[id]/            editor + canvas do fluxo
   automacoes/[id]/metricas/   funil por bloco, cliques por botão, curvas de 30 dias
+  biblioteca/                 acervo raspado, ranking por outlier, gerador de roteiro
   contatos/ conversas/ ice-breakers/
 src/app/login/              login por senha
 src/app/privacidade/        exigência da Meta para publicar o app
@@ -484,6 +601,29 @@ src/lib/flow/send-cap.ts    caps; falha fechado
 src/lib/instagram/api.ts    envio, corte de tamanho, ice breakers, assinatura de webhook
 src/lib/instagram/errors.ts permanente × transitório
 src/lib/risk/               cinco sinais + veredito, todos puros e testados
+src/lib/library/scrape.ts   orçamento de tempo, retomada, custo por resultado
+src/lib/library/ingest.ts   parse da Apify, mediana por perfil, multiplicador de outlier
+src/lib/library/thumbs.ts   cópia das capas para o nosso Storage (o CDN da Meta derruba rajada)
+src/lib/ai/                 schemas Zod do roteiro; chamada direta à Anthropic com fetch
 src/lib/data.ts             leitura para o painel (server-only)
-supabase/migrations/        0001..0013 aplicadas à mão no SQL Editor; 0014 escrita e pendente
+supabase/migrations/        0001..0015, todas aplicadas à mão no SQL Editor
+scripts/                    diagnóstico fora do app (raspagem, capas, recálculo de mediana)
+docs/maestri/               trabalho em fila, escrito para um agente executar
 ```
+
+---
+
+## 10. O que vem a seguir
+
+Duas features, especificadas em `docs/maestri/`, ambas fechando o mesmo laço: **hoje a biblioteca
+escreve o roteiro e a automação entrega o presente, mas as duas metades não se conhecem.**
+
+1. **`01-entrega.md` — o presente nasce junto do roteiro.** O gerador passa a produzir também o
+   material prometido, publicado numa página nossa, cuja URL a automação dispara. Mata a classe
+   inteira de bug do link 404 e fecha o funil: comentou → DM → clicou → abriu.
+2. **`02-insights.md` — os insights do post voltam para quem escreveu.** Métricas da Meta
+   (incluindo `follows`, os seguidores que aquele vídeo trouxe) cruzadas com o funil que só nós
+   temos: quantos comentaram, viraram DM, clicaram, seguiram, abriram o presente.
+
+Leia `docs/maestri/00-contexto.md` antes das duas — é o que impede um agente de quebrar um
+invariante sem saber que existia.

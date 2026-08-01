@@ -1,9 +1,13 @@
 # ROADMAP — o que falta para ter o núcleo do ManyChat
 
 > Comparação honesta com o ManyChat para Instagram. Conferido linha a linha contra o código em
-> 2026-07-31 (fim do dia). O que mudou nesta última rodada: cliques por botão saíram do "falta"
-> para o "pronto", as métricas ganharam séries temporais em cinco lugares, a trava de variação
-> ganhou interface própria e o construtor passou a apontar por onde o fluxo perde gente.
+> 2026-08-01. O que mudou nesta última rodada: entrou a **biblioteca de conteúdo** (raspagem,
+> ranking por outlier, gerador de roteiro) e a condição **"segue a conta"**, que é o portão do
+> presente. Antes disso: cliques por botão, séries temporais, interface da trava de variação e
+> análise de vazamento no construtor.
+>
+> As duas próximas features já estão especificadas em `docs/maestri/`, escritas para um agente
+> executar.
 >
 > Antes de confiar em qualquer ✅ desta página, leia a seção 5 do `HANDOFF.md`: passar no schema
 > e no vitest não é a mesma coisa que a Meta aceitar o payload.
@@ -143,11 +147,22 @@ repergunta do `ask` não conta duas vezes.
    Falta a prova real: nenhum deles passou por um envio de verdade.
 9. ~~**Métricas de decisão**~~ — ✅ cliques por botão, séries temporais e análise de vazamento no
    construtor. É o que responde "o que escrever no próximo post" em vez de "quantos entraram".
-10. **Provar os blocos novos.** Antes de qualquer feature nova: mandar carrossel, vídeo, áudio,
-    arquivo, `goto_flow` e `bubbles` de verdade para a própria conta e olhar o direct. Custa uma
-    tarde e converte seis 🟡 em ✅ ou revela seis bugs.
-11. **Múltiplas contas** — o schema já isola por `account_id`; falta o seletor no painel.
-12. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação. O dono decidiu
+10. ~~**Biblioteca de conteúdo**~~ — ✅ raspagem por Apify, ranking por outlier sobre a mediana do
+    próprio autor, capas no nosso Storage, gerador de roteiro. Falta rodar o gerador uma vez.
+11. **A entrega nasce junto do roteiro** — 📋 especificado em `docs/maestri/01-entrega.md`. O
+    gerador passa a produzir o material prometido, publicado em página nossa, cuja URL a automação
+    dispara. Mata a classe de bug do link 404 (a automação `mapa` está ativa apontando para um
+    404 agora) e fecha o funil até "abriu o presente".
+12. **Insights do vídeo** — 📋 especificado em `docs/maestri/02-insights.md`. Métricas da Meta por
+    post, incluindo `follows` (seguidores que aquele vídeo trouxe), cruzadas com o funil que só
+    nós temos. **Bloqueado por escopo**: falta `instagram_business_manage_insights` e uma
+    reconexão da conta. Curva de retenção segundo a segundo não existe em API nenhuma da Meta —
+    não prometa.
+13. **Provar os blocos novos.** Mandar carrossel, vídeo, áudio, arquivo, `goto_flow` e `bubbles`
+    de verdade para a própria conta e olhar o direct. Custa uma tarde e converte seis 🟡 em ✅ ou
+    revela seis bugs.
+14. **Múltiplas contas** — o schema já isola por `account_id`; falta o seletor no painel.
+15. **Broadcast segmentado** — por último, com trava de janela, cap e confirmação. O dono decidiu
     não priorizar; era exemplo, não pedido.
 
 ### Dívida conhecida

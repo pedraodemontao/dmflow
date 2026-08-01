@@ -20,8 +20,13 @@ src/lib/flow/        types.ts (schema Zod dos nós + META_LIMITS), engine.ts (st
                      button-source.ts (título ↔ payload), transform.ts (canvas ↔ JSON)
 src/lib/webhook/     poll.ts (A VARREDURA — é o que entrega), process.ts (fila + roteamento)
 src/lib/risk/        cinco sinais puros + assess.ts (veredito)
+src/lib/library/     scrape.ts (orçamento de tempo + retomada), ingest.ts (mediana por perfil,
+                     multiplicador de outlier), thumbs.ts (cópia das capas — o CDN da Meta
+                     derruba rajada com 503)
+src/lib/ai/          schemas Zod do roteiro; chamada direta à Anthropic com fetch, sem AI SDK
 src/app/api/         webhooks/instagram, auth/instagram(+callback), cron/tick, conversao
-supabase/            migrations/0001..0013, seed.sql (fluxo de exemplo)
+supabase/            migrations/0001..0015, seed.sql (fluxo de exemplo)
+docs/maestri/        trabalho em fila, escrito para agente executar (00-contexto é obrigatório)
 src/lib/series.ts    agrupamento em balde de dia/hora (puro), alimenta os gráficos
 src/components/ui/   index.tsx (primitivos), chart.tsx (BigNumber, Meter, RankBars,
                      TimeSeries, LineSeries)
@@ -109,6 +114,17 @@ src/components/ui/   index.tsx (primitivos), chart.tsx (BigNumber, Meter, RankBa
 - **O OAuth tem que começar e terminar no mesmo domínio.** O `state` vive num cookie; iniciar
   em `localhost` com `redirect_uri` apontando para o túnel dá `state-invalido`. Sempre acesse
   o app pela URL pública.
+- **Na biblioteca, o outlier é medido sobre PLAYS.** O Instagram devolve dois contadores para o
+  mesmo vídeo — `videoViewCount` (4.719) e `videoPlayCount` (112.806). Trocar os dois muda o
+  multiplicador por um fator de 20. E o divisor é a mediana **do próprio autor**: comparar
+  perfis entre si não diz nada, porque a base de seguidores é outra.
+- **Valor derivado não entra em coluna `bigint`.** Mediana de um número par de vídeos tem `.5`,
+  o Postgres recusa, e o perfil fica **sem régua nenhuma** — nenhum vídeo dele ganha
+  multiplicador. Aconteceu em 01/08 e passou despercebido porque o erro ia para o array
+  `errors` da raspagem. **Erro que vai para uma lista em vez de subir é erro que não existe.**
+- **Capa de post é copiada, nunca linkada.** O navegador pede as dez capas de uma vez e o CDN da
+  Meta derruba oito com 503 — medido no log de rede; não é referrer nem formato de URL, é
+  rajada. Some a expiração da URL assinada e hotlink deixa de ser opção (`library/thumbs.ts`).
 
 ## Setup na Meta (já feito, para referência)
 
