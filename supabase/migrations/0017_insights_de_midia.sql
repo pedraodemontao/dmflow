@@ -14,7 +14,11 @@
 -- Vínculo mídia → automação é `triggers.media_id`, que já existe; esta tabela
 -- não duplica esse relacionamento, só guarda o media_id solto para não
 -- depender de um trigger sobreviver até a hora da leitura.
-create table public.media_insights (
+-- `if not exists` em tudo, como as outras: a migration é colada à mão no SQL
+-- Editor e colar duas vezes é rotina — o dono não tem como saber o que já
+-- rodou além de olhar o banco. Erro na segunda colagem parece falha da
+-- migration e manda ele investigar o que estava certo.
+create table if not exists public.media_insights (
   id                    bigserial primary key,
   account_id            uuid not null references public.accounts(id) on delete cascade,
   media_id              text not null,
@@ -33,7 +37,7 @@ create table public.media_insights (
 );
 
 -- Consulta principal: histórico de uma mídia, mais recente primeiro.
-create index media_insights_lookup
+create index if not exists media_insights_lookup
   on public.media_insights (account_id, media_id, captured_at desc);
 
 alter table public.media_insights enable row level security;
