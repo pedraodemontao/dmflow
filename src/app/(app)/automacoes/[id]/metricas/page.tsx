@@ -1,9 +1,15 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Activity, ArrowLeft } from 'lucide-react'
+import { Activity, ArrowLeft, Film } from 'lucide-react'
 
 import { ButtonClicks } from '@/components/automacoes/button-clicks'
 import { FlowFunnel } from '@/components/automacoes/flow-funnel'
+import {
+  VideoFunnelCard,
+  VideoMetrics,
+  VideoRanking,
+  type RankingSort,
+} from '@/components/automacoes/video-insights'
 import { Badge, Button, Card, EmptyState } from '@/components/ui'
 import { BigNumber, LineSeries, Meter, TimeSeries } from '@/components/ui/chart'
 import {
@@ -14,20 +20,46 @@ import {
   getFlowMetrics,
 } from '@/lib/data'
 import { flowDefinitionSchema } from '@/lib/flow/types'
+import { getLatestMediaInsight, getVideoFunnel, getVideoRanking } from '@/lib/instagram/video-funnel'
 
 export const dynamic = 'force-dynamic'
 
-export default async function MetricasPage({ params }: { params: Promise<{ id: string }> }) {
+const RANKING_SORTS: RankingSort[] = ['seguidores', 'comentario_dm', 'view_seguidor']
+
+export default async function MetricasPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>
+  searchParams: Promise<{ ordenar?: string }>
+}) {
   const { id } = await params
+  const { ordenar } = await searchParams
+  const sort: RankingSort = RANKING_SORTS.includes(ordenar as RankingSort)
+    ? (ordenar as RankingSort)
+    : 'seguidores'
+
   const automation = await getAutomation(id)
   if (!automation) notFound()
 
-  const [metrics, series, conversion, buttonClicks] = await Promise.all([
+  const mediaId = automation.trigger.media_id
+
+  const [metrics, series, conversion, buttonClicks, insight, ranking] = await Promise.all([
     getFlowMetrics(automation.flow.id),
     getAutomationSeries(automation.flow.id),
     getAutomationConversionSeries(automation.flow.id),
     getButtonClicks(automation.flow.id),
+    mediaId ? getLatestMediaInsight(automation.trigger.account_id, mediaId) : Promise.resolve(null),
+    getVideoRanking(),
   ])
+  const funnel = mediaId
+    ? await getVideoFunnel({
+        flowId: automation.flow.id,
+        mediaId,
+        deliveryId: automation.flow.delivery_id,
+        views: insight?.views ?? null,
+      })
+    : []
   const parsed = flowDefinitionSchema.safeParse(automation.flow.definition)
 
   const { runs, done } = automation.stats
@@ -58,6 +90,27 @@ export default async function MetricasPage({ params }: { params: Promise<{ id: s
 
       <main className="flex-1 overflow-y-auto p-6">
         <div className="canon mx-auto w-full max-w-3xl space-y-3">
+          {/* O vídeo que gerou a automação: o que a Meta mediu, o que a automação
+              fez com isso (o funil que só a gente tem) e o comparativo entre
+              posts. Vem antes do funil interno do fluxo — é a pergunta que o
+              dono faz primeiro depois de todo post: "valeu a pena gravar isso?" */}
+          {mediaId ? (
+            <>
+              <VideoMetrics insight={insight} />
+              <VideoFunnelCard steps={funnel} hasViews={insight != null} />
+            </>
+          ) : (
+            <Card className="p-5">
+              <EmptyState
+                icon={<Film className="size-8" />}
+                title="Automação sem post vinculado"
+                description="Este gatilho não está preso a um vídeo específico, então não há insight de mídia para mostrar aqui. O comparativo abaixo continua valendo para os posts que têm automação."
+              />
+            </Card>
+          )}
+
+          <VideoRanking rows={ranking} sort={sort} basePath={`/automacoes/${id}/metricas`} />
+
           <div className="grid gap-3 md:grid-cols-[1.15fr_1fr]">
             {/* A pergunta de cima: de quem entrou, quanta gente chegou ao fim.
                 Número grande em display + barra embaixo — a fração precisa de

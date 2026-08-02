@@ -19,6 +19,44 @@ export default function Loading() {
 
       <main className="flex-1 overflow-y-auto p-6">
         <div className="canon mx-auto w-full max-w-3xl space-y-3">
+          {/* O vídeo: grade de estatísticas (bloco 1) e o funil (bloco 2). */}
+          <Card className="p-5">
+            <Skeleton className="h-2.5 w-40 rounded-sm" />
+            <Skeleton className="mt-1.5 h-3 w-full max-w-md rounded-sm" />
+            <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {[0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <Skeleton key={i} className="h-16 rounded-md" />
+              ))}
+            </div>
+          </Card>
+
+          <Card className="overflow-hidden">
+            <div className="border-b border-border p-4">
+              <Skeleton className="h-2.5 w-56 rounded-sm" />
+              <Skeleton className="mt-1.5 h-3 w-72 max-w-full rounded-sm" />
+            </div>
+            <div className="divide-y divide-border px-4">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <div key={i} className="flex items-center gap-3 py-3">
+                  <Skeleton className="h-3 w-5 shrink-0 rounded-sm" />
+                  <div className="min-w-0 flex-1">
+                    <Skeleton className="mb-1.5 h-3 w-40 max-w-full rounded-sm" />
+                    <Skeleton className="h-1.5 w-full rounded-[2px]" />
+                  </div>
+                  <Skeleton className="h-3 w-6 shrink-0 rounded-sm" />
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Comparativo entre posts (bloco 3). */}
+          <Card className="overflow-hidden">
+            <div className="border-b border-border p-4">
+              <Skeleton className="h-2.5 w-44 rounded-sm" />
+              <Skeleton className="mt-2 h-6 w-full max-w-sm rounded-full" />
+            </div>
+          </Card>
+
           <div className="grid gap-3 md:grid-cols-[1.15fr_1fr]">
             <Card className="p-5">
               <Skeleton className="h-2.5 w-28 rounded-sm" />
