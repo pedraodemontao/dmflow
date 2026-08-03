@@ -36,6 +36,20 @@ const apifyPostSchema = z.object({
   videoDuration: z.number().nullish(),
   caption: z.string().nullish(),
   timestamp: z.string().nullish(),
+  /**
+   * O que o vídeo PROVOCOU. A legenda diz o que o autor quis dizer; o
+   * comentário diz o que ficou na cabeça de quem viu — a dúvida, o pedido, o
+   * "que ferramenta é essa". Para a análise de conteúdo vale mais que a
+   * legenda, e já vinha pago na mesma raspagem, descartado.
+   */
+  latestComments: z
+    .array(z.object({ text: z.string().nullish(), ownerUsername: z.string().nullish() }))
+    .nullish(),
+  hashtags: z.array(z.string()).nullish(),
+  /** Publi teve empurrão pago: comparar com orgânico na mesma régua mistura duas coisas. */
+  paidPartnership: z.boolean().nullish(),
+  dimensionsHeight: z.number().nullish(),
+  dimensionsWidth: z.number().nullish(),
 })
 
 export interface ScrapedItem {
@@ -50,6 +64,22 @@ export interface ScrapedItem {
   durationSec: number | null
   caption: string
   postedAt: string | null
+  topComments: Array<{ text: string; author: string | null }>
+  hashtags: string[]
+  isPaidPartnership: boolean
+  /** Altura ÷ largura. 1,78 é o 9:16 do reel; 1,0 é quadrado. */
+  aspectRatio: number | null
+}
+
+/**
+ * Altura ÷ largura, arredondado a duas casas. Nulo quando falta dimensão — e
+ * nulo é honesto: chutar 1,78 porque "reel costuma ser vertical" plantaria um
+ * dado falso na análise de formato, que é justamente o que ela vai ler.
+ */
+function aspect(height: number | null | undefined, width: number | null | undefined): number | null {
+  if (typeof height !== 'number' || typeof width !== 'number') return null
+  if (!Number.isFinite(height) || !Number.isFinite(width) || width <= 0 || height <= 0) return null
+  return Math.round((height / width) * 100) / 100
 }
 
 /** Contagem não-negativa. A Apify manda -1 quando o perfil esconde as curtidas. */
@@ -162,6 +192,16 @@ export function parseApifyPosts(raw: unknown[]): ScrapedItem[] {
       // português e o enriquecimento por IA, que precisa do gancho literal.
       caption: post.caption?.trim() ?? '',
       postedAt: isoOrNull(post.timestamp),
+      // Teto de 12: passa disso e o comentário deixa de informar e vira
+      // ruído no prompt da análise — os primeiros já mostram o padrão do que
+      // as pessoas perguntaram, e cada um a mais é token pago sem retorno.
+      topComments: (post.latestComments ?? [])
+        .map((c) => ({ text: (c.text ?? '').trim(), author: c.ownerUsername ?? null }))
+        .filter((c) => c.text.length > 0)
+        .slice(0, 12),
+      hashtags: (post.hashtags ?? []).filter((tag) => tag.trim().length > 0),
+      isPaidPartnership: post.paidPartnership === true,
+      aspectRatio: aspect(post.dimensionsHeight, post.dimensionsWidth),
     })
   }
 

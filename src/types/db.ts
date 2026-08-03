@@ -245,6 +245,16 @@ export interface LibraryItem {
   outlier: number | null
   watched: boolean
   scraped_at: string | null
+  /** Comentários do post. O que ele PROVOCOU — a legenda é marketing do autor. */
+  top_comments: Array<{ text: string; author: string | null }>
+  hashtags: string[]
+  /** Publi teve empurrão pago: o desempenho não prova o mesmo que o de orgânico. */
+  is_paid_partnership: boolean
+  /** Altura ÷ largura. ~1,78 é o vertical do reel; ~1,0 é quadrado. */
+  aspect_ratio: number | null
+  /** Nulo = nunca analisado. É o que a fila de análise lê; ≠ `scraped_at`. */
+  analyzed_at: string | null
+  analysis_model: string | null
   created_at: string
   updated_at: string
 }
