@@ -61,6 +61,10 @@ export async function generateDelivery(input: GenerateDeliveryInput): Promise<Ge
       prompt: buildDeliveryUserPrompt(input),
       toolName: TOOL_NAME,
       toolDescription: TOOL_DESCRIPTION,
+      // A entrega é a peça ESTRUTURADA do par: a promessa já foi definida pelo
+      // roteiro, e aqui o trabalho é cumpri-la em passo a passo e checklist.
+      // Um degrau abaixo do roteiro, não dois — é o que o lead lê inteiro.
+      task: 'delivery',
     })
 
     return {

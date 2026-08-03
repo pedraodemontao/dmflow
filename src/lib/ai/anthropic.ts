@@ -20,8 +20,34 @@ import { z } from 'zod'
 const API_URL = 'https://api.anthropic.com/v1/messages'
 const API_VERSION = '2023-06-01'
 
-/** Escolha do dono. Trocável por env sem mexer no código. */
-const DEFAULT_MODEL = 'claude-sonnet-4-5-20250929'
+/**
+ * MODELO POR TAREFA — a ferramenta precisa caber no bolso para continuar viva.
+ *
+ * O critério não é "o que é mais importante", é **o que é criativo × o que é
+ * estruturado**:
+ *
+ *   roteiro  → decidir ÂNGULO, gancho e ritmo. Não há resposta certa, e a
+ *              diferença entre morno e afiado é a diferença entre um vídeo que
+ *              performa e uma tarde de gravação jogada fora. Modelo melhor.
+ *   entrega  → cumprir uma promessa já definida, em passo a passo e checklist.
+ *              A forma está dada; o trabalho é executar bem. Modelo econômico.
+ *
+ * Repare que a entrega NÃO é menor: a primeira gerou 21 blocos, mais saída que
+ * o roteiro. Ela é mais FÁCIL, não mais curta — e por isso desce um degrau, não
+ * dois. É o material que o lead lê inteiro, a promessa do vídeo sendo cumprida;
+ * economizar até o fundo aqui entrega ao lead um PDF morno com o nome do dono.
+ *
+ * Medido na primeira geração real: roteiro 4.426 de entrada e 1.416 de saída.
+ * Volume de alguns por semana, não por minuto.
+ */
+const MODEL_BY_TASK = {
+  /** Roteiro de vídeo: a peça criativa. */
+  script: 'claude-opus-5',
+  /** Material de entrega: a peça estruturada. */
+  delivery: 'claude-sonnet-5',
+} as const
+
+export type AiTask = keyof typeof MODEL_BY_TASK
 
 /** Roteiro completo cabe folgado; o teto existe para resposta que não termina nunca. */
 const MAX_TOKENS = 4000
@@ -40,8 +66,23 @@ export function hasAnthropicKey(): boolean {
   return Boolean(process.env.ANTHROPIC_API_KEY)
 }
 
-function model(): string {
-  return process.env.ANTHROPIC_MODEL || DEFAULT_MODEL
+/**
+ * Qual modelo para qual tarefa, com duas saídas de emergência sem deploy:
+ *
+ *   ANTHROPIC_MODEL_SCRIPT / ANTHROPIC_MODEL_DELIVERY  — por tarefa
+ *   ANTHROPIC_MODEL                                    — atropela as duas
+ *
+ * O override geral existe para o dia em que um modelo sair do ar: uma variável
+ * e tudo volta a funcionar, sem esperar build.
+ */
+function model(task: AiTask = 'script'): string {
+  const geral = process.env.ANTHROPIC_MODEL
+  if (geral) return geral
+
+  const porTarefa =
+    task === 'delivery' ? process.env.ANTHROPIC_MODEL_DELIVERY : process.env.ANTHROPIC_MODEL_SCRIPT
+
+  return porTarefa || MODEL_BY_TASK[task]
 }
 
 /**
@@ -82,6 +123,8 @@ export interface StructuredRequest<T> {
   /** Nome da ferramenta forçada. Aparece no prompt do modelo, então descreve o resultado. */
   toolName: string
   toolDescription: string
+  /** Qual tarefa — decide o modelo. Omitir vale como `script`, o mais capaz. */
+  task?: AiTask
 }
 
 export interface StructuredResult<T> {
@@ -128,7 +171,7 @@ export async function generateStructured<T>(
       },
       signal: AbortSignal.timeout(TIMEOUT_MS),
       body: JSON.stringify({
-        model: model(),
+        model: model(request.task),
         max_tokens: MAX_TOKENS,
         system: request.system,
         messages,
@@ -162,7 +205,7 @@ export async function generateStructured<T>(
     if (parsed.success) {
       return {
         output: parsed.data,
-        model: body.model ?? model(),
+        model: body.model ?? model(request.task),
         tokensIn,
         tokensOut,
       }
