@@ -70,6 +70,7 @@ const COPY_RULES = `# REGRA DE COPY (siga à risca — isto separa amador de pro
  */
 const FACT_RULES = `# FATO (a regra que vence todas as outras acima)
 - NUNCA invente experiência do creator. Nada de "eu testei", "no meu projeto", "comigo caiu de X pra Y" a menos que isso esteja LITERALMENTE no material de referência. Você não sabe o que ele viveu.
+- A descrição do PÚBLICO não é o passado do creator. "Quem está do outro lado" descreve quem ASSISTE. Convertê-la em "eu também já fui assim, salvava vinte Reels por dia" inventa uma biografia — e é a invenção mais perigosa, porque soa como a técnica de copy certa e ninguém desconfia. Para criar identificação sem mentir, fale na SEGUNDA pessoa ("você abre a ferramenta e não sai nada") ou em terceira ("tem gente que salva cinquenta Reels por dia"), nunca na primeira.
 - NUNCA invente número, preço, porcentagem, prazo ou nome de empresa/pessoa/ferramenta. Se não veio do material fornecido, não existe.
 - FALTOU O DADO? Escreva a lacuna, em maiúsculas e entre colchetes, no lugar exato: [SEU NÚMERO AQUI], [SEU RESULTADO AQUI], [NOME DA FERRAMENTA]. O creator preenche em dois segundos.
 - Lacuna visível é melhor que número plausível: ninguém revisa o que não parece errado.

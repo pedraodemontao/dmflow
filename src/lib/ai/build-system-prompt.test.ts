@@ -176,3 +176,27 @@ describe('trava contra fato inventado', () => {
     expect(buildSystemPrompt(persona())).toContain('conhecimento geral')
   })
 })
+
+/**
+ * Segunda rodada da trava, 03/08/2026. Com a regra de fato já ligada, o modelo
+ * parou de inventar número de resultado — mas escreveu "Eu passei por isso.
+ * Salvava vinte Reel por dia", que veio da seção QUEM ESTÁ DO OUTRO LADO da
+ * persona (o público consome 50-100 Reels/dia).
+ *
+ * Converter a descrição do público em biografia do creator é a invenção mais
+ * difícil de pegar: soa como a técnica de copy correta ("eu já fui você") e
+ * ninguém desconfia de uma frase bem escrita.
+ */
+describe('trava: público não vira passado do creator', () => {
+  it('proíbe transformar a descrição do público em memória pessoal', () => {
+    const prompt = buildSystemPrompt(persona())
+    expect(prompt).toContain('A descrição do PÚBLICO não é o passado do creator')
+  })
+
+  it('oferece a saída — segunda ou terceira pessoa, nunca primeira', () => {
+    // Proibir sem dar alternativa faria o modelo perder a identificação, que é
+    // o que a copy precisa. A regra tem que ensinar o caminho certo.
+    const prompt = buildSystemPrompt(persona())
+    expect(prompt).toContain('SEGUNDA pessoa')
+  })
+})
