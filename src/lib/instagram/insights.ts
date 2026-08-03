@@ -1,3 +1,4 @@
+import { fetchMedia } from '@/lib/instagram/api'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { MediaInsight } from '@/types/db'
 
@@ -132,6 +133,57 @@ interface CollectTarget {
  * automação que já existe — não se inventa outro. Trigger e fluxo têm que
  * estar ativos, e a conta também.
  */
+/**
+ * Os posts RECENTES da conta, tenham automação ou não.
+ *
+ * POR QUE ISTO EXISTE: a seleção por gatilho abaixo só enxerga post com
+ * automação daquele `media_id` específico. Gatilho de "qualquer post"
+ * (`media_id` nulo) — que é o mais usado aqui — não produz alvo nenhum, então
+ * um vídeo publicado hoje ficaria sem uma única medição.
+ *
+ * E medir tarde é quase tão ruim quanto não medir: o valor desta tabela é a
+ * SÉRIE (ver migration 0017 — "quantas views tinha quando liguei a
+ * automação"), e série que começa no terceiro dia perdeu justamente o pico,
+ * que é onde o post decide o que vai ser.
+ */
+async function recentMediaTargets(): Promise<CollectTarget[]> {
+  const { data } = await supabaseAdmin
+    .from('accounts')
+    .select('id, ig_user_id, access_token')
+    .eq('is_active', true)
+
+  const targets: CollectTarget[] = []
+
+  for (const account of (data ?? []) as Array<{
+    id: string
+    ig_user_id: string
+    access_token: string
+  }>) {
+    try {
+      // Poucos: o teto de coleta por hora já protege o orçamento, e post
+      // antigo não muda o suficiente para pagar uma chamada por tick.
+      const media = await fetchMedia({
+        igUserId: account.ig_user_id,
+        accessToken: account.access_token,
+        limit: 10,
+      })
+      for (const item of media) {
+        targets.push({
+          accountId: account.id,
+          mediaId: item.id,
+          accessToken: account.access_token,
+        })
+      }
+    } catch (error) {
+      // Uma conta que não responde não pode calar a coleta das outras nem
+      // derrubar o tick — métrica é acessório, entrega não.
+      console.error('[dm-flow] não listei as mídias recentes:', String(error).slice(0, 120))
+    }
+  }
+
+  return targets
+}
+
 async function activeMediaTargets(): Promise<CollectTarget[]> {
   const { data } = await supabaseAdmin
     .from('triggers')
@@ -209,7 +261,15 @@ export async function shouldCollect(target: CollectTarget): Promise<boolean> {
  * que a automação parou de verdade).
  */
 export async function collectMediaInsights(): Promise<{ collected: number; skipped: number }> {
-  const targets = await activeMediaTargets()
+  // As duas fontes se somam: o post com automação própria continua sendo
+  // coletado mesmo quando sai das dez mais recentes, e o post novo passa a ser
+  // coletado desde a primeira hora mesmo sem automação própria.
+  const [porGatilho, recentes] = await Promise.all([activeMediaTargets(), recentMediaTargets()])
+  const porChave = new Map<string, CollectTarget>()
+  for (const alvo of [...porGatilho, ...recentes]) {
+    porChave.set(`${alvo.accountId}:${alvo.mediaId}`, alvo)
+  }
+  const targets = [...porChave.values()]
   let collected = 0
   let skipped = 0
 
