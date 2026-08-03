@@ -1,10 +1,11 @@
 import Link from 'next/link'
-import { MessageCircle, Zap } from 'lucide-react'
+import { LinkIcon, MessageCircle, Zap } from 'lucide-react'
 
 import { AutomationActions } from '@/components/automacoes/automation-actions'
 import { Badge, Button, Card, EmptyState } from '@/components/ui'
 import { Meter } from '@/components/ui/chart'
 import { getAutomations } from '@/lib/data'
+import { findBrokenLinks, type LinkStatus } from '@/lib/flow/link-health'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,6 +18,26 @@ const TRIGGER_LABEL: Record<string, string> = {
 
 export default async function AutomacoesPage() {
   const automations = await getAutomations()
+
+  // Checagem só das ATIVAS: automação pausada com link quebrado não está
+  // perdendo ninguém, e alarmar sobre ela ensinaria a ignorar o alarme.
+  //
+  // `allSettled` porque uma checagem que estoure não pode derrubar a lista de
+  // automações — a tela precisa abrir mesmo com a rede ruim.
+  const brokenByTrigger = new Map<string, LinkStatus[]>()
+  const checks = await Promise.allSettled(
+    automations
+      .filter(({ trigger }) => trigger.is_active)
+      .map(async ({ trigger, flow }) => ({
+        triggerId: trigger.id,
+        broken: await findBrokenLinks(flow.definition),
+      })),
+  )
+  for (const check of checks) {
+    if (check.status === 'fulfilled' && check.value.broken.length > 0) {
+      brokenByTrigger.set(check.value.triggerId, check.value.broken)
+    }
+  }
 
   return (
     <>
@@ -49,12 +70,11 @@ export default async function AutomacoesPage() {
                 const rate = stats.runs > 0 ? stats.done / stats.runs : 0
                 const percent = Math.round(rate * 100)
                 const blocks = Object.keys(flow.definition?.nodes ?? {}).length
+                const broken = brokenByTrigger.get(trigger.id) ?? []
 
                 return (
-                  <Card
-                    key={trigger.id}
-                    className="group relative flex items-center gap-4 overflow-hidden p-4"
-                  >
+                  <Card key={trigger.id} className="group relative overflow-hidden">
+                    <div className="flex items-center gap-4 p-4">
                     {/* Marca de caneta na borda esquerda no hover/foco. É
                         marcação, não borda: `.surface-panel` (globals.css) é
                         regra sem camada e venceria qualquer utilitário de
@@ -110,11 +130,42 @@ export default async function AutomacoesPage() {
                       </p>
                     </div>
 
-                    <AutomationActions
-                      triggerId={trigger.id}
-                      name={flow.name}
-                      isActive={trigger.is_active}
-                    />
+                      <AutomationActions
+                        triggerId={trigger.id}
+                        name={flow.name}
+                        isActive={trigger.is_active}
+                      />
+                    </div>
+
+                    {/* Faixa embaixo, não badge no título: o link quebrado não
+                        é um atributo da automação, é uma ocorrência — e ela
+                        precisa caber o link inteiro para o dono reconhecer
+                        qual é sem abrir o fluxo. */}
+                    {broken.length > 0 && (
+                      <div className="border-t border-danger/40 bg-danger/10 px-4 py-2.5">
+                        <p className="label flex items-center gap-1.5 text-[9px] text-danger">
+                          <LinkIcon className="size-3" />
+                          {broken.length === 1
+                            ? 'link que o lead recebe não responde'
+                            : `${broken.length} links que o lead recebe não respondem`}
+                        </p>
+                        <ul className="mt-1.5 space-y-1">
+                          {broken.map((link) => (
+                            <li key={link.url} className="text-[11px] leading-relaxed">
+                              <span className="tabular-nums text-danger">
+                                {link.status ?? link.motivo}
+                              </span>{' '}
+                              <span className="break-all text-muted">{link.url}</span>
+                              {link.label && (
+                                <span className="label ml-1 text-[9px] text-muted">
+                                  botão “{link.label}”
+                                </span>
+                              )}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </Card>
                 )
               })}
