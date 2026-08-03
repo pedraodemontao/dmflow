@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   buildCtaBlock,
+  buildDeliverySystemPrompt,
   buildSystemPrompt,
   parseNamedMechanisms,
 } from '@/lib/ai/build-system-prompt'
@@ -131,5 +132,47 @@ describe('buildCtaBlock', () => {
 
   it('cai numa palavra genérica quando a persona ainda não definiu a dela', () => {
     expect(buildCtaBlock(persona({ cta_keyword: '   ' }))).toContain('"EU QUERO"')
+  })
+})
+
+/**
+ * A trava de fato nasceu de um roteiro real que dizia "Eu testei isso num
+ * projeto meu. Antes eu gastava quarenta reais por mês. Agora gasto doze" —
+ * sobre um teste que o dono nunca fez (03/08/2026).
+ *
+ * O teste é contra REGRESSÃO de prompt, que é um tipo de regressão que não
+ * quebra build nem tipo: alguém enxuga o system prompt, a regra some, e a
+ * única evidência aparece meses depois num vídeo já gravado.
+ */
+describe('trava contra fato inventado', () => {
+  it('proíbe experiência inventada do creator nos DOIS prompts', () => {
+    for (const prompt of [buildSystemPrompt(persona()), buildDeliverySystemPrompt(persona())]) {
+      expect(prompt).toContain('NUNCA invente experiência do creator')
+      expect(prompt).toContain('eu testei')
+    }
+  })
+
+  it('proíbe número e nome sem fonte, e ensina a marcar a lacuna', () => {
+    const prompt = buildSystemPrompt(persona())
+    expect(prompt).toContain('NUNCA invente número')
+    expect(prompt).toContain('[SEU NÚMERO AQUI]')
+  })
+
+  it('manda preservar unidade e condição do número que veio do material', () => {
+    // "70x em projetos grandes" virou "70%" sem condição no primeiro roteiro:
+    // errar a unidade é tão grave quanto inventar, e passa mais despercebido.
+    expect(buildSystemPrompt(persona())).toContain('mesma unidade')
+  })
+
+  it('vem DEPOIS da regra de copy — ela é a exceção à especificidade pedida', () => {
+    const prompt = buildSystemPrompt(persona())
+    expect(prompt.indexOf('# FATO')).toBeGreaterThan(prompt.indexOf('# REGRA DE COPY'))
+  })
+
+  it('não proíbe explicar como as coisas funcionam', () => {
+    // Trava larga demais produziria roteiro que não afirma nada — e copy que
+    // não afirma nada não converte. A regra é contra fato específico sem
+    // fonte, não contra conhecimento do nicho.
+    expect(buildSystemPrompt(persona())).toContain('conhecimento geral')
   })
 })

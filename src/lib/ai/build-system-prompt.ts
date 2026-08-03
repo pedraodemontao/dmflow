@@ -48,6 +48,34 @@ const COPY_RULES = `# REGRA DE COPY (siga à risca — isto separa amador de pro
 - ZERO enchimento: cada beat avança a ideia. Beat que não muda nada na cabeça de quem vê, corta.
 - PROVA antes de promessa: mostra a tela/resultado, depois conclui. Não prometa, demonstre.`
 
+/**
+ * A trava contra fato inventado.
+ *
+ * INCIDENTE DE 03/08/2026 que motivou isto: o primeiro roteiro gerado dizia
+ * "Eu testei isso num projeto meu. Antes eu gastava quarenta reais por mês.
+ * Agora gasto doze." O dono nunca testou. O modelo precisava de uma prova, não
+ * tinha nenhuma, e fabricou uma — na primeira pessoa, com número redondo e tom
+ * de quem viveu aquilo. Se ele grava, mente sem saber.
+ *
+ * A CAUSA ESTAVA NA REGRA DE COPY ao lado: ela pede "ESPECÍFICO > vago: número
+ * concreto, nome da ferramenta, resultado tangível" e não fornecia fato nenhum
+ * junto. Pedir especificidade sem dar fatos é pedir para inventar com
+ * confiança — o modelo obedece, e obedecer aqui significa alucinar bem.
+ *
+ * A saída não é afrouxar a especificidade (copy vaga não converte), é separar
+ * as duas coisas: específico no que É verdade, lacuna explícita no que falta.
+ * Um roteiro com `[SEU NÚMERO AQUI]` dá dois segundos de trabalho ao dono. Um
+ * roteiro com número inventado custa a credibilidade dele com a audiência —
+ * e ninguém revisa o que não parece errado.
+ */
+const FACT_RULES = `# FATO (a regra que vence todas as outras acima)
+- NUNCA invente experiência do creator. Nada de "eu testei", "no meu projeto", "comigo caiu de X pra Y" a menos que isso esteja LITERALMENTE no material de referência. Você não sabe o que ele viveu.
+- NUNCA invente número, preço, porcentagem, prazo ou nome de empresa/pessoa/ferramenta. Se não veio do material fornecido, não existe.
+- FALTOU O DADO? Escreva a lacuna, em maiúsculas e entre colchetes, no lugar exato: [SEU NÚMERO AQUI], [SEU RESULTADO AQUI], [NOME DA FERRAMENTA]. O creator preenche em dois segundos.
+- Lacuna visível é melhor que número plausível: ninguém revisa o que não parece errado.
+- Número que VEIO do material: use exatamente como está, com a mesma unidade e a mesma condição. "70x em projetos grandes" não vira "70%" nem perde o "em projetos grandes".
+- Pode afirmar livremente o que é conhecimento geral e verificável do nicho. A trava é contra fato ESPECÍFICO sem fonte, não contra explicar como algo funciona.`
+
 function bullets(lines: string[], fallback: string): string {
   return lines.length > 0 ? lines.map((line) => `- ${line}`).join('\n') : fallback
 }
@@ -79,6 +107,7 @@ ${persona.voice_prompt}`,
     hookPatterns ?? null,
 
     COPY_RULES,
+    FACT_RULES,
 
     `# PROIBIDO (nunca)
 ${forbiddenBlock}`,
@@ -137,6 +166,7 @@ export function buildDeliverySystemPrompt(persona: Persona): string {
 ${persona.voice_prompt}`,
 
     DELIVERY_COPY_RULES,
+    FACT_RULES,
 
     `# PROIBIDO (nunca)
 ${forbiddenBlock}`,
