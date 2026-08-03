@@ -235,6 +235,10 @@ export interface LibraryItemUpsert {
   duration_sec: number | null
   caption: string
   posted_at: string | null
+  top_comments: Array<{ text: string; author: string | null }>
+  hashtags: string[]
+  is_paid_partnership: boolean
+  aspect_ratio: number | null
   scraped_at: string
 }
 
@@ -283,6 +287,14 @@ export function mergeWithExisting(args: {
     duration_sec: item.durationSec ?? existing?.duration_sec ?? null,
     caption: item.caption || existing?.caption || '',
     posted_at: item.postedAt ?? existing?.posted_at ?? null,
+    // Os campos de análise SOBRESCREVEM em vez de preservar o que existe: ao
+    // contrário da legenda, eles são um retrato do post no momento da
+    // raspagem, e comentário novo vale mais que comentário velho. Preservar
+    // aqui congelaria a leitura do público na primeira vez que vimos o post.
+    top_comments: item.topComments,
+    hashtags: item.hashtags,
+    is_paid_partnership: item.isPaidPartnership,
+    aspect_ratio: item.aspectRatio,
     scraped_at: scrapedAt,
   }
 }
