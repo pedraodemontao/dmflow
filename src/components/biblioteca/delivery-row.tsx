@@ -2,12 +2,15 @@
 
 import { useRouter } from 'next/navigation'
 import { useState, useSyncExternalStore, useTransition } from 'react'
-import { Check, ChevronDown, Copy, ExternalLink, Eye } from 'lucide-react'
+import { Check, ChevronDown, Copy, ExternalLink, Eye, Pencil } from 'lucide-react'
 
 import { publishDelivery } from '@/app/(app)/biblioteca/entregas/actions'
 import type { DeliveryListItem } from '@/app/(app)/biblioteca/entregas/queries'
 import { DeliveryBlocks } from '@/app/e/blocks'
+import { DeliveryEditor } from '@/components/biblioteca/delivery-editor'
+import { DeliveryLinkFlow } from '@/components/biblioteca/delivery-link-flow'
 import { Badge, Button } from '@/components/ui'
+import type { FlowTarget } from '@/app/(app)/biblioteca/entregas/queries'
 import type { DeliveryBlock } from '@/lib/ai/schemas'
 import { cn } from '@/lib/utils'
 
@@ -41,14 +44,17 @@ export function DeliveryRow({
   delivery,
   blocks,
   appUrl,
+  flows,
 }: {
   delivery: DeliveryListItem
   blocks: DeliveryBlock[]
   appUrl: string | null
+  flows: FlowTarget[]
 }) {
   const router = useRouter()
   const [pending, start] = useTransition()
   const [copiado, setCopiado] = useState(false)
+  const [editando, setEditando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 
   // O card da biblioteca leva até aqui por `#slug`. Lido via
@@ -99,7 +105,15 @@ export function DeliveryRow({
 
       {aberto && (
         <div className="border-t border-border bg-surface-2 px-4 py-4">
-          {blocks.length === 0 ? (
+          {editando ? (
+            <DeliveryEditor
+              id={delivery.id}
+              title={delivery.title}
+              subtitle={delivery.subtitle}
+              blocks={blocks}
+              onDone={() => setEditando(false)}
+            />
+          ) : blocks.length === 0 ? (
             <p className="text-[11px] text-muted">
               Esta entrega está sem conteúdo — a geração falhou no meio. Gere o roteiro de novo
               pelo card da biblioteca.
@@ -110,7 +124,13 @@ export function DeliveryRow({
             </div>
           )}
 
+          {!editando && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
+            <Button type="button" size="sm" variant="outline" onClick={() => setEditando(true)}>
+              <Pencil className="size-3.5" />
+              Editar
+            </Button>
+
             {!publicada && blocks.length > 0 && (
               <Button
                 type="button"
@@ -163,14 +183,19 @@ export function DeliveryRow({
               </p>
             )}
           </div>
+          )}
 
-          {publicada && (
+          {publicada && !editando && (
             <p className="mt-3 text-[11px] leading-relaxed text-muted">
               Para a automação mandar este link, escreva{' '}
               <code className="text-foreground">{'{{presente}}'}</code> no texto do bloco e
               vincule esta entrega no editor da automação. Assim o link nunca mais some — trocar
               o material não exige mexer no fluxo.
             </p>
+          )}
+
+          {publicada && !editando && (
+            <DeliveryLinkFlow deliveryId={delivery.id} flows={flows} />
           )}
 
           {erro && <p className="mt-2 text-[11px] text-danger">{erro}</p>}

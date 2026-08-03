@@ -14,6 +14,7 @@ import type { DeliveryStatus } from '@/types/db'
 export interface DeliveryListItem {
   id: string
   title: string
+  subtitle: string | null
   slug: string
   status: DeliveryStatus
   createdAt: string
@@ -32,7 +33,7 @@ export interface DeliveryListItem {
 export async function getDeliveries(): Promise<DeliveryListItem[]> {
   const { data: rows, error } = await supabaseAdmin
     .from('deliveries')
-    .select('id, title, slug, status, created_at, published_at, blocks')
+    .select('id, title, subtitle, slug, status, created_at, published_at, blocks')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -43,6 +44,7 @@ export async function getDeliveries(): Promise<DeliveryListItem[]> {
   const deliveries = (rows ?? []) as Array<{
     id: string
     title: string
+    subtitle: string | null
     slug: string
     status: DeliveryStatus
     created_at: string
@@ -75,6 +77,7 @@ export async function getDeliveries(): Promise<DeliveryListItem[]> {
   return deliveries.map((row) => ({
     id: row.id,
     title: row.title,
+    subtitle: row.subtitle,
     slug: row.slug,
     status: row.status,
     createdAt: row.created_at,
@@ -106,6 +109,53 @@ export async function getDeliveryOptions(): Promise<DeliveryOption[]> {
   }
 
   return (data ?? []) as DeliveryOption[]
+}
+
+export interface FlowTarget {
+  flowId: string
+  name: string
+  isActive: boolean
+  /** Entrega vinculada hoje — para marcar "já usa esta" e permitir desvincular. */
+  deliveryId: string | null
+  /** Se o texto do fluxo já chama `{{presente}}`. Vincular sem isso não manda nada. */
+  usesPresente: boolean
+}
+
+/**
+ * Automações que podem receber uma entrega, para vincular sem sair da aba.
+ *
+ * `usesPresente` existe porque vincular é metade do trabalho: se nenhum bloco
+ * do fluxo escreve `{{presente}}`, o vínculo não faz nada e a tela precisa
+ * dizer isso — senão o dono vincula, acha que resolveu, e a DM continua saindo
+ * com o link velho.
+ */
+export async function getFlowTargets(): Promise<FlowTarget[]> {
+  const { data, error } = await supabaseAdmin
+    .from('flows')
+    .select('id, name, is_active, delivery_id, definition')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('[dm-flow] automações indisponíveis:', error.message)
+    return []
+  }
+
+  return ((data ?? []) as Array<{
+    id: string
+    name: string
+    is_active: boolean
+    delivery_id: string | null
+    definition: unknown
+  }>).map((row) => ({
+    flowId: row.id,
+    name: row.name,
+    isActive: row.is_active,
+    deliveryId: row.delivery_id,
+    // Busca na definição serializada: `{{presente}}` pode estar no texto, no
+    // título de um botão ou na legenda de uma mídia, e procurar campo por
+    // campo daria a mesma resposta com mais chance de esquecer um.
+    usesPresente: JSON.stringify(row.definition ?? {}).includes('{{presente}}'),
+  }))
 }
 
 export interface DeliveryBadge {

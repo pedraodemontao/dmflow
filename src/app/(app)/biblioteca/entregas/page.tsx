@@ -3,7 +3,7 @@ import { Gift } from 'lucide-react'
 import { BibliotecaTabs } from '@/components/biblioteca/biblioteca-tabs'
 import { DeliveryRow } from '@/components/biblioteca/delivery-row'
 import { Card, EmptyState } from '@/components/ui'
-import { getDeliveries } from './queries'
+import { getDeliveries, getFlowTargets } from './queries'
 
 /**
  * As entregas: o material que cada roteiro prometeu.
@@ -21,7 +21,7 @@ import { getDeliveries } from './queries'
 export const dynamic = 'force-dynamic'
 
 export default async function EntregasPage() {
-  const deliveries = await getDeliveries()
+  const [deliveries, flows] = await Promise.all([getDeliveries(), getFlowTargets()])
 
   // Sem barra final: `APP_URL` é documentada assim em `src/lib/env.ts`, mas
   // uma barra sobrando produziria `//e/slug`, que é link quebrado com cara de
@@ -78,6 +78,7 @@ export default async function EntregasPage() {
                 delivery={delivery}
                 blocks={delivery.blocks}
                 appUrl={appUrl}
+                flows={flows}
               />
             ))}
           </ul>
