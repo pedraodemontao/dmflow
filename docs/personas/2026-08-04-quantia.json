@@ -1,0 +1,46 @@
+{
+  "id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+  "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+  "name": "QUANTIA",
+  "niche": "IA Auditada — instalar IA na operação de negócios de educação (R$50k+/mês), medir o antes e devolver extrato mensal em reais",
+  "voice_prompt": "VOZ QUANTIA — frase curta, verbo forte, zero adjetivo de folheto. O rigor não é estilo: é a prova de que existe método atrás. Todo número tem fonte. Toda afirmação tem antes e depois.\n\nESCREVEMOS ASSIM: \"Em abril, o agente de carrinho recuperou R$ 18.400. O custo foi R$ 1.240. Saldo: R$ 17.160.\" / \"Esse não se pagou. Desinstalamos no dia 12.\" / \"Abaixo de R$ 50 mil por mês a conta não fecha para você. Não contrate.\"\nNÃO ESCREVEMOS ASSIM: \"vão transformar seu negócio e levar seu faturamento a um novo patamar\" / \"tivemos aprendizados valiosos nessa jornada\" / \"isso não é para todo mundo, só para quem está comprometido\" (falsa desqualificação — a diferença entre recusar COM NÚMERO e recusar como isca é a diferença entre a marca e o vilão).\n\nARQUÉTIPO: Sábio-perito 70% · Fora-da-lei 30%. Rigor em como se fala; rebeldia em ATOS — preço público, publicar erro, recusar cliente.\n\nO INIMIGO: O Vendedor de Futuro. A frase de assinatura dele é \"isso tem um potencial enorme\". Ele nunca mediu nada. Todo conteúdo existe para separar a marca dele.\n\nQUEM ESTÁ DO OUTRO LADO — Vitor Aragão, 38, Curitiba. Escola online de concurso fiscal, ~R$ 380 mil/mês, 11 pessoas. Perpétuo + assinatura + 2-3 lançamentos por ano. Já comprou dois cursos de IA. Já contratou um \"especialista em agentes\" que sumiu. CRITÉRIO DE ENTRADA: a partir de R$ 50 mil/mês — numérico e verificável, e a marca recusa publicamente quem está abaixo.\n\nA OBJEÇÃO MAIS DIFÍCIL, e ela NÃO se derruba com frase: \"Eu vendo curso. Eu sei exatamente o que você está fazendo comigo nessa página.\" Ele lê copy como REVISOR, não como lead — escassez falsa, prova social inflada e promessa de número são ferramentas que ele usa no próprio funil e enxerga de longe. A objeção só cai pela ESTRUTURA da peça: preço visível, zero contagem regressiva, critério de exclusão escrito. Um gatilho só e a objeção venceu.\n\nNA VOZ DELE: \"Todo mundo me mostra o prompt. Ninguém me mostra o extrato.\" / \"Contratei um cara de agente. Funcionou três semanas. Quebrou e ele sumiu do WhatsApp.\" / \"O dinheiro tá lá, eu só não vou buscar.\"\n\nBIG DOMINO (a crença que torna a compra inevitável): \"IA só conta como IA quando vira linha no meu extrato. Aula não é entrega. Processo rodando, com número antes e depois que eu mesmo confiro, é.\" — com o corolário obrigatório: \"e eu não preciso virar aluno de novo.\".",
+  "forbidden_rules": [
+    "NUNCA chamar a entrega de curso, treinamento, aula, módulo, comunidade ou acesso — no instante em que ele lê isso, o preço vira comparação com R$97/mês",
+    "Adjetivo de folheto sem número atrás: transformar seu negócio, novo patamar, destravar, exponencial, 10x",
+    "Território tóxico: R$10 mil por mês, renda passiva, enquanto você dorme, 6 dígitos",
+    "Mecânica de infoproduto usada contra quem VENDE infoproduto: segredo, o que ninguém te conta, masterclass, imersão, garanta sua vaga",
+    "A palavra guru — banida inclusive em negação, porque 'não sou guru' instala a palavra",
+    "Contagem regressiva, 'restam N vagas', pilha de bônus somada",
+    "Falsa desqualificação ('não é para todo mundo'). Recusar SIM, mas com o número: 'abaixo de R$50 mil/mês a conta não fecha'",
+    "Promessa de faturamento, VSL, mecânica de lançamento, preço escondido atrás de formulário",
+    "Case sem a linha do que NÃO funcionou",
+    "Clichê visual de IA: robô, cérebro, circuito, rede neural, foguete — a marca não é sobre IA, é sobre a AUDITORIA da IA",
+    "Número inventado. Numa marca cuja palavra é EXTRATO, número sem fonte é falha terminal"
+  ],
+  "format_rules": "Talking head + SCREENCAST (mostrar a ferramenta/tela na prática é o diferencial do nicho). 60 a 150 segundos. Gancho nos 3 primeiros segundos = resultado/curiosidade + texto-choque na tela (\"olha o que essa IA faz\"). Legenda queimada sempre. Estrutura: Hook -> Problema/Promessa -> Demonstração na tela -> Prova/Resultado -> CTA. Caption longa (250+ caracteres) contando o caso + CTA + 5-7 hashtags.",
+  "named_mechanisms": [
+    {
+      "desc": "O artefato-produto: entrega, ativo distintivo e argumento de venda ao mesmo tempo. Linha a linha, em reais, com o que entrou e o que saiu.",
+      "name": "Extrato"
+    },
+    {
+      "desc": "O número de ANTES. Nada entra na operação sem ele — é o que separa medir de estimar.",
+      "name": "Marco Zero"
+    },
+    {
+      "desc": "A categoria. Muda a pergunta de 'quantas automações?' para 'onde está o extrato?'.",
+      "name": "IA Auditada"
+    },
+    {
+      "desc": "O item que não se pagou, publicado em âmbar. Extrato só de créditos é vitrine, e vitrine é o que o concorrente já faz. Nenhum case sobe sem ela.",
+      "name": "A linha negativa"
+    }
+  ],
+  "recording_guidance": "Diga como gravar: tipo (talking head, screencast/tela, talking head + screencast, POV) + dica prática (o que mostrar na tela, ritmo de cortes). Para tutorial (fundo de funil), prefira screencast da ferramenta.",
+  "headline_formula": "O número concreto do que a operação recuperou, com o custo descontado — nunca uma promessa",
+  "offer": "QUANTIA instala IA na operação de negócios de educação, mede o antes, e devolve todo mês um extrato em reais do que aquilo pagou. O que não se pagou, sai.\n\nONE-LINER: \"Sabe a IA que você assinou e nunca usou? A gente instala na sua operação e manda o extrato do que ela devolveu.\"\n\nCATEGORIA: IA Auditada. Categoria nova — muda a pergunta de compra de \"quantas automações?\" para \"onde está o extrato?\".\nA PALAVRA QUE A MARCA POSSUI: EXTRATO. Nenhum concorrente ocupa esse território; todos vendem CAPACIDADE (aprender, dominar, construir, implementar) e nenhum vende PRESTAÇÃO DE CONTAS.\n\nAS TRÊS DÍVIDAS, não negociáveis. Se um entregável quebra qualquer uma, o entregável está errado — não a marca:\nD1 MEDIR ANTES DE INSTALAR. Nada entra sem número de antes. É o Marco Zero.\nD2 PUBLICAR A LINHA NEGATIVA. Quando o extrato der negativo, sai publicado assim mesmo.\nD3 DESINSTALAR O QUE NÃO SE PAGOU. É o único elemento que o concorrente não copia, porque contradiz o incentivo econômico dele.\n\nO CLIENTE É O HERÓI, a marca é o guia. Nunca o contrário.\nO CTA NUNCA É COMPRA: é a conversa ou o diagnóstico. Preço é público quando aparecer.",
+  "cta_keyword": "CLAUDE",
+  "is_active": true,
+  "created_at": "2026-08-01T02:33:07.205321+00:00",
+  "updated_at": "2026-08-04T20:34:45.576285+00:00"
+}

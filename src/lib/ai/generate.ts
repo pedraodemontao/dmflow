@@ -66,6 +66,13 @@ export function buildUserPrompt(input: GenerateScriptInput): string {
 
   if (input.modeledOn) {
     const molde = input.modeledOn
+    // A DURAÇÃO VEM DO MOLDE, não do formulário. Um vídeo de 42s tem outro
+    // arco que um de 120s: menos beats, um ponto só, corte mais seco. Pedir
+    // 120s "modelado" num vídeo de 42s não produz uma versão longa do mesmo
+    // conteúdo — produz outro conteúdo, com estrutura de página de venda
+    // pendurada num gancho emprestado. Foi exatamente o que saiu em 04/08.
+    const duracaoDoMolde = molde.duration_sec ? `${molde.duration_sec}` : input.duration
+
     return `Crie um roteiro de Reel NOVO para ${input.persona.name}, MODELADO neste conteúdo real que JÁ PERFORMOU no nicho. Copie a INTELIGÊNCIA (formato, estrutura, tipo de gancho) — NÃO o texto. Reescreva tudo na voz dele, no tema dele (${input.persona.niche}).
 
 # CONTEÚDO DE REFERÊNCIA (modele isto)
@@ -77,10 +84,12 @@ export function buildUserPrompt(input: GenerateScriptInput): string {
 
 PILAR: ${input.pillar}
 TEMA/ÂNGULO: ${themeLine(input)}
-DURAÇÃO ALVO: ${input.duration} segundos.
+DURAÇÃO ALVO: ${duracaoDoMolde} segundos — a MESMA do vídeo de referência, e isso não é negociável. Menos tempo significa MENOS beats e um ponto só, não a mesma quantidade de ideias falada mais rápido.
 ${input.stage.cta_instruction}
 
-Mantenha o MESMO tipo de arco que funcionou, mas com tema e voz do creator.
+# A REFERÊNCIA MANDA NA FORMA
+Mantenha o MESMO tipo de arco, o MESMO número aproximado de beats e a MESMA densidade de ideias do vídeo de referência. O que muda é o TEMA e a VOZ; o esqueleto é dele.
+Se a instrução da etapa acima pedir algo que não cabe nesse formato — quebrar objeções, listar preço, dar régua de qualificação — DEIXE DE FORA. Isso é estrutura de página de venda, e ela não entra num Reel de referência curta. Um Reel faz UM ponto.
 ${input.ownPerformance ? `\n${input.ownPerformance}\n` : ''}
 ${buildCtaBlock(input.persona)}
 
