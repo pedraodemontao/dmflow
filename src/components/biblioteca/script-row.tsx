@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
-import { ChevronDown, Gift } from 'lucide-react'
+import { ChevronDown, ExternalLink, Gift } from 'lucide-react'
 
 import type { ScriptListItem } from '@/app/(app)/biblioteca/roteiros/queries'
 import { ScriptView } from '@/components/biblioteca/script-view'
@@ -98,6 +98,49 @@ export function ScriptRow({ item }: { item: ScriptListItem }) {
 
       {aberto && (
         <div className="border-t border-border bg-surface-2 p-4">
+          {/* O molde fica no TOPO do roteiro aberto, não num link perdido: a
+              pergunta que o dono faz ao ler é "ficou parecido com o que
+              funcionou?", e ela só se responde com os dois à vista. */}
+          {item.modeledOn?.url && (
+            <a
+              href={item.modeledOn.url}
+              target="_blank"
+              rel="noreferrer"
+              className="mb-4 flex items-center gap-3 rounded-sm border border-border bg-background p-3 transition-colors hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            >
+              {item.modeledOn.thumbUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={item.modeledOn.thumbUrl}
+                  alt=""
+                  className="h-16 w-12 shrink-0 rounded-sm object-cover"
+                />
+              ) : (
+                <span className="flex h-16 w-12 shrink-0 items-center justify-center rounded-sm border border-border text-[9px] text-muted">
+                  sem capa
+                </span>
+              )}
+              <div className="min-w-0 flex-1">
+                <p className="label text-[9px] text-muted">o vídeo que serviu de molde</p>
+                <p className="mt-0.5 truncate text-xs text-foreground">
+                  @{item.modeledOn.handle}
+                  {item.modeledOn.outlier !== null && (
+                    <span className="text-accent"> · {item.modeledOn.outlier.toFixed(1)}× a mediana</span>
+                  )}
+                  {item.modeledOn.durationSec && (
+                    <span className="text-muted"> · {item.modeledOn.durationSec}s</span>
+                  )}
+                </p>
+                {item.modeledOn.hookText && (
+                  <p className="mt-1 line-clamp-2 text-[11px] leading-snug text-muted">
+                    “{item.modeledOn.hookText}”
+                  </p>
+                )}
+              </div>
+              <ExternalLink className="size-3.5 shrink-0 text-muted" />
+            </a>
+          )}
+
           {item.script ? (
             <ScriptView script={item.script} />
           ) : (

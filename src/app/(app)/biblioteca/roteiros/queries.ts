@@ -11,7 +11,15 @@ export interface ScriptListItem {
   duration: string | null
   modelUsed: string | null
   /** De qual vídeo do acervo este roteiro foi modelado. */
-  modeledOn: { handle: string | null; outlier: number | null } | null
+  modeledOn: {
+    handle: string | null
+    outlier: number | null
+    /** O link do post. É o que permite comparar o roteiro com o vídeo que o gerou. */
+    url: string | null
+    thumbUrl: string | null
+    hookText: string | null
+    durationSec: number | null
+  } | null
   /** A entrega que nasceu junto — o presente que este roteiro promete. */
   delivery: { id: string; title: string; slug: string; status: string } | null
   script: Script | null
@@ -47,15 +55,16 @@ export async function getScripts(): Promise<ScriptListItem[]> {
 
   const [{ data: itens }, { data: entregas }] = await Promise.all([
     itemIds.length > 0
-      ? supabaseAdmin.from('library_items').select('id, owner_handle, outlier').in('id', itemIds)
+      ? supabaseAdmin
+          .from('library_items')
+          .select('id, owner_handle, outlier, external_url, thumb_url, hook_text, duration_sec')
+          .in('id', itemIds)
       : Promise.resolve({ data: [] }),
     supabaseAdmin.from('deliveries').select('id, title, slug, status, script_id'),
   ])
 
   const porItem = new Map(
-    ((itens ?? []) as Array<{ id: string; owner_handle: string | null; outlier: number | null }>).map(
-      (row) => [row.id, row],
-    ),
+    ((itens ?? []) as Array<{ id: string; [k: string]: unknown }>).map((row) => [row.id, row]),
   )
   const porScript = new Map(
     (
@@ -85,7 +94,16 @@ export async function getScripts(): Promise<ScriptListItem[]> {
       funnelStage: row.funnel_stage,
       duration: row.duration,
       modelUsed: row.model_used,
-      modeledOn: item ? { handle: item.owner_handle, outlier: item.outlier } : null,
+      modeledOn: item
+        ? {
+            handle: typeof item.owner_handle === 'string' ? item.owner_handle : null,
+            outlier: typeof item.outlier === 'number' ? item.outlier : null,
+            url: typeof item.external_url === 'string' ? item.external_url : null,
+            thumbUrl: typeof item.thumb_url === 'string' ? item.thumb_url : null,
+            hookText: typeof item.hook_text === 'string' ? item.hook_text : null,
+            durationSec: typeof item.duration_sec === 'number' ? item.duration_sec : null,
+          }
+        : null,
       delivery: entrega
         ? { id: entrega.id, title: entrega.title, slug: entrega.slug, status: entrega.status }
         : null,
