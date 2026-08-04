@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { loadModelingContext, type ContextProblem } from '@/lib/ai/context'
 import { generateScript } from '@/lib/ai/generate'
 import { generateDelivery } from '@/lib/ai/generate-delivery'
+import { MOCK_MODEL } from '@/lib/ai/generate'
 import { generateDeliverySlug } from '@/lib/ai/slug'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { Delivery, Script as ScriptRow } from '@/types/db'
@@ -127,6 +128,26 @@ export async function POST(request: Request) {
     stage: context.stage,
     promise: generated.output.ctas.instagram.fala,
   })
+
+  // O MOCK NÃO É GRAVADO COMO ENTREGA. Ele existe para o caminho de teste
+  // rodar sem rede e sem crédito, e é um placeholder legível ("Seu material,
+  // <persona>") — mas gravado com `status: draft` ele fica indistinguível de
+  // uma entrega gerada de verdade que só falta revisar.
+  //
+  // Foi o que aconteceu em 04/08: a geração falhou por resposta truncada, o
+  // mock entrou no banco, e o dono passou a ter material falso esperando
+  // publicação. Entrega falha VISÍVEL custa uma segunda tentativa; entrega
+  // falsa invisível custa um lead recebendo placeholder.
+  if (generatedDelivery.model === MOCK_MODEL) {
+    console.error('[deliveries] geração caiu no mock — não gravando placeholder')
+    return Response.json({
+      ok: true,
+      script,
+      delivery: null,
+      deliveryError:
+        'O roteiro saiu, mas a entrega não: o modelo não devolveu o material. Gere de novo — o roteiro já está salvo e não será cobrado outra vez.',
+    })
+  }
 
   const { data: deliveryRow, error: deliveryError } = await supabaseAdmin
     .from('deliveries')

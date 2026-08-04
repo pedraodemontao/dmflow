@@ -49,8 +49,15 @@ const MODEL_BY_TASK = {
 
 export type AiTask = keyof typeof MODEL_BY_TASK
 
-/** Roteiro completo cabe folgado; o teto existe para resposta que não termina nunca. */
-const MAX_TOKENS = 4000
+/**
+ * Teto por tarefa. Existe contra resposta que não termina nunca — mas apertado
+ * demais ele corta a resposta no meio, e resposta cortada não falha como
+ * "faltou espaço": falha como "campo obrigatório ausente".
+ *
+ * A entrega é a peça longa das duas: uma delas veio com 18 blocos. O roteiro
+ * tem estrutura fixa (ganchos, beats, CTAs) e não cresce assim.
+ */
+const MAX_TOKENS_BY_TASK = { script: 4000, delivery: 8000 } as const
 
 /**
  * Uma retentativa, não mais. A primeira falha de schema costuma ser descuido e
@@ -110,6 +117,14 @@ interface AnthropicResponse {
   model?: string
   content?: Array<{ type: string; [key: string]: unknown }>
   usage?: { input_tokens?: number; output_tokens?: number }
+  /**
+   * `max_tokens` aqui significa RESPOSTA CORTADA NO MEIO, e o sintoma é
+   * enganoso: o JSON da ferramenta chega incompleto e o Zod acusa um campo
+   * faltando ("title: expected string, received undefined"), como se o modelo
+   * tivesse desobedecido o schema. Sem ler isto, a mensagem manda quem
+   * investiga para o prompt quando o problema é o teto.
+   */
+  stop_reason?: string
 }
 
 type Message =
@@ -172,7 +187,7 @@ export async function generateStructured<T>(
       signal: AbortSignal.timeout(TIMEOUT_MS),
       body: JSON.stringify({
         model: model(request.task),
-        max_tokens: MAX_TOKENS,
+        max_tokens: MAX_TOKENS_BY_TASK[request.task ?? 'script'],
         system: request.system,
         messages,
         tools: [
@@ -197,7 +212,17 @@ export async function generateStructured<T>(
 
     const toolUse = firstToolUse(body)
     if (!toolUse) {
-      lastIssue = 'a resposta não veio pela ferramenta'
+      lastIssue =
+        body.stop_reason === 'max_tokens'
+          ? `a resposta estourou o teto de ${MAX_TOKENS_BY_TASK[request.task ?? 'script']} tokens e veio cortada`
+          : 'a resposta não veio pela ferramenta'
+      continue
+    }
+
+    // Truncamento ANTES do Zod: um JSON cortado no meio produz erro de campo
+    // faltando, que descreve o sintoma e esconde a causa.
+    if (body.stop_reason === 'max_tokens') {
+      lastIssue = `a resposta estourou o teto de ${MAX_TOKENS_BY_TASK[request.task ?? 'script']} tokens e veio cortada`
       continue
     }
 
