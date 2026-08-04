@@ -85,6 +85,7 @@ export async function POST(request: Request) {
     refs: context.refs,
     modeledOn: context.item,
     hookPatterns: context.hookPatterns,
+    ownPerformance: context.ownPerformance,
   })
 
   const { data, error } = await supabaseAdmin

@@ -26,6 +26,12 @@ export interface GenerateScriptInput {
   /** O vídeo que serve de molde. É o que diferencia "gerar" de "modelar". */
   modeledOn?: LibraryItem | null
   hookPatterns?: string | null
+  /**
+   * O que já funcionou com a audiência DELE. Opcional: sem vídeo medido
+   * suficiente o bloco não existe, e prompt sem bloco é melhor que prompt com
+   * bloco vazio pedindo para aprender com nada.
+   */
+  ownPerformance?: string | null
 }
 
 export interface GeneratedScript {
@@ -75,7 +81,7 @@ DURAÇÃO ALVO: ${input.duration} segundos.
 ${input.stage.cta_instruction}
 
 Mantenha o MESMO tipo de arco que funcionou, mas com tema e voz do creator.
-
+${input.ownPerformance ? `\n${input.ownPerformance}\n` : ''}
 ${buildCtaBlock(input.persona)}
 
 ${closing}`
@@ -91,7 +97,7 @@ ${input.stage.cta_instruction}
 
 # CONTEÚDOS REAIS DO NICHO QUE PERFORMARAM (sua INTELIGÊNCIA — modele o ângulo, o gancho e a estrutura NISSO, reescreva 100% na voz do creator)
 ${refs}
-
+${input.ownPerformance ? `\n${input.ownPerformance}\n` : ''}
 ${buildCtaBlock(input.persona)}
 
 ${closing}`

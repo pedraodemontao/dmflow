@@ -1,3 +1,4 @@
+import { buildOwnPerformanceBlock, getOwnPerformance } from '@/lib/ai/own-performance'
 import { formatHookPatterns, scoreLibrary } from '@/lib/ai/retrieve'
 import { getAccount } from '@/lib/data'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -40,6 +41,11 @@ export interface ScriptContext {
   item: LibraryItem
   refs: LibraryItem[]
   hookPatterns: string | null
+  /**
+   * O que já converteu com a audiência do próprio dono. Null enquanto não
+   * houver vídeo medido suficiente — ver `MIN_POSTS_PARA_APRENDER`.
+   */
+  ownPerformance: string | null
 }
 
 export interface ModelingArgs {
@@ -129,6 +135,15 @@ export async function loadModelingContext(args: ModelingArgs): Promise<LoadResul
     .limit(POOL_LIMIT)
 
   const pool = (poolRows as LibraryItem[] | null) ?? []
+
+  // O dado próprio corrige o molde externo: a biblioteca diz o que funcionou
+  // para os outros, isto diz o que funcionou para ELE. Falha aqui não pode
+  // impedir a geração — o roteiro sem este bloco é o que já existia ontem.
+  const performance = await getOwnPerformance(account.id).catch((error) => {
+    console.error('[dm-flow] desempenho próprio ignorado:', String(error).slice(0, 120))
+    return null
+  })
+  const ownPerformance = performance ? buildOwnPerformanceBlock(performance) : null
   const pillarName = pillar?.name ?? item.category ?? 'modelado'
 
   return {
@@ -142,6 +157,7 @@ export async function loadModelingContext(args: ModelingArgs): Promise<LoadResul
       item,
       refs: scoreLibrary(pool, `${pillarName} ${args.theme ?? ''}`, REF_LIMIT),
       hookPatterns: formatHookPatterns(pool),
+      ownPerformance,
     },
   }
 }
