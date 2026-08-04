@@ -1,0 +1,2837 @@
+{
+  "scripts": [
+    {
+      "id": "6ffd47d9-20c8-4e5c-9c63-de9eddfdb936",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "0cebb70d-48c6-42bb-ad76-b027d6ca2cd9",
+      "funnel_stage": "meio",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "eb241567-3e1a-48e3-8241-400ef84b0920",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui. Eu mostro IA com número de antes e depois, não com print de prompt.",
+            "tela": "SEGUE PRO EXTRATO"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE que eu te mando o passo a passo da tarefa narrada. E segue, porque o extrato desse teste vem no próximo vídeo.",
+            "tela": "COMENTA: CLAUDE"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "O Claude agora olha a sua tela enquanto você trabalha. E copia o seu jeito.",
+            "tela": "ELE APRENDE VENDO SUA TELA"
+          },
+          {
+            "beat": "Tensão / o inimigo (3-14s)",
+            "fala": "Todo mundo te vende prompt. Prompt é uma frase. Processo é o que a sua equipe faz de verdade. Você não escreve o seu processo. Você mostra ele.",
+            "tela": "PROMPT NÃO É PROCESSO"
+          },
+          {
+            "beat": "Promessa concreta (14-24s)",
+            "fala": "Você compartilha a tela. Abre o [NOME DA FERRAMENTA QUE VOCÊ USA NA OPERAÇÃO]. Faz a tarefa como faz todo dia. E narra em voz alta cada clique.",
+            "tela": "NARRAR > DOCUMENTAR"
+          },
+          {
+            "beat": "Demonstração na tela (24-40s)",
+            "fala": "Aqui eu faço a triagem de dúvida de aluno. Abro o ticket. Leio. Classifico. Falo o critério em voz alta: essa é de conteúdo, essa é de financeiro. No fim eu peço: escreve o passo a passo do que você me viu fazer. Ele devolve o processo escrito.",
+            "tela": "TAREFA REAL, NÃO EXEMPLO"
+          },
+          {
+            "beat": "Objeção 1 — não sei programar (40-47s)",
+            "fala": "Não tem código nessa etapa. Você está falando e clicando. Quem sabe o processo é você, não ele.",
+            "tela": "ZERO CÓDIGO AQUI"
+          },
+          {
+            "beat": "Objeção 2 e 3 — grana e golpe (47-56s)",
+            "fala": "E antes de isso entrar na operação, mede o antes. Quantos tickets por dia. Quantos minutos cada um. Esse é o Marco Zero. Sem número de antes, você não instalou nada. Você só assistiu uma demo.",
+            "tela": "MARCO ZERO ANTES DE INSTALAR"
+          },
+          {
+            "beat": "Prova / regra da casa (56-64s)",
+            "fala": "No mês seguinte você compara. Se o saldo em reais for negativo, desinstala. Extrato só com crédito é vitrine.",
+            "tela": "O QUE NÃO SE PAGA, SAI"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "O Claude agora aprende olhando a sua tela. Você não escreve prompt. Você trabalha e narra.",
+            "tela": "ELE TÁ VENDO SUA TELA"
+          },
+          {
+            "fala": "Pare de ensinar IA com texto. Compartilhe a tela e faça a tarefa na frente dele.",
+            "tela": "PARE DE ESCREVER PROMPT"
+          },
+          {
+            "fala": "Tem uma coisa que ninguém está usando: o Claude vendo você trabalhar na tela.",
+            "tela": "NINGUÉM ESTÁ USANDO ISSO"
+          }
+        ],
+        "format": {
+          "dica": "Grave o screencast primeiro: compartilhe a tela com o Claude e execute UMA tarefa real da sua operação (triagem de ticket de aluno, por exemplo), narrando cada clique em voz alta. Deixe visível o pedido final \"escreve o passo a passo do que você me viu fazer\" e a resposta dele — esse é o print que segura o vídeo. Talking head só no hook e no fecho, em corte seco. Cortes a cada 2-3s na parte falada, e mantenha 4-6s cheios na tela do processo devolvido, sem corte, para dar tempo de ler. Legenda queimada do começo ao fim. Se tiver planilha do Marco Zero (tickets/dia, minutos por ticket), mostre 2 segundos dela antes do fecho.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "O Claude aprende vendo a sua tela. Você compartilha a tela, faz a tarefa como faz todo dia e narra cada clique. No fim, pede o passo a passo do que ele te viu fazer. Ele devolve o seu processo escrito — o seu, não o do print do gringo.\n\nSó que ensinar não é instalar. Antes de qualquer coisa entrar na operação, a gente marca o Marco Zero: quantos tickets por dia, quantos minutos cada um, quem faz hoje. Sem número de antes, não existe depois. Existe demo.\n\nNo mês seguinte, extrato. Linha a linha, em reais: o que entrou, o que saiu, o que sobrou. E a linha negativa vai publicada igual. O que não se paga, sai da operação.\n\nAqui a pergunta não é \"quantas automações você tem\". É \"onde está o extrato\".\n\nComenta CLAUDE que eu te mando o passo a passo de como gravar a sua primeira tarefa narrada.\n\n#iaauditada #claudecode #inteligenciaartificial #educacaoonline #operacao #infoproduto #automacao",
+        "headline": "O Claude aprende olhando a sua tela — e antes de instalar isso na operação, você mede quantos [MINUTOS POR TAREFA] custa hoje. Sem esse número, não tem extrato no fim do mês."
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7874,
+      "tokens_out": 2073,
+      "created_at": "2026-08-04T20:38:26.904432+00:00"
+    },
+    {
+      "id": "c21cb063-d62b-4c77-a705-3966860ac7eb",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "64e8f644-b750-46dd-ba7a-eb3b41612274",
+      "funnel_stage": "topo",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "2076c9a5-fea1-4761-a56e-d079981ab351",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui. Aqui não tem demonstração bonita. Tem extrato, com a linha que deu negativo.",
+            "tela": "Segue pra ver o extrato"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE que eu te mando o modelo de extrato que a gente usa pra medir o antes. E segue, porque o próximo é a linha negativa inteira, publicada.",
+            "tela": "Comenta CLAUDE + segue"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Gancho (0-3s)",
+            "fala": "Tem um detalhe que entrega qualquer demonstração de IA. E não é a tela.",
+            "tela": "TEM UM DETALHE QUE ENTREGA TUDO"
+          },
+          {
+            "beat": "O detalhe (3-12s)",
+            "fala": "O vídeo mostra o agente respondendo bonito. Fluxo verde, tudo certo. Só que ninguém mostra o número de antes. E sem o número de antes, aquilo ali é encenação.",
+            "tela": "A tela engana. O extrato não."
+          },
+          {
+            "beat": "Nomeia o inimigo (12-24s)",
+            "fala": "Existe uma frase que denuncia. \"Isso tem um potencial enorme.\" Potencial é o que se diz quando não se mediu. Quem mediu fala em reais.",
+            "tela": "\"Isso tem um potencial enorme\""
+          },
+          {
+            "beat": "Tira a culpa (24-34s)",
+            "fala": "Se você comprou dois cursos de IA e não sabe dizer o que eles pagaram, o problema não é você. Te venderam a capacidade de fazer. Ninguém te entregou a conta.",
+            "tela": "Você não errou. Te venderam capacidade."
+          },
+          {
+            "beat": "Demonstração na tela (34-48s)",
+            "fala": "Na tela é isto. Primeira coluna: quanto aquele processo custava antes. Isso é o Marco Zero. Segunda: quanto custa agora. Terceira: o saldo. Uma linha só. [SEU NÚMERO DE ANTES AQUI] virou [SEU NÚMERO DE DEPOIS AQUI].",
+            "tela": "Marco Zero → depois → saldo"
+          },
+          {
+            "beat": "A linha negativa (48-56s)",
+            "fala": "E tem a linha em âmbar. O item que não se pagou. Extrato só com crédito é vitrine. Vitrine é o que o Vendedor de Futuro já faz.",
+            "tela": "A linha em âmbar"
+          },
+          {
+            "beat": "Fecho de ideia (56-60s)",
+            "fala": "Faça o teste hoje. Abra a IA que você assinou. Se você não sabe dizer o número de antes, ela ainda não conta.",
+            "tela": "IA só conta quando vira linha no extrato"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "Tem um detalhe que entrega toda demonstração de IA. E não é a tela.",
+            "tela": "TEM UM DETALHE QUE ENTREGA TUDO"
+          },
+          {
+            "fala": "A tela engana o olho. O extrato não engana ninguém.",
+            "tela": "A tela engana. O extrato não."
+          },
+          {
+            "fala": "Todo mundo te mostra o prompt. Ninguém te mostra o extrato.",
+            "tela": "Prompt todo mundo mostra. Extrato, ninguém."
+          }
+        ],
+        "format": {
+          "dica": "Grave os 3 primeiros segundos em talking head, olhando na câmera, sem música — a fala seca puxa atenção. No beat da demonstração, corte para screencast de uma planilha simples com três colunas: ANTES, DEPOIS, SALDO, e destaque a linha negativa em âmbar com o cursor. Cortes a cada 3-4 segundos, legenda queimada sempre. Nada de robô, gráfico genérico ou animação: só tela real de planilha e rosto.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "🔊 Tem um detalhe que entrega tudo numa demonstração de IA: o silêncio sobre o número de antes.\n\nA tela engana o olho. Fluxo verde, agente respondendo rápido, print bonito no story. Só que a pergunta que derruba qualquer demonstração é uma: quanto esse processo custava ANTES de você instalar isso aí?\n\nSem esse número — o Marco Zero — não existe medição. Existe estimativa com cara de resultado.\n\nÉ por isso que a conversa não é \"quantas automações você tem\". É \"onde está o extrato\". Linha a linha, em reais, o que entrou e o que saiu. Inclusive a linha em âmbar: o item que não se pagou. Extrato só de crédito é vitrine.\n\nSe você comprou curso de IA e não sabe dizer o que ele pagou, a culpa não é sua. Te venderam capacidade. Ninguém te entregou a conta.\n\nComenta aqui: você sabe o número de ANTES do seu processo? Só isso.\n\n#iaauditada #inteligenciaartificial #educacaoonline #escolaonline #gestaodenegocios #automacao #extrato",
+        "headline": "Tem um detalhe que entrega toda demonstração de IA: ninguém mostra o número de antes"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7882,
+      "tokens_out": 1889,
+      "created_at": "2026-08-04T20:37:31.727184+00:00"
+    },
+    {
+      "id": "34d70c62-33e2-496c-a785-1ea3950d18e4",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "f0572b10-a75a-423f-a51f-5fb857870cca",
+      "funnel_stage": "meio",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "70347370-6ccb-4a26-9831-9e5a001dfd6c",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui. Eu publico extrato, incluindo as linhas negativas, não prompt bonito.",
+            "tela": "SEGUE PRO PRÓXIMO EXTRATO"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE que eu te mando as quatro etapas e o modelo de extrato no direct. E segue, porque o próximo vídeo é a linha negativa de um extrato de verdade.",
+            "tela": "COMENTA \"CLAUDE\""
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-4s)",
+            "fala": "O Claude não serve só pra escrever seu produto. Serve pra auditar ele.",
+            "tela": "USEI O CLAUDE COMO AUDITOR DO PRÓPRIO PRODUTO"
+          },
+          {
+            "beat": "Tensão / Problema (4-14s)",
+            "fala": "Você pede uma ideia de produto pra IA. Ela te devolve elogio. Sempre. Nunca te devolve o número de antes. E sem número de antes, você não criou produto. Você criou expectativa.",
+            "tela": "\"tem um potencial enorme\""
+          },
+          {
+            "beat": "Virada — o método (14-22s)",
+            "fala": "A ordem certa é o contrário. Primeiro o Marco Zero. Depois o prompt. São quatro etapas na tela.",
+            "tela": "MARCO ZERO ANTES DO PROMPT"
+          },
+          {
+            "beat": "Etapa 1 na tela (22-31s)",
+            "fala": "Etapa um. Você não pede ideia. Você manda ele te entrevistar. Números da sua operação, oferta atual, taxa de conversão, ticket. Ele pergunta, você responde. Nada de criar nada ainda.",
+            "tela": "1. O CLAUDE TE ENTREVISTA"
+          },
+          {
+            "beat": "Etapa 2 na tela (31-40s)",
+            "fala": "Etapa dois. Ele fecha o Marco Zero. Quanto aquela etapa da sua operação faz hoje, em reais, sem IA nenhuma. Escreve e trava. Esse número não se mexe depois.",
+            "tela": "2. MARCO ZERO: O NÚMERO DE ANTES"
+          },
+          {
+            "beat": "Etapa 3 na tela (40-48s)",
+            "fala": "Etapa três. Custo. API, ferramenta, hora de gente pra operar. Some antes de construir. Se o custo já come o ganho estimado, morreu aqui. Ótimo. Custou zero.",
+            "tela": "3. O CUSTO ANTES DE COMEÇAR"
+          },
+          {
+            "beat": "Etapa 4 na tela (48-56s)",
+            "fala": "Etapa quatro. Você monta o extrato do mês. Entrou tanto. Saiu tanto. Saldo. Uma linha por processo. Se der negativo, publica negativo e desinstala.",
+            "tela": "4. EXTRATO: ENTROU, SAIU, SALDO"
+          },
+          {
+            "beat": "Prova / objeções (56-70s)",
+            "fala": "Não precisa programar. Isso é conversa e planilha. Não precisa de investimento novo: você já paga a assinatura que não usa. E não é promessa, porque o número quem confere é você. No meu print aqui: entrou [SEU NÚMERO AQUI]. Saiu [SEU CUSTO AQUI]. Saldo [SEU SALDO AQUI].",
+            "tela": "[SEU EXTRATO AQUI — ENTROU / SAIU / SALDO]"
+          },
+          {
+            "beat": "Fecho de posição (70-78s)",
+            "fala": "Todo mundo mostra o prompt. Quase ninguém mostra o extrato. E abaixo de cinquenta mil por mês essa conta não fecha pra você. Não faça.",
+            "tela": "AULA NÃO É ENTREGA. EXTRATO É."
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "O Claude elogia qualquer produto que você inventar. Pergunta o contrário e ele te dá o argumento perfeito pra matar a mesma ideia.",
+            "tela": "O CLAUDE ELOGIA QUALQUER IDEIA SUA"
+          },
+          {
+            "fala": "Tem um detalhe que entrega se o produto que você criou com IA presta. E não é o prompt.",
+            "tela": "TEM UM DETALHE QUE ENTREGA O PRODUTO RUIM"
+          },
+          {
+            "fala": "Todo mundo te mostra o prompt do produto novo. Ninguém te mostra o extrato dele.",
+            "tela": "PROMPT NÃO É PRODUTO. EXTRATO É."
+          }
+        ],
+        "format": {
+          "dica": "Grave em duas camadas. Talking head para o hook e para o fecho de posição — olho na câmera, frase curta, sem gesticular. Do beat 4 ao 8, screencast do Claude: mostre a janela de conversa onde ele te ENTREVISTA (perguntas na tela, rolando), depois corte para a planilha com as colunas ENTROU / SAIU / SALDO e uma linha em âmbar marcada como negativa. Numere as etapas com selo 1/2/3/4 no canto. Corte a cada 3-4 segundos, sem música alta. Legenda queimada do começo ao fim. Deixe os campos [SEU NÚMERO AQUI] em branco na planilha só se você for preenchê-los antes de gravar — não grave a tela vazia.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "Dá pra usar o Claude como auditor do seu próprio produto — não como puxa-saco de ideia.\n\nPeça uma ideia e ele te devolve elogio. Sempre. O que ele não te devolve é o número de antes. E produto sem número de antes não é produto: é expectativa.\n\nO caminho tem 4 etapas:\n\n1 — ele te entrevista: números da operação, oferta atual, conversão, ticket. Nada de criar nada ainda.\n2 — Marco Zero: quanto aquela etapa faz hoje, em reais, sem IA. Escreve e trava.\n3 — custo somado antes de construir: API, ferramenta, hora de gente. Se o custo come o ganho, morreu aqui. Custou zero.\n4 — extrato do mês: entrou, saiu, saldo. Uma linha por processo. Deu negativo, publica negativo e desinstala.\n\nÉ isso que a gente chama de IA Auditada. Muda a pergunta de \"quantas automações eu tenho?\" para \"onde está o extrato?\".\n\nAbaixo de R$ 50 mil por mês a conta não fecha. Não faça.\n\n#iaauditada #claude #inteligenciaartificial #negociosdigitais #educacaoonline #automacao #extrato",
+        "headline": "Como usar o Claude para auditar seu próprio produto: 4 etapas para sair da ideia elogiada e chegar no extrato — entrou, saiu, saldo"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7942,
+      "tokens_out": 2442,
+      "created_at": "2026-08-04T20:36:33.388859+00:00"
+    },
+    {
+      "id": "c15959ee-531e-4439-9dee-fd4a54f92fa5",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "4eb081ad-41a8-47a3-8a24-b84fb4e5f593",
+      "funnel_stage": "topo",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui. Aqui não tem prompt mágico. Tem número antes e número depois.",
+            "tela": "SEGUE PRO PRÓXIMO NÚMERO"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE que eu te mando o passo a passo do teste dos dois lados e a folha do Marco Zero. E segue aqui pra não perder os próximos.",
+            "tela": "COMENTA \"CLAUDE\" + SEGUE"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-4s)",
+            "fala": "A IA é bajuladora. Ela concorda com você por padrão.",
+            "tela": "A IA CONCORDA COM VOCÊ. SEMPRE."
+          },
+          {
+            "beat": "O inimigo (4-15s)",
+            "fala": "Faça o teste. Pergunte se a sua ideia de automação é boa. Ela te dá cinco motivos brilhantes de que sim. Agora abre outra janela e pergunta o contrário. Ela te dá cinco motivos brilhantes de que não. Mesma ideia. Duas respostas perfeitas.",
+            "tela": "O TESTE DOS DOIS LADOS"
+          },
+          {
+            "beat": "Tira a culpa (15-26s)",
+            "fala": "Não é você que é ruim de prompt. A ferramenta não foi feita para discordar. Foi feita para agradar. E quem só ouve concordância acha que está decidindo, quando está sendo elogiado.",
+            "tela": "O PROBLEMA NÃO É VOCÊ"
+          },
+          {
+            "beat": "Demonstração na tela (26-42s)",
+            "fala": "Olha as duas respostas lado a lado. Argumento a favor. Argumento contra. Procura um número em qualquer uma delas. Não tem. Nem quanto custa rodar, nem quanto tempo economiza, nem o que era antes. A ferramenta não sabe do seu negócio. Ela só escreve bonito.",
+            "tela": "NENHUMA DAS DUAS TELAS TEM NÚMERO"
+          },
+          {
+            "beat": "A virada (42-52s)",
+            "fala": "Então não pergunte se a ideia é boa. Anote o número de antes. Quanto essa tarefa custa hoje, em horas ou em reais. Esse número é o Marco Zero. Depois de instalar, você compara. A IA opina. O número decide.",
+            "tela": "O ÚNICO JUIZ: O NÚMERO DE ANTES"
+          },
+          {
+            "beat": "Prova (52-60s)",
+            "fala": "Todo mundo mostra o prompt. Quase ninguém mostra o extrato. E extrato é a única coisa que não dá para discutir com argumento perfeito.",
+            "tela": "AULA NÃO É ENTREGA. PROCESSO RODANDO É."
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "A IA é bajuladora. Ela concorda com você por padrão.",
+            "tela": "A IA CONCORDA COM VOCÊ. SEMPRE."
+          },
+          {
+            "fala": "Pergunte se a sua ideia de IA é boa. Ela vai dizer que sim. Pergunte o contrário. Ela vai dizer que não. Com a mesma convicção.",
+            "tela": "MESMA IDEIA. DUAS RESPOSTAS PERFEITAS."
+          },
+          {
+            "fala": "Tem um detalhe nessa tela que entrega tudo: não tem um único número nela.",
+            "tela": "PROCURA UM NÚMERO AQUI"
+          }
+        ],
+        "format": {
+          "dica": "Grave o hook em talking head, sem corte, olhando na câmera. Nos 26s, corte para screencast com as DUAS janelas do chat lado a lado na mesma tela: à esquerda a pergunta \"essa automação vale a pena?\", à direita \"por que essa automação não vale a pena?\". Passe o cursor devagar pelas duas respostas procurando um número — o gesto de procurar e não achar é a prova. Depois volte para talking head na virada do Marco Zero e mostre uma folha simples com duas colunas escritas à mão: ANTES e DEPOIS. Cortes secos a cada 4-6 segundos, legenda queimada sempre.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "A IA é bajuladora por projeto, não por defeito.\n\nPergunte se a sua ideia de automação é boa: você recebe cinco motivos brilhantes de que sim. Pergunte o contrário na janela ao lado: cinco motivos brilhantes de que não. Mesma ideia, duas respostas perfeitas, zero número em qualquer uma delas.\n\nÉ aí que a decisão trava em negócio de educação. Não falta ferramenta. Falta o número de ANTES. Quanto aquela tarefa custa hoje — em horas da equipe ou em reais no mês. Sem esse número, o que você chama de resultado é opinião com formatação boa.\n\nO nome disso aqui é Marco Zero: nada entra na operação sem o número de antes. Depois que entra, a conta é simples — o que entrou, o que saiu, o saldo em reais. E o item que não se pagou também vai publicado. Extrato só com créditos é vitrine.\n\nFaça o teste dos dois lados hoje e comenta o que a IA respondeu. Aposto que ela te elogiou nas duas vezes.\n\n#iaauditada #inteligenciaartificial #negociosdigitais #educacaoonline #automacao #gestao #marketingdigital",
+        "headline": "A IA te dá um argumento perfeito para qualquer lado. O que ela nunca te dá é o número de antes."
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7845,
+      "tokens_out": 2005,
+      "created_at": "2026-08-04T20:35:22.649366+00:00"
+    },
+    {
+      "id": "dd1fe7fc-fff2-4933-82ac-0449cc83895b",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "0cebb70d-48c6-42bb-ad76-b027d6ca2cd9",
+      "funnel_stage": "meio",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "eb241567-3e1a-48e3-8241-400ef84b0920",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu abro esses sistemas por dentro — o que quebrou, o que custava e o que passou a custar.",
+            "tela": "SEGUE PRA VER POR DENTRO"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE que eu te mando o passo a passo de como gravar teu processo. E segue aqui, porque eu mostro esses sistemas por dentro toda semana.",
+            "tela": "COMENTA \"CLAUDE\" + SEGUE"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "Você não precisa explicar seu processo pro Claude. Você mostra.",
+            "tela": "ELE ASSISTE VOCÊ TRABALHAR"
+          },
+          {
+            "beat": "Problema nomeado (3-15s)",
+            "fala": "O motivo de nenhuma ferramenta encaixar no teu negócio é o teu processo. Ele tem uma ordem, tem exceção, tem aquele detalhe que só o teu time sabe. Ferramenta de prateleira te obriga a mudar isso. E aí você paga e ninguém usa.",
+            "tela": "\"MEU PROCESSO É MUITO ESPECÍFICO\""
+          },
+          {
+            "beat": "A virada (15-25s)",
+            "fala": "Aqui eu compartilho minha tela com o Claude e vou narrando. Clico aqui, isso vai pra planilha, esse cliente é exceção. Ele está vendo, ouvindo e anotando a regra.",
+            "tela": "COMPARTILHA A TELA E NARRA"
+          },
+          {
+            "beat": "Demonstração na tela (25-40s)",
+            "fala": "Repara: ele devolveu o processo escrito, passo por passo, com a exceção que eu falei em voz alta. Isso vira a instrução que o sistema segue depois. Nenhuma linha de código digitada por mim aqui — eu só descrevi como o trabalho é feito.",
+            "tela": "OLHA O QUE ELE ENTENDEU"
+          },
+          {
+            "beat": "Prova / caso (40-52s)",
+            "fala": "É assim que eu construí o dm-flow: o núcleo do ManyChat funcionando, feito por uma pessoa, no lugar de uma assinatura mensal. Está no ar. [SEU NÚMERO AQUI: o que a assinatura custava por mês antes].",
+            "tela": "dm-flow · RODANDO EM PRODUÇÃO"
+          },
+          {
+            "beat": "Quebra de objeção + honestidade (52-62s)",
+            "fala": "Você não vira programador e não precisa. Mas seja honesto: se o teu processo está só na cabeça de alguém, nada disso funciona. Ele precisa existir pra ser gravado. E não, não é qualquer coisa — sistema com dinheiro passando dentro eu falo antes o que dá e o que não dá.",
+            "tela": "O QUE NÃO DÁ PRA FAZER"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "Você não precisa explicar teu processo pro Claude. Você mostra a tela e vai narrando.",
+            "tela": "ELE ASSISTE VOCÊ TRABALHAR"
+          },
+          {
+            "fala": "Todo mundo tenta descrever o processo por escrito. Erro. Você grava a tela fazendo ele.",
+            "tela": "PARA DE ESCREVER O PROCESSO"
+          },
+          {
+            "fala": "O motivo de nenhuma ferramenta encaixar no teu negócio não é o teu negócio. É que ela nunca te viu trabalhar.",
+            "tela": "A FERRAMENTA NUNCA TE VIU TRABALHAR"
+          }
+        ],
+        "format": {
+          "dica": "Grave em duas camadas. Comece com talking head bem perto na câmera nos 3 primeiros segundos. No segundo 15, corte para screencast REAL: sua tela dividida com o Claude, você executando uma tarefa da operação e narrando em voz alta. Deixe visível o momento em que ele devolve o processo escrito — dê zoom nessa parte e destaque a linha da exceção que você falou. Abra o dm-flow rodando por 3 a 4 segundos, tela de verdade, sem edição bonita. Volte pro talking head só no bloco de honestidade. Cortes secos a cada 3-4 segundos, legenda queimada do começo ao fim.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "Agora dá pra ensinar o Claude a trabalhar do jeito que a SUA operação trabalha — sem escrever documento, sem virar técnico. Você compartilha a tela, faz a tarefa como faz todo dia e vai narrando: \"clico aqui, isso vai pra planilha, esse cliente é exceção\". Ele transforma isso na regra que o sistema vai seguir.\n\nIsso muda a conta que todo dono de negócio faz. O motivo de ferramenta genérica nunca encaixar é que ela te obriga a mudar o processo. Sob medida é o contrário: o sistema encaixa no processo que já existe e funciona.\n\nFoi assim que eu construí o dm-flow — o núcleo do ManyChat rodando em produção, feito por uma pessoa, no lugar de uma assinatura mensal.\n\nO que NÃO dá: se o teu processo só existe na cabeça de uma pessoa, não tem o que gravar. Ele precisa existir primeiro.\n\nSe você tem alguém do time gastando a tarde copiando dado de um lugar pro outro, comenta CLAUDE que eu te mando o passo a passo de como gravar teu processo.\n\n#automacao #inteligenciaartificial #claudecode #donodenegocio #processos #sistemas #operacao",
+        "headline": "O sistema que aprende o processo do teu time só de assistir você trabalhar — e por que ferramenta de prateleira nunca encaixou"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7357,
+      "tokens_out": 2113,
+      "created_at": "2026-08-04T20:15:12.905023+00:00"
+    },
+    {
+      "id": "12cd490d-1035-4196-aa61-df1a36ce484e",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "64e8f644-b750-46dd-ba7a-eb3b41612274",
+      "funnel_stage": "topo",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "2076c9a5-fea1-4761-a56e-d079981ab351",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu mostro esses sistemas por dentro, com a tela aberta, sem slide.",
+            "tela": "SEGUE — sistema por dentro toda semana"
+          },
+          "instagram": {
+            "fala": "Comenta a palavra CLAUDE que eu te mando o passo a passo de como esse sistema foi montado. E segue aqui, porque eu vou abrindo mais partes dele por dentro.",
+            "tela": "comenta CLAUDE + segue"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "Tem um detalhe que entrega quando um sistema foi feito por IA. E não é o design.",
+            "tela": "TEM UM DETALHE QUE ENTREGA TUDO"
+          },
+          {
+            "beat": "Nomear o detalhe (3-12s)",
+            "fala": "A tela pode estar bonita. O que entrega é quando ela te obriga a mudar seu processo pra caber nela.",
+            "tela": "não é a tela. é o que ela pede de você"
+          },
+          {
+            "beat": "O inimigo (12-25s)",
+            "fala": "Ferramenta de prateleira nasce pra atender mil negócios. Nenhum deles é exatamente o seu. Então você adapta a operação, treina o time no jeito dela, e ainda paga assinatura todo mês. Não é culpa sua. Até agora essa era a única opção que existia.",
+            "tela": "o inimigo: inventar do zero"
+          },
+          {
+            "beat": "A virada / notícia (25-38s)",
+            "fala": "Isso mudou. Software sob medida ficou barato. O que antes era orçamento de agência e meses de prazo, hoje uma pessoa com IA entrega em outra escala de tempo. A conta que fazia da ferramenta genérica a única saída deixou de fechar.",
+            "tela": "a conta que sustentava isso parou de fechar"
+          },
+          {
+            "beat": "Demonstração na tela (38-50s)",
+            "fala": "Isso aqui é o dm-flow. Um sistema que faz o núcleo do que uma assinatura de automação de DM faz, rodando em produção. Foi construído por uma pessoa. E ele segue o fluxo que já existia, em vez de exigir um fluxo novo.",
+            "tela": "por dentro do dm-flow"
+          },
+          {
+            "beat": "Honestidade (50-57s)",
+            "fala": "E não, não dá pra fazer qualquer coisa. Tem processo que é bagunça, não é sistema. Nesse caso a IA só automatiza a bagunça mais rápido.",
+            "tela": "o que NÃO dá pra fazer"
+          },
+          {
+            "beat": "Fecho de ideia (57-62s)",
+            "fala": "Então pensa na sua operação. Qual tarefa alguém do seu time ainda faz copiando dado de um lugar pro outro?",
+            "tela": "qual tarefa seu time faz na mão hoje?"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "Tem um detalhe que entrega quando um sistema não foi feito pro seu negócio. E não é o design.",
+            "tela": "TEM UM DETALHE QUE ENTREGA TUDO"
+          },
+          {
+            "fala": "Sua ferramenta tem uns campos que ninguém do seu time preenche. Isso não é bug. É o sinal.",
+            "tela": "esse campo aí ninguém preenche"
+          },
+          {
+            "fala": "Se você teve que mudar seu processo pra usar a ferramenta, a ferramenta não é sua.",
+            "tela": "você mudou o processo pra caber na ferramenta"
+          }
+        ],
+        "format": {
+          "dica": "Abre em talking head só nos 3 primeiros segundos, bem perto da câmera, tom de quem vai contar um detalhe. No segundo 4 já corta pra tela: primeiro a ferramenta genérica cheia de campo que o negócio dele não usa, depois o dm-flow rodando de verdade — mexe o mouse, clica, deixa aparecer o fluxo funcionando. Cortes a cada 2-3 segundos, zoom no ponto exato que você está falando. Volta pro talking head só no beat da honestidade (o que NÃO dá pra fazer) e no fecho. Legenda queimada em tudo.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "🔊 Tem um detalhe que entrega quando um sistema não foi feito pro seu negócio: ele te obriga a mudar seu processo pra caber nele.\n\nFerramenta de prateleira é construída pra atender mil operações diferentes. A sua não é nenhuma delas. Aí acontece o de sempre: o time aprende o jeito da ferramenta, alguém passa a tarde copiando dado de um lugar pro outro, e a assinatura chega todo mês do mesmo jeito.\n\nIsso não era culpa de ninguém. Software sob medida era orçamento de dezenas de milhares e meses de prazo — então a ferramenta genérica era a única conta que fechava.\n\nEssa conta parou de fechar. Nesse vídeo eu abro o dm-flow por dentro: um sistema que faz o núcleo do que uma assinatura de automação de DM faz, construído por uma pessoa, rodando em produção. Não é slide, é a tela.\n\nE sendo honesto: não dá pra fazer tudo. Processo que é bagunça não vira sistema — vira bagunça automatizada mais rápido.\n\nComenta qual tarefa repetitiva ainda existe na sua operação. Eu leio todas.\n\n#automacao #inteligenciaartificial #donodenegocio #claudecode #processos #operacao #sistemas",
+        "headline": "Tem um detalhe que entrega quando o sistema não foi feito pro seu negócio — e não é o design"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7365,
+      "tokens_out": 2050,
+      "created_at": "2026-08-04T20:14:06.475098+00:00"
+    },
+    {
+      "id": "cdf44d7e-83ab-40a1-8cac-9c58220feca1",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "f0572b10-a75a-423f-a51f-5fb857870cca",
+      "funnel_stage": "meio",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "70347370-6ccb-4a26-9831-9e5a001dfd6c",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu mostro esses sistemas por dentro, com a tela aberta, sem enfeite.",
+            "tela": "SEGUE PRA VER O SISTEMA POR DENTRO"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE que eu te mando o passo a passo das quatro etapas no direct. E segue aqui, porque eu vou abrir o dm-flow por dentro nos próximos.",
+            "tela": "COMENTA \"CLAUDE\" 👇 + SEGUE"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "Dá pra usar a IA como auditor da sua própria operação. E o que aparece na tela é desconfortável.",
+            "tela": "4 ETAPAS PRA A IA MAPEAR SUA OPERAÇÃO"
+          },
+          {
+            "beat": "Problema / o que aparece (3-15s)",
+            "fala": "Você tem alguém no time copiando dado de um lugar pro outro toda tarde. Ninguém nunca mediu quanto isso custa. E é exatamente esse pedaço que vira sistema sob medida primeiro.",
+            "tela": "A tarefa que ninguém mediu"
+          },
+          {
+            "beat": "Etapa 1 na tela (15-25s)",
+            "fala": "Etapa um: você não descreve nada. Você deixa a IA te entrevistar. Ela pergunta quem faz o quê, em qual ferramenta, quantas vezes por semana. Aqui na tela é o Claude Code fazendo isso.",
+            "tela": "ETAPA 1 — A IA TE ENTREVISTA"
+          },
+          {
+            "beat": "Etapa 2 (25-35s)",
+            "fala": "Etapa dois: ela rastreia onde o mesmo dado é digitado duas vezes. Sempre tem. Planilha que alimenta ferramenta que alimenta relatório.",
+            "tela": "ETAPA 2 — CAÇAR O TRABALHO REPETIDO"
+          },
+          {
+            "beat": "Etapa 3 (35-45s)",
+            "fala": "Etapa três: lista de tudo que você paga por mês e o que você realmente usa de cada uma. Não é a IA adivinhando, é você jogando as faturas pra dentro.",
+            "tela": "ETAPA 3 — A CONTA DAS ASSINATURAS"
+          },
+          {
+            "beat": "Etapa 4 — demonstração (45-58s)",
+            "fala": "Etapa quatro: ela monta o mapa visual. Cada caixa é um processo, cada linha vermelha é trabalho manual. É esse mapa que diz o que vale virar sistema e o que é bobagem mexer.",
+            "tela": "ETAPA 4 — O MAPA DA OPERAÇÃO"
+          },
+          {
+            "beat": "Prova (58-72s)",
+            "fala": "O dm-flow nasceu desse tipo de leitura. É um clone do núcleo do ManyChat, rodando em produção, feito por uma pessoa, no lugar de uma assinatura mensal. Está aqui na tela, funcionando.",
+            "tela": "O dm-flow saiu de um mapa desses"
+          },
+          {
+            "beat": "Quebra de objeções (72-90s)",
+            "fala": "Três coisas que sempre vêm. Não sabe programar: você não vai escrever código, você descreve o processo. Acha que é caro: era, quando dependia de agência com time e prazo de meses. E não, não é mágica. Sistema sob medida resolve processo repetitivo do seu negócio. Não resolve gestão ruim, e não substitui vendedor.",
+            "tela": "não sei programar / não tenho grana / é golpe?"
+          },
+          {
+            "beat": "Fecho de conteúdo (90-100s)",
+            "fala": "Faz esse mapa antes de assinar mais uma ferramenta. Vai ficar óbvio o que você paga sem precisar.",
+            "tela": "faça o mapa antes de contratar qualquer coisa"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "Dá pra usar a IA como auditor da sua própria operação. E o que aparece na tela é desconfortável.",
+            "tela": "A IA COMO AUDITOR DA SUA OPERAÇÃO"
+          },
+          {
+            "fala": "Tem uma tarefa no seu time que ninguém nunca mediu. Em quatro etapas a IA te mostra ela.",
+            "tela": "TEM UMA TAREFA QUE NINGUÉM MEDIU"
+          },
+          {
+            "fala": "Antes de assinar mais uma ferramenta, faz isso. Quatro etapas, e a lista do que você paga sem usar aparece sozinha.",
+            "tela": "NÃO ASSINE NADA ANTES DISSO"
+          }
+        ],
+        "format": {
+          "dica": "Grave o hook e a quebra de objeções em talking head, câmera na mão, close. As 4 etapas em screencast: mostre o Claude Code fazendo as perguntas da entrevista, o texto sendo gerado, e o mapa da operação montando na tela. Corte a cada 2-3 segundos, com o número da etapa queimado grande no canto. No beat de prova, abra o dm-flow rodando de verdade e mexa nele — clique, mostre um fluxo funcionando. Nada de slide, tudo tela real.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "Dá pra usar a IA como auditor da sua própria operação — e o resultado é bem desconfortável.\n\nO caminho tem 4 etapas:\n\n1 — A IA te entrevista. Você não escreve documento nenhum: ela pergunta quem faz o quê, em qual ferramenta, quantas vezes por semana.\n\n2 — Ela caça o trabalho repetido. Onde o mesmo dado é digitado duas vezes. Planilha que alimenta ferramenta que alimenta relatório.\n\n3 — A conta das assinaturas. Tudo que sai por mês contra o que você de fato usa de cada uma.\n\n4 — O mapa da operação. Cada caixa é um processo, cada linha vermelha é trabalho manual. É esse mapa que mostra o que vale virar sistema sob medida e o que é bobagem mexer.\n\nO dm-flow (clone funcional do núcleo do ManyChat, rodando em produção, construído por uma pessoa no lugar de uma assinatura mensal) saiu exatamente desse tipo de leitura.\n\nE sendo honesto: isso resolve processo repetitivo. Não resolve gestão ruim e não substitui vendedor.\n\nComenta CLAUDE que eu te mando o passo a passo das 4 etapas no direct.\n\n#automacao #inteligenciaartificial #donodenegocio #processos #claudecode #sistemasobmedida #operacao",
+        "headline": "O sistema que mapeia onde sua operação queima horas em trabalho manual — em 4 etapas, com a IA te entrevistando"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7425,
+      "tokens_out": 2452,
+      "created_at": "2026-08-04T20:12:50.005395+00:00"
+    },
+    {
+      "id": "770fb56e-a2f8-48bc-856b-4a4ee257721c",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "4eb081ad-41a8-47a3-8a24-b84fb4e5f593",
+      "funnel_stage": "topo",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu mostro por dentro dos sistemas que eu construo, o que funciona e o que quebra.",
+            "tela": "Segue pra ver por dentro"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE aqui embaixo que eu te mando as perguntas que eu uso pra IA não me dar razão. E segue pra não perder os próximos.",
+            "tela": "Comenta CLAUDE + segue"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "A IA é bajuladora. Ela concorda com quase tudo que você fala.",
+            "tela": "A IA CONCORDA COM VOCÊ. SEMPRE."
+          },
+          {
+            "beat": "Nomeia o inimigo (3-15s)",
+            "fala": "Você pede pra ela avaliar sua ideia de automação. Ela acha ótima. Você pergunta o contrário, ela acha ruim. Mesma ideia, duas respostas. Ela não tá te enganando. Ela tá te obedecendo.",
+            "tela": "O problema não é você. É a pergunta."
+          },
+          {
+            "beat": "Por que isso quebra na prática (15-28s)",
+            "fala": "É por isso que muita gente tenta automatizar o processo e desiste. A pessoa chega já com a solução decidida. Pede pra IA construir. Ela constrói. E o resultado não encaixa em nada do que o time já faz.",
+            "tela": "Ela responde o que você pediu, não o que você precisa"
+          },
+          {
+            "beat": "Demonstração na tela (28-45s)",
+            "fala": "Olha aqui na tela. Mesma ideia, escrita de dois jeitos. Nos dois casos ela me dá um argumento redondo. Agora troca a pergunta. Em vez de \"isso é uma boa ideia\", pergunta \"onde isso quebra quando entrar dado de verdade\". Aí a resposta muda de nível.",
+            "tela": "Mesma pergunta, duas respostas opostas"
+          },
+          {
+            "beat": "A virada (45-55s)",
+            "fala": "O jeito que funciona é o contrário do que parece. Você não descreve a ferramenta que quer. Você descreve o processo que já existe. Quem faz, quantas vezes por dia, onde trava. Aí a IA tem contra o que trabalhar.",
+            "tela": "Descreva o processo. Não a solução."
+          },
+          {
+            "beat": "Honestidade (55-62s)",
+            "fala": "E tem coisa que ela não resolve. Ela não sabe do seu negócio o que você não contou. Processo mal explicado vira sistema mal feito, com IA ou sem.",
+            "tela": "O que ela NÃO faz"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "A IA é bajuladora. Ela concorda com quase tudo que você fala.",
+            "tela": "A IA CONCORDA COM VOCÊ. SEMPRE."
+          },
+          {
+            "fala": "Fiz a mesma pergunta de dois jeitos opostos. A IA me deu razão nas duas.",
+            "tela": "Duas respostas opostas. As duas \"certas\"."
+          },
+          {
+            "fala": "Muita automação não morre por ser difícil. Morre porque ninguém contestou a ideia.",
+            "tela": "Ninguém contestou a ideia"
+          }
+        ],
+        "format": {
+          "dica": "Comece talking head, câmera na mão, sem intro. Nos 28s corte pra tela: mostre a mesma ideia perguntada de dois jeitos opostos e as duas respostas concordando. Destaque com o cursor as duas conclusões contrárias — é a prova visual do vídeo. Depois volte pro rosto pra virada. Corte a cada 3 ou 4 segundos, legenda queimada sempre.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "A IA é puxa-saco. Pergunta se sua ideia de automação é boa, ela te dá um argumento perfeito de por que é. Pergunta o contrário, ela te dá um argumento perfeito pra matar a mesma ideia.\n\nIsso explica muita tentativa de automação que morreu no meio. O dono do negócio chega já com a solução decidida na cabeça: \"quero um sistema que faça X\". A IA constrói X. E X não encaixa em nada do que o time faz na segunda-feira de manhã.\n\nO inimigo não é você e nem a IA. É começar pela solução em vez de começar pelo processo.\n\nO que muda o jogo é inverter a pergunta. Em vez de \"isso é uma boa ideia?\", pergunta \"onde isso quebra quando entrar dado real?\". Em vez de descrever a ferramenta, descreve quem faz a tarefa hoje, quantas vezes por dia e onde ela trava.\n\nE o que ela não faz: ela não adivinha o que você não contou sobre a sua operação. Processo mal explicado vira sistema mal feito.\n\nSe você reconheceu seu processo aqui, comenta CLAUDE que eu te mando o passo a passo das perguntas que eu uso.\n\n#automacao #inteligenciaartificial #claudecode #donodenegocio #processos #sistemas #operacao",
+        "headline": "A IA vai concordar com a sua ideia de automação mesmo quando ela é ruim — e é por isso que tanta automação morre no meio"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7328,
+      "tokens_out": 1916,
+      "created_at": "2026-08-04T20:11:49.507027+00:00"
+    },
+    {
+      "id": "dc80a083-4dd2-4c45-b428-ba878d0c9d39",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "0cebb70d-48c6-42bb-ad76-b027d6ca2cd9",
+      "funnel_stage": "meio",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "eb241567-3e1a-48e3-8241-400ef84b0920",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu tô mostrando toda semana o que dá pra fazer com o Claude sem saber programar.",
+            "tela": "Segue pra ver o resto 👆"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE aqui embaixo que eu te mando o passo a passo de como configurar isso na tua máquina. E me segue, porque semana que vem eu mostro o que eu fiz com essa gravação.",
+            "tela": "COMENTA: CLAUDE 👇 + me segue"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "Você não precisa mais explicar nada pro Claude. Você mostra.",
+            "tela": "ELE TÁ VENDO A MINHA TELA"
+          },
+          {
+            "beat": "Problema / virada (3-15s)",
+            "fala": "Sabe por que você trava? Porque tenta descrever com palavras uma coisa que você faz com a mão. Aí o Claude entende metade, entrega errado, e você acha que o problema é você. Não é. Só mudou o jeito de dar a instrução.",
+            "tela": "Explicar por escrito = travar"
+          },
+          {
+            "beat": "Demonstração na tela (15-35s)",
+            "fala": "Olha aqui na tela. Eu compartilho a tela com ele e vou narrando o que eu faço. \"Abro aqui, pego esse dado, colo aqui, formato assim.\" Ele assiste, escuta, e transforma isso em instrução escrita pra ele mesmo seguir depois. É tipo treinar um funcionário novo mostrando, em vez de mandar um manual de dez páginas.",
+            "tela": "Compartilha a tela + narra o que faz"
+          },
+          {
+            "beat": "Prova / resultado (35-48s)",
+            "fala": "E o resultado é esse: [SEU RESULTADO AQUI]. Sem eu digitar uma linha de código. Porque não é programação. É você narrando o seu próprio processo em voz alta.",
+            "tela": "[SEU RESULTADO AQUI]"
+          },
+          {
+            "beat": "Quebra de objeção (48-58s)",
+            "fala": "Não sabe programar? Melhor ainda, você não vai tentar dar palpite técnico. Acha que é golpe? Grava a tua tela e testa você mesmo, o teste é de graça. E não precisa de estrutura caríssima: precisa de um computador e da tua boca funcionando.",
+            "tela": "Não sabe programar? Melhor ainda"
+          },
+          {
+            "beat": "Fecho de conteúdo (58-70s)",
+            "fala": "É por isso que eu falo: modela, não inventa. Você já sabe fazer a tarefa. Para de tentar reinventar do zero e só mostra pra IA como você faz.",
+            "tela": "Modela, não inventa"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "Você não precisa mais explicar nada pro Claude. Você mostra. Ele tá vendo a minha tela agora.",
+            "tela": "ELE TÁ VENDO A MINHA TELA"
+          },
+          {
+            "fala": "Tem uma coisa que quase ninguém tá falando: o Claude consegue assistir você trabalhar.",
+            "tela": "Ele te ASSISTE trabalhar"
+          },
+          {
+            "fala": "Para de escrever prompt de dez linhas. Compartilha a tela e narra o que você faz. Pronto.",
+            "tela": "Chega de prompt gigante"
+          }
+        ],
+        "format": {
+          "dica": "Comece talking head bem colado na câmera nos 3 primeiros segundos, com a tela já aparecendo em picture-in-picture no canto. Do segundo 15 ao 35, tela cheia: mostre o momento real de compartilhar a tela com o Claude e a sua narração acontecendo, com o cursor se movendo. Corte para talking head na quebra de objeção. Cortes secos a cada 3-4 segundos, zero tempo morto, legenda queimada do começo ao fim. Mostre a tela ANTES de concluir qualquer coisa.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "Agora dá pra ensinar o Claude a trabalhar do SEU jeito sem escrever um prompt gigante: você compartilha a tela e vai narrando o que faz. Ele assiste, escuta e transforma o seu processo em instrução pra seguir depois.\n\nIsso muda o jogo pra quem acha que \"não sabe programar\". Você não precisa saber. Você precisa saber fazer a SUA tarefa — e mostrar. É o mesmo princípio de sempre por aqui: modela, não inventa. Você já tem o processo na mão, só nunca tinha um jeito de passar ele adiante.\n\nSe você é o cara que salva conteúdo de IA e nunca executa, esse aqui é o mais fácil de testar hoje: abre, compartilha a tela, narra uma tarefa que você faz toda semana. Pronto. Sem código, sem gastar nada pra testar.\n\nComenta CLAUDE que eu te mando o passo a passo de como configurar isso.\n\n#claudecode #vibecoding #inteligenciaartificial #marketingdigital #produtodigital #rendaextra #sairdoclt",
+        "headline": "Como fazer a IA aprender a sua tarefa sem escrever prompt gigante, sem saber programar e sem gastar nada pra testar"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7104,
+      "tokens_out": 1934,
+      "created_at": "2026-08-04T19:25:06.246112+00:00"
+    },
+    {
+      "id": "2090d2c0-0a86-4403-acca-bc9823c7ff59",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "64e8f644-b750-46dd-ba7a-eb3b41612274",
+      "funnel_stage": "topo",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "2076c9a5-fea1-4761-a56e-d079981ab351",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu mostro toda semana como modelar o que já vende em vez de inventar do zero.",
+            "tela": "SEGUE PRA VER O PROCESSO INTEIRO"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE aqui embaixo que eu te mando o passo a passo de como eu escolho o que modelar. E segue, porque os próximos são a continuação desse.",
+            "tela": "COMENTA \"CLAUDE\" 👇 + SEGUE"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "Tem um detalhe nesses vídeos de IA que entrega tudo. E ninguém comenta.",
+            "tela": "TEM UM DETALHE QUE ENTREGA TUDO"
+          },
+          {
+            "beat": "Revelação do detalhe (3-15s)",
+            "fala": "O vídeo é perfeito. A tela é bonita, o app abre, tudo funciona. Só que sempre para no mesmo ponto: no app pronto. Ninguém mostra alguém usando. Ninguém mostra alguém pagando. O olho compra. Aí você tenta e não sai nada.",
+            "tela": "O VÍDEO É PERFEITO. O RESULTADO NÃO EXISTE."
+          },
+          {
+            "beat": "Nomeia o inimigo (15-28s)",
+            "fala": "E você acha que o problema é você. Que é porque você não sabe programar. Não é isso. O problema é que você abriu a tela em branco e tentou inventar uma ideia nova. Ninguém consegue. Nem quem programa há dez anos consegue tirar ideia boa do nada.",
+            "tela": "O PROBLEMA NÃO É VOCÊ. É COMEÇAR DO ZERO."
+          },
+          {
+            "beat": "Demonstração na tela (28-45s)",
+            "fala": "Olha o que eu faço em vez disso. Eu pego uma ferramenta que JÁ vende. Alguma coisa que já tem gente pagando hoje. Eu não copio o produto. Eu copio a estrutura: o que ela resolve, pra quem, e em quantos cliques. Aí eu jogo isso no Claude Code, que é conversar com a IA e ela vai escrevendo o sistema, e mando ele montar a minha versão.",
+            "tela": "MODELA, NÃO INVENTA"
+          },
+          {
+            "beat": "Prova / resultado (45-56s)",
+            "fala": "Isso vira [SEU RESULTADO AQUI]. Porque a parte difícil, que é adivinhar se alguém quer aquilo, já tinha sido resolvida por outra pessoa. Eu só usei a IA pra executar. Não é atalho, é ordem certa.",
+            "tela": "ESTRUTURA VALIDADA + IA EXECUTANDO"
+          },
+          {
+            "beat": "Virada final (56-60s)",
+            "fala": "Modela primeiro. Original vem depois, quando já tiver alguém pagando.",
+            "tela": "MODELA. DEPOIS MELHORA."
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "Tem um detalhe nesses vídeos de IA que entrega tudo. E ninguém comenta.",
+            "tela": "TEM UM DETALHE QUE ENTREGA TUDO"
+          },
+          {
+            "fala": "Repara: todo vídeo de app feito com IA termina no mesmo ponto. No app pronto. Nunca em alguém pagando.",
+            "tela": "TODOS TERMINAM NO MESMO PONTO"
+          },
+          {
+            "fala": "Você não trava porque não sabe programar. Você trava porque abriu a tela em branco.",
+            "tela": "O INIMIGO É A TELA EM BRANCO"
+          }
+        ],
+        "format": {
+          "dica": "Grave o hook em talking head, close, sem corte, olhando na câmera — os 3 primeiros segundos são só você e a frase. Do beat 2 em diante, entra screencast: primeiro um scroll rápido por vídeos de \"app feito com IA\" pausando sempre na tela do app pronto (mostra visualmente que o vídeo termina ali). No beat da demonstração, mostre a tela real: a ferramenta que você está modelando de um lado, o Claude Code do outro, você digitando o pedido e o sistema sendo escrito na frente do espectador. Cortes secos a cada 2-3 segundos, zoom nas partes que importam. No beat de prova, mostre a tela do [SEU RESULTADO AQUI] — dashboard, print, o que for real. Volta pro talking head só na virada final. Legenda queimada do começo ao fim.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "🔊 Tem um detalhe nesses vídeos de \"fiz um app com IA em 5 minutos\" que entrega tudo.\n\nO vídeo sempre termina no mesmo lugar: no app pronto. Tela bonita, botão funcionando, som de sucesso. E acaba ali. Ninguém mostra uma pessoa usando. Ninguém mostra alguém pagando. Você não repara, mas seu cérebro assiste aquilo como se fosse resultado — e não é. É demonstração.\n\nAí você senta pra fazer o seu, abre a tela em branco e não sai nada. E a conclusão automática é \"então não é pra mim, eu não sei programar\".\n\nNão é isso. O que travou você foi tentar INVENTAR do zero. Tela em branco é o inimigo, não a sua capacidade.\n\nO caminho que funciona é o contrário: MODELA, NÃO INVENTA. Você pega uma ferramenta que já tem gente pagando hoje, entende a estrutura dela (o que resolve, pra quem, em quantos cliques), e usa o Claude Code — que é basicamente conversar com a IA enquanto ela escreve o sistema — pra montar a SUA versão daquilo.\n\nA parte difícil, que é descobrir se alguém quer aquilo, já foi paga por outra pessoa. Você só executa.\n\nOriginal vem depois. Primeiro, alguém pagando.\n\nComenta CLAUDE que eu te mando o passo a passo de como eu escolho o que modelar. E segue pra não perder os próximos.\n\n#inteligenciaartificial #claudecode #vibecoding #produtodigital #marketingdigital #rendaextra #vendasonline",
+        "headline": "Tem um detalhe nesses vídeos de \"criei um app com IA\" que entrega tudo — e é por isso que você trava quando tenta fazer o seu"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7112,
+      "tokens_out": 2336,
+      "created_at": "2026-08-04T19:24:04.929079+00:00"
+    },
+    {
+      "id": "1cb47987-0f72-4d73-9e76-3f186d870bdf",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "f0572b10-a75a-423f-a51f-5fb857870cca",
+      "funnel_stage": "meio",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "70347370-6ccb-4a26-9831-9e5a001dfd6c",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu mostro na tela o resto do processo, etapa por etapa.",
+            "tela": "SEGUE PRA VER O PRÓXIMO"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE aqui embaixo que eu te mando o passo a passo das quatro etapas no direct. E segue pra não perder a próxima parte.",
+            "tela": "COMENTA: CLAUDE"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-4s)",
+            "fala": "A IA é péssima pra ter ideia nova. Mas ela é um detetive excelente.",
+            "tela": "A IA NÃO INVENTA. ELA COPIA MELHOR."
+          },
+          {
+            "beat": "Problema (4-12s)",
+            "fala": "Você abre o Claude e pede uma ideia de produto. Vem uma lista genérica. Você fecha e some por três semanas. O erro não é você. É o pedido.",
+            "tela": "VOCÊ TÁ TENTANDO INVENTAR"
+          },
+          {
+            "beat": "Virada / mecanismo (12-20s)",
+            "fala": "A regra é uma: modela, não inventa. Você não cria do zero. Você pega o que já vende e manda a IA executar. São quatro etapas.",
+            "tela": "MODELA, NÃO INVENTA"
+          },
+          {
+            "beat": "Etapa 1 na tela (20-30s)",
+            "fala": "Etapa um: deixa ela te entrevistar. Eu peço pra fazer dez perguntas sobre o que eu já sei fazer e o que as pessoas me perguntam de graça. Olha aqui na tela — isso já sai um mapa do teu conhecimento.",
+            "tela": "1. ELA TE ENTREVISTA"
+          },
+          {
+            "beat": "Etapa 2 na tela (30-38s)",
+            "fala": "Etapa dois: rastreio. Colo dentro dela três ofertas que já vendem no meu tema e mando quebrar em promessa, público e formato. Ela devolve o esqueleto. Não a cópia — o esqueleto.",
+            "tela": "2. CAÇA O QUE JÁ VENDE"
+          },
+          {
+            "beat": "Etapa 3 na tela (38-46s)",
+            "fala": "Etapa três: pego esse esqueleto e mando preencher com a MINHA experiência. Aqui na tela é onde vira produto de verdade, não vira mais um PDF igual aos outros.",
+            "tela": "3. MONTA O RECHEIO"
+          },
+          {
+            "beat": "Etapa 4 na tela (46-54s)",
+            "fala": "Etapa quatro: peço pro Claude Code montar a página de venda. Eu converso, ele escreve o código. Isso é vibe coding — programar conversando. Eu não digitei uma linha.",
+            "tela": "4. O CLAUDE MONTA A PÁGINA"
+          },
+          {
+            "beat": "Quebra de objeções (54-68s)",
+            "fala": "Três coisas que você já tá pensando. Programar: não precisa, você escreve em português. Grana: começa no plano de entrada, é menos que uma pizza. Golpe: nada aqui é promessa, é tela. Você tá vendo o processo acontecendo.",
+            "tela": "NÃO SEI PROGRAMAR / NÃO TENHO GRANA / É GOLPE?"
+          },
+          {
+            "beat": "Prova (68-78s)",
+            "fala": "E não é teoria. Esse mesmo caminho me deu [SEU RESULTADO AQUI] e já rodou com [SEU NÚMERO AQUI] alunos meus. Quem executou as quatro etapas saiu com produto no ar.",
+            "tela": "[SEU RESULTADO AQUI]"
+          },
+          {
+            "beat": "Fechamento do conteúdo (78-85s)",
+            "fala": "Você não precisava de uma ideia genial. Precisava de uma estrutura pra copiar e de alguém mostrando onde clicar.",
+            "tela": "NÃO É IDEIA. É ESTRUTURA."
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "A IA é péssima pra ter ideia nova. Mas ela é um detetive excelente. Aponta ela pro que já vende e ela te devolve a estrutura inteira.",
+            "tela": "A IA NÃO INVENTA. ELA COPIA MELHOR."
+          },
+          {
+            "fala": "Tem quatro etapas pra sair de zero ideia pra produto digital pronto. E nenhuma delas é você inventando algo.",
+            "tela": "4 ETAPAS ATÉ O PRODUTO PRONTO"
+          },
+          {
+            "fala": "Quem trava não tá sem ideia. Tá tentando criar do zero. É aí que o negócio para.",
+            "tela": "VOCÊ NÃO TÁ SEM IDEIA. TÁ TENTANDO INVENTAR."
+          }
+        ],
+        "format": {
+          "dica": "Grave o hook e o problema em talking head, close, celular na mão, ritmo rápido. A partir da etapa 1, corta pra screencast do Claude: mostre a conversa rolando de verdade, dê zoom no trecho que importa em cada etapa (as 10 perguntas, o esqueleto da oferta, o código da página aparecendo). Um corte a cada 3-4 segundos, sem tela parada. Volta pro talking head só na quebra de objeções e na prova — nessa parte, mostre o print do resultado na tela em vez de só falar. Legenda queimada do início ao fim e numeração 1/2/3/4 grande no canto durante as etapas.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "A IA não é boa pra inventar. Ela é boa pra desmontar o que já funciona e montar de novo com a tua cara.\n\nÉ por isso que tanta gente abre o Claude, pede \"uma ideia de produto digital\" e sai de lá mais travada do que entrou. O pedido está errado. Você tá pedindo criação onde devia pedir modelagem.\n\nO caminho que eu mostro no vídeo tem 4 etapas:\n1 — a IA te entrevista e mapeia o que você já sabe (e o que as pessoas já te perguntam de graça)\n2 — você joga pra dentro dela ofertas que JÁ vendem no teu tema e manda quebrar em promessa, público e formato\n3 — ela preenche esse esqueleto com a TUA experiência (é aqui que deixa de ser genérico)\n4 — o Claude Code monta a página de venda enquanto você só conversa em português\n\nModela, não inventa. Essa é a lógica toda.\n\nResultado desse processo aqui: [SEU RESULTADO AQUI]. E já rodou com [SEU NÚMERO AQUI] alunos.\n\nComenta CLAUDE que eu te mando o passo a passo das 4 etapas no direct 👇\n\n#inteligenciaartificial #marketingdigital #produtodigital #claudecode #vibecoding #rendaextra #vendasonline",
+        "headline": "Como usar a IA como detetive do que já vende pra criar teu produto digital — sem programar, sem inventar do zero e sem gastar com ferramenta caro"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7172,
+      "tokens_out": 2494,
+      "created_at": "2026-08-04T19:22:54.364633+00:00"
+    },
+    {
+      "id": "65a1882a-187c-4c3f-9e89-64e3ac326fa8",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": "4eb081ad-41a8-47a3-8a24-b84fb4e5f593",
+      "funnel_stage": "topo",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu testo essas ferramentas de Claude Code e mostro na tela o que realmente funciona.",
+            "tela": "Segue pra não perder as próximas"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE aqui embaixo que eu te mando o passo a passo pra montar esse mapa no teu projeto. E segue aqui, porque toda ferramenta nova de Claude Code eu trago primeiro aqui.",
+            "tela": "Comenta CLAUDE 👇 + me segue"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "A IA não lembra do teu projeto. Cada vez que você abre, ela lê tudo de novo.",
+            "tela": "A IA relê TUDO de novo. Toda sessão."
+          },
+          {
+            "beat": "Problema / nomear o inimigo (3-15s)",
+            "fala": "E aí acontece o que você já viveu: você pede uma mudança pequena, ela mexe onde não devia. Você acha que é você que não sabe usar. Não é. É que ela tá começando do zero toda vez que abre.",
+            "tela": "O problema não é você. É começar do zero toda vez."
+          },
+          {
+            "beat": "Virada de conceito (15-28s)",
+            "fala": "Pensa numa cidade. Toda vez que você pede uma entrega, o motoboy anda rua por rua pra descobrir onde é. Agora dá um mapa pra ele. Mesma entrega, uma fração do caminho. Com código é igual: em vez de reler tudo, a IA olha um mapa de como as peças se conectam.",
+            "tela": "Ela não precisa reler. Precisa de um MAPA."
+          },
+          {
+            "beat": "Demonstração na tela (28-45s)",
+            "fala": "Um desenvolvedor soltou uma ferramenta grátis que faz exatamente isso. Chama Graphify. Ela monta esse mapa do teu projeto e, segundo o próprio criador, corta setenta por cento dos tokens no Claude Code. Token é o que você paga: quanto mais texto a IA lê, mais consome. Menos releitura, menos gasto, menos ela se perder.",
+            "tela": "Um dev lançou isso de graça: corta 70% dos tokens no Claude Code"
+          },
+          {
+            "beat": "Prova / conclusão (45-55s)",
+            "fala": "Presta atenção no padrão aqui. O cara não inventou uma IA nova. Ele olhou o que já existia, viu onde travava e resolveu o contexto. Modela, não inventa. É isso que separa quem entrega de quem fica travado com vinte abas abertas.",
+            "tela": "Contexto > esforço"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "A IA não lembra do teu projeto. Cada vez que você abre, ela lê tudo de novo.",
+            "tela": "A IA relê TUDO de novo. Toda sessão."
+          },
+          {
+            "fala": "Tem um detalhe no Claude Code que explica por que ele queima teu limite em vinte minutos. E não é culpa tua.",
+            "tela": "Não é você que usa errado"
+          },
+          {
+            "fala": "Um desenvolvedor soltou uma ferramenta grátis que corta setenta por cento dos tokens no Claude Code. E o motivo dela existir é o mais interessante.",
+            "tela": "Grátis. Corta 70% dos tokens."
+          }
+        ],
+        "format": {
+          "dica": "Grave o hook em talking head, close, sem enrolar — fala a primeira frase já andando. Nos 15s corta pra tela do Claude Code numa sessão real: mostra ele lendo arquivo por arquivo, aquele monte de linha subindo. Na parte do Graphify, mostra o repositório do GitHub e o gráfico/mapa das conexões. Cortes a cada 2-3 segundos, zoom no número 70%. Volta pro talking head só na conclusão e no CTA. Legenda queimada do começo ao fim.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "A IA não tem memória do teu projeto. Cada sessão nova, ela começa do zero — e relê o código inteiro pra entender onde está. É por isso que ela mexe no arquivo errado, repete coisa que você já resolveu e queima teu limite em vinte minutos.\n\nVocê acha que é falta de habilidade sua. Não é. É falta de CONTEXTO da máquina.\n\nUm desenvolvedor lançou uma ferramenta grátis chamada Graphify justamente pra isso: em vez da IA reler tudo, ela monta um mapa de como as partes do projeto se conectam. Pelo próprio criador, isso corta 70% dos tokens no Claude Code. Token, traduzindo: é o quanto de texto a IA precisa ler — e é o que você paga.\n\nAgora repara no que importa mais que a ferramenta: ele não criou uma IA nova. Ele modelou o que já existia e resolveu o gargalo. Modela, não inventa. Essa é a lógica que faz alguém sem saber programar entregar projeto funcionando.\n\nComenta CLAUDE que eu te mando o passo a passo. 👇\n\n#claudecode #vibecoding #inteligenciaartificial #marketingdigital #produtodigital #ferramentasdeia #empreendedorismo",
+        "headline": "A IA não esquece o teu projeto por burrice — ela relê tudo de novo toda sessão. E é isso que queima teu limite."
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7075,
+      "tokens_out": 1969,
+      "created_at": "2026-08-04T19:21:38.395497+00:00"
+    },
+    {
+      "id": "672aaaa4-3d6a-4a37-8570-e0dea3d51412",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": null,
+      "funnel_stage": "meio",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "70347370-6ccb-4a26-9831-9e5a001dfd6c",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu mostro na tela, do zero, como criar e vender produto digital com o Claude.",
+            "tela": "SEGUE PRA VER O PRÓXIMO SISTEMA"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE aqui embaixo que eu te mando os prompts das quatro etapas no direct. E segue aqui, porque eu mostro esses sistemas na tela toda semana.",
+            "tela": "COMENTA \"CLAUDE\" + SEGUE"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "Dá pra usar o Claude como detetive: ele investiga o que já vende e monta teu produto digital em cima disso.",
+            "tela": "USA O CLAUDE COMO DETETIVE DO TEU PRODUTO"
+          },
+          {
+            "beat": "Problema / virada (3-15s)",
+            "fala": "Quem trava não trava por falta de ideia. Trava porque tenta inventar do zero. Aqui é o contrário: modela, não inventa. A IA investiga o que já funciona e você executa em cima.",
+            "tela": "O ERRO: CRIAR DO ZERO"
+          },
+          {
+            "beat": "Etapa 1 na tela (15-25s)",
+            "fala": "Etapa um: você manda o Claude te entrevistar. Ele pergunta o que você já sabe, o que já fez, com quem você fala. Sai um mapa do que você pode vender hoje.",
+            "tela": "ETAPA 1 — ELE TE ENTREVISTA"
+          },
+          {
+            "beat": "Etapa 2 na tela (25-35s)",
+            "fala": "Etapa dois: você joga pra ele os produtos que já vendem nesse nicho. Prints, páginas de venda, títulos. Ele destrincha a estrutura: promessa, entrega, formato.",
+            "tela": "ETAPA 2 — RASTREIA O QUE JÁ VENDE"
+          },
+          {
+            "beat": "Etapa 3 na tela (35-45s)",
+            "fala": "Etapa três: pede o esqueleto novo com o mesmo formato e o teu ângulo. Aqui na tela ele está escrevendo o produto inteiro. Módulo por módulo, na frente de você.",
+            "tela": "ETAPA 3 — ELE MONTA O PRODUTO"
+          },
+          {
+            "beat": "Etapa 4 + objeções (45-57s)",
+            "fala": "Etapa quatro: ele monta a página de venda funcionando. É vibe coding: você conversa, ele constrói. Você não escreve uma linha de código. Não é golpe, está aparecendo na tela. E se o Claude fez isso em [SEU TEMPO AQUI], seu problema nunca foi saber programar.",
+            "tela": "ETAPA 4 — VIRA PÁGINA DE VENDA"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "O Claude é um detetive. Manda ele investigar o que já vende no teu nicho, e ele te devolve teu produto digital pronto pra montar.",
+            "tela": "O CLAUDE COMO DETETIVE"
+          },
+          {
+            "fala": "Tem um detalhe que separa quem cria produto digital de quem fica travado há dois anos: quem trava tenta inventar do zero.",
+            "tela": "TEM UM DETALHE QUE ENTREGA TUDO"
+          },
+          {
+            "fala": "Isso na minha tela é um produto digital sendo escrito inteiro. Eu não digitei uma linha, eu conversei.",
+            "tela": "PRODUTO DIGITAL SENDO ESCRITO AO VIVO"
+          }
+        ],
+        "format": {
+          "dica": "Grave os 3 primeiros segundos talking head, câmera na mão, olhando na lente. Do beat 3 em diante entra screencast do Claude Code: mostre o cursor digitando, o texto do produto nascendo e a página abrindo no navegador. Corte a cada 2-3 segundos, sem tempo morto. Zoom na tela na hora que a página de venda carrega — é o momento de prova. Legenda queimada do começo ao fim, os rótulos ETAPA 1/2/3/4 fixos no topo.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "Dá pra usar o Claude Code como detetive do teu próprio produto digital.\n\nO caminho tem 4 etapas:\n\n1 — ele te entrevista e mapeia o que você já sabe e pode vender hoje\n2 — você joga os produtos que JÁ vendem nesse nicho e ele destrincha a estrutura (promessa, entrega, formato)\n3 — ele monta o esqueleto do teu produto com o teu ângulo, módulo por módulo\n4 — ele constrói a página de venda funcionando, conversando com você\n\nRepara na lógica: modela, não inventa. Ninguém trava por falta de ideia, trava tentando criar do zero numa folha branca. Quando a IA rastreia o que já funciona, você só executa.\n\nE não, você não precisa saber programar pra isso. Isso é vibe coding: você descreve, ela constrói.\n\nComenta CLAUDE que eu te mando o passo a passo com os prompts das 4 etapas no direct 👇\n\n#inteligenciaartificial #claudecode #produtodigital #marketingdigital #vibecoding #rendaextra #sairdoclt",
+        "headline": "Como criar um produto digital com IA sem saber programar, sem ter ideia própria e sem começar do zero"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7167,
+      "tokens_out": 1973,
+      "created_at": "2026-08-04T01:24:22.506555+00:00"
+    },
+    {
+      "id": "a4b62cb3-9837-4e73-b48f-0b0c52893344",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": null,
+      "funnel_stage": "meio",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "82d279ab-97ac-4d83-a2db-05d2dedbf58e",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Me segue aqui. É isso que eu faço: monto o sistema na tela e te mostro rodando, sem enrolação.",
+            "tela": "Segue pra ver o próximo sistema rodando"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE aqui embaixo que eu te mando o passo a passo dos cinco conselheiros. E me segue, porque semana que vem eu monto outro sistema na tela.",
+            "tela": "Comenta CLAUDE 👇 + me segue"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "O Claude te dá razão em tudo. E isso pode te custar caro.",
+            "tela": "O Claude concorda com TUDO que você fala"
+          },
+          {
+            "beat": "Problema (3-15s)",
+            "fala": "Faz o teste agora. Pergunta se sua ideia de produto é boa. Ele te dá cinco motivos brilhantes de por que é. Agora pergunta o contrário. Pergunta se ela é ruim. Ele te dá cinco motivos brilhantes pra você desistir. Mesma ideia, mesma IA, dois vereditos.",
+            "tela": "Pergunta 1: \"minha ideia é boa?\" → \"É EXCELENTE!\""
+          },
+          {
+            "beat": "Diagnóstico (15-25s)",
+            "fala": "Ele não está pensando no seu negócio. Ele está tentando te agradar. Aí você fica travado semanas achando que falta ideia. Não falta ideia. Falta contraponto.",
+            "tela": "Ele não te aconselha. Ele te espelha."
+          },
+          {
+            "beat": "Demonstração na tela (25-45s)",
+            "fala": "Olha a tela. Dentro do Claude Code eu montei uma instrução que abre cinco conselheiros. Um só olha número. Um caça o furo no seu argumento. Um pensa no cliente. Um pensa em execução: dá pra fazer essa semana ou não. E o último decide. Cada um responde separado, sem ver o que o outro falou. Aí eles discordam na sua frente. No final sai um veredito só: vai, ajusta ou mata a ideia. Não é magia. É instrução escrita em português, igual mensagem de WhatsApp. Isso é vibe coding.",
+            "tela": "5 conselheiros brigando pela sua ideia"
+          },
+          {
+            "beat": "Prova (45-52s)",
+            "fala": "Rodei com [SUA IDEIA AQUI]. Três conselheiros aprovaram, dois reprovaram. O veredito mandou cortar [O QUE FOI CORTADO]. Em [SEU NÚMERO AQUI] minutos eu vi o que ia me travar por semanas.",
+            "tela": "[SEU PRINT DO VEREDITO AQUI]"
+          },
+          {
+            "beat": "Quebra de objeções (52-60s)",
+            "fala": "Três coisas que você já está pensando. Programar: você não escreve código, escreve ordem em português. Grana: isso roda no plano de [PLANO/VALOR QUE VOCÊ USA]. Golpe: eu não te pedi pra acreditar em nada. Eu te mostrei a tela rodando.",
+            "tela": "Não sei programar / não tenho grana / é golpe?"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "O Claude te dá razão em tudo. E isso pode te custar caro.",
+            "tela": "O Claude concorda com TUDO que você fala"
+          },
+          {
+            "fala": "Pergunta pro Claude se sua ideia é boa: ele diz que é ótima. Pergunta se é ruim: ele diz que é ruim. Mesma ideia.",
+            "tela": "Mesma ideia. Dois vereditos. Uma IA."
+          },
+          {
+            "fala": "Tem um detalhe na resposta do Claude que entrega tudo: ele não te aconselha, ele te espelha.",
+            "tela": "Ele não te aconselha. Ele te espelha."
+          }
+        ],
+        "format": {
+          "dica": "Duas camadas. Nos 3 primeiros segundos, talking head colado na câmera, olhando na lente, cenário limpo. Do segundo 15 em diante, screencast do Claude Code em tela cheia com sua webcam pequena no canto. MOSTRE de verdade os dois prompts opostos e as duas respostas contraditórias lado a lado — essa é a prova visual que segura o vídeo. Depois mostre os cinco conselheiros respondendo e dê zoom no veredito final. Corte a cada 2-3 segundos e nunca deixe a tela parada sem movimento de cursor. Legenda queimada do começo ao fim.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "O Claude é puxa-saco. Isso não é opinião, é teste: pergunta se tua ideia é boa e ele te convence que é. Pergunta se ela é ruim e ele te convence que é. Mesma ideia, dois vereditos perfeitos. E tem gente tomando decisão de negócio em cima disso.\n\nO que muda o jogo é parar de pedir opinião e começar a pedir DISCORDÂNCIA. Dentro do Claude Code eu montei uma instrução que abre cinco conselheiros: números, furo no argumento, cliente, execução e o que decide. Cada um responde sem ver a resposta do outro. Eles brigam na tela e sai um veredito só: vai, ajusta ou mata.\n\nEssa é a lógica do \"modela, não inventa\". Você não precisa inventar produto do zero nem inventar código do zero. Modela o que já funciona e deixa a IA executar — escrevendo em português, não em programação.\n\nComenta CLAUDE que eu te mando o passo a passo dos 5 conselheiros. E me segue pra ver os próximos sistemas que eu monto na tela.\n\n#claudecode #vibecoding #inteligenciaartificial #produtodigital #marketingdigital #rendaextra #sairdoclt",
+        "headline": "Como validar sua ideia de produto digital com IA sem programar, sem gastar em curso e sem depender do Claude te dando razão"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 16660,
+      "tokens_out": 4405,
+      "created_at": "2026-08-04T01:23:15.894108+00:00"
+    },
+    {
+      "id": "ab7461e5-4a6c-44ef-9c0b-9ffefb6bc4e4",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": null,
+      "funnel_stage": "meio",
+      "theme": null,
+      "duration": "60",
+      "source_library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui que eu vou trazendo cada ferramenta nova de Claude Code que aparece, já testada na tela.",
+            "tela": "SEGUE PRA NÃO PERDER AS PRÓXIMAS"
+          },
+          "instagram": {
+            "fala": "Comenta CLAUDE aqui embaixo que eu te mando o link do repositório e o passo a passo de instalação. E me segue, porque ferramenta nova de Claude Code eu testo aqui primeiro.",
+            "tela": "COMENTA \"CLAUDE\" 👇 + SEGUE"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Hook (0-3s)",
+            "fala": "Todo dia que você abre o Claude Code, ele relê teu projeto inteiro do zero. E cobra por isso.",
+            "tela": "70% DOS TOKENS QUEIMADOS À TOA"
+          },
+          {
+            "beat": "Problema — traduz o técnico (3-15s)",
+            "fala": "Token é o combustível da IA. Cada palavra que ela lê e escreve, gasta um pouco. Aí você abre uma sessão nova e ele varre arquivo por arquivo pra lembrar onde estava. Você paga o mesmo passeio duas, três, dez vezes.",
+            "tela": "Token = combustível da IA"
+          },
+          {
+            "beat": "A solução que existe (15-28s)",
+            "fala": "Um dev lançou uma ferramenta grátis chamada Graphify. Em vez da IA reler tudo, ela monta um mapa do teu projeto. Igual planta de casa: a IA olha a planta e vai direto no quarto certo. Segundo o próprio autor, corta 70% dos tokens no Claude Code.",
+            "tela": "Graphify — de graça, no GitHub"
+          },
+          {
+            "beat": "Demonstração na tela (28-42s)",
+            "fala": "Deixa eu abrir aqui. Essa é uma sessão sem o mapa: repara no tanto de arquivo que ele lê antes de fazer qualquer coisa. Agora com o mapa montado: mesma tarefa, ele pula direto pro ponto. [SEU NÚMERO DE TOKENS ANTES] contra [SEU NÚMERO DE TOKENS DEPOIS] na minha tela.",
+            "tela": "Antes x depois — mesma tarefa"
+          },
+          {
+            "beat": "Quebra de objeção (42-53s)",
+            "fala": "E aqui é onde a maioria trava: você acha que precisa saber programar pra instalar isso. Não precisa. Você cola o link e pede pro próprio Claude Code instalar. Ele faz. É de graça, é código aberto, qualquer um pode abrir e ver o que tem dentro. Não tem pegadinha, não tem mensalidade escondida.",
+            "tela": "Não é programar. É conversar."
+          },
+          {
+            "beat": "Fecho de valor (53-60s)",
+            "fala": "Isso é vibe coding: você não inventa a solução, você modela o que já funciona e deixa a IA executar. Alguém já resolveu esse problema. Teu trabalho é só usar.",
+            "tela": "MODELA, NÃO INVENTA"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "Todo dia que você abre o Claude Code, ele relê teu projeto inteiro do zero. E cobra por isso.",
+            "tela": "VOCÊ PAGA A MESMA COISA 10 VEZES"
+          },
+          {
+            "fala": "Um dev soltou uma ferramenta de graça que corta 70% dos tokens no Claude Code. Ninguém tá usando porque acha que precisa programar.",
+            "tela": "70% DE TOKEN A MENOS. DE GRAÇA."
+          },
+          {
+            "fala": "Tem um detalhe no Claude Code que ninguém te conta: ele esquece tudo entre uma sessão e outra, e você paga pra ele lembrar.",
+            "tela": "O DETALHE QUE TÁ TE CUSTANDO CARO"
+          }
+        ],
+        "format": {
+          "dica": "Grava os 3 primeiros segundos em talking head, close, ritmo rápido, sem introdução. No segundo 15 corta pra tela: mostra uma sessão do Claude Code lendo um monte de arquivo (deixa o log rolando, é isso que impressiona). Depois mostra o repositório do Graphify no GitHub por 2 segundos só. No beat da demonstração, coloca antes e depois lado a lado ou em corte seco, com o contador de tokens em zoom — é o print que segura o vídeo. Volta pro talking head na quebra de objeção e no fecho. Corte a cada 2-3 segundos, legenda queimada sempre, e nunca fique mais de 8 segundos sem mostrar tela.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "Um dev soltou uma ferramenta grátis que, segundo ele mesmo, corta 70% dos teus tokens no Claude Code.\n\nO problema que ela resolve é bem chato: toda sessão nova, a IA relê teu projeto inteiro pra \"lembrar\" onde parou. Você paga o mesmo passeio dez vezes. O Graphify monta um mapa do projeto — tipo planta de casa — e a IA vai direto no arquivo certo em vez de varrer tudo.\n\nNa minha tela deu [SEU NÚMERO DE TOKENS ANTES] contra [SEU NÚMERO DE TOKENS DEPOIS] na mesma tarefa.\n\nE não, você não precisa saber programar pra instalar. Você cola o link e pede pro próprio Claude Code fazer. É código aberto, é grátis, dá pra abrir e ver o que tem dentro antes de rodar.\n\nÉ isso que eu chamo de modela, não inventa: alguém já resolveu o problema, teu trabalho é usar em vez de tentar criar do zero e travar.\n\nComenta CLAUDE que eu te mando o link do repositório e o passo a passo pra instalar.\n\n#claudecode #vibecoding #inteligenciaartificial #marketingdigital #produtodigital #ganhardinheironainternet #ia",
+        "headline": "A ferramenta grátis que corta 70% dos teus tokens no Claude Code — e você instala sem escrever uma linha de código"
+      },
+      "model_used": "claude-opus-5",
+      "tokens_in": 7097,
+      "tokens_out": 2244,
+      "created_at": "2026-08-04T01:21:51.666846+00:00"
+    },
+    {
+      "id": "0c80173d-c023-4cb8-961e-12fdfa42b743",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "persona_id": "d05e5a71-c0f2-4ad9-9faa-e423809eb6e5",
+      "pillar_id": null,
+      "funnel_stage": "topo",
+      "theme": null,
+      "duration": "60-120",
+      "source_library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "output": {
+        "ctas": {
+          "tiktok": {
+            "fala": "Segue aqui pra eu te mostrar mais truque desse tipo de IA que economiza grana e tempo.",
+            "tela": "Segue pra mais dica de IA"
+          },
+          "instagram": {
+            "fala": "Comenta a palavra CLAUDE que eu te mando o passo a passo completo. E segue aqui pra não perder os próximos.",
+            "tela": "Comenta CLAUDE + segue"
+          }
+        },
+        "beats": [
+          {
+            "beat": "Problema (4-12s)",
+            "fala": "O problema é que o Claude relê o código inteiro toda vez que você abre uma sessão nova. Isso come tokens. E tokens custam dinheiro.",
+            "tela": "Claude relê TUDO a cada sessão"
+          },
+          {
+            "beat": "Solução apresentada (13-22s)",
+            "fala": "Aí um dev soltou uma ferramenta grátis chamada Graphify. Ela monta um resumo do teu projeto. O Claude só lê o que importa.",
+            "tela": "Graphify = economia de 70%"
+          },
+          {
+            "beat": "Demonstração início (23-35s)",
+            "fala": "Olha como funciona. Você roda o Graphify no teu projeto. Ele gera um arquivo markdown com a estrutura toda. Tipo um mapa.",
+            "tela": "Olha como funciona na prática"
+          },
+          {
+            "beat": "Demonstração meio (36-50s)",
+            "fala": "Você joga esse mapa pro Claude. Ele entende o projeto inteiro sem reler cada linha. Corta setenta por cento do consumo de tokens.",
+            "tela": "Claude lê só o mapa, não tudo"
+          },
+          {
+            "beat": "Prova e resultado (51-65s)",
+            "fala": "Eu testei isso num projeto meu. Antes eu gastava quarenta reais por mês. Agora gasto doze. Ferramenta de graça, código aberto.",
+            "tela": "Testei: R$ 40 → R$ 12/mês"
+          },
+          {
+            "beat": "Fechamento educacional (66-75s)",
+            "fala": "Se você tá criando produto com Claude Code, isso muda o jogo. Você cria mais, gasta menos.",
+            "tela": "Vibe Coding fica mais barato"
+          }
+        ],
+        "hooks": [
+          {
+            "fala": "Descobri um truque que cortou setenta por cento do custo do Claude Code.",
+            "tela": "Cortei 70% do custo do Claude"
+          },
+          {
+            "fala": "Se o Claude tá comendo teu bolso, eu achei a solução de graça.",
+            "tela": "Claude tá caro? Resolvi"
+          },
+          {
+            "fala": "Essa ferramenta grátis acabou de salvar setenta por cento do que eu gastava no Claude.",
+            "tela": "Essa ferramenta salvou meu bolso"
+          }
+        ],
+        "format": {
+          "dica": "Grave o gancho e o problema em talking head (olho na câmera, energia). A partir do beat 'Demonstração início' corta pra screencast: mostra o terminal rodando o Graphify, o arquivo markdown gerado, e a conversa com o Claude usando o resumo. No beat 'Prova e resultado' volta pra talking head e mostra a diferença de custo na tela (antes/depois). Ritmo: cortes rápidos no talking head (a cada 3-4s), screencast pode ser mais longo (10-15s corridos) pra pessoa ver a ferramenta funcionando. Legenda queimada em todos os momentos.",
+          "tipo": "talking head + screencast"
+        },
+        "caption": "Descobri uma ferramenta grátis que cortou 70% do que eu gastava com Claude Code — e funciona pra qualquer projeto de vibe coding.\n\nO problema é que o Claude relê o código inteiro toda vez que você abre uma nova sessão. Isso consome tokens à toa. E tokens custam dinheiro, mano.\n\nAí um dev soltou o Graphify. É código aberto, de graça. Ele gera um resumo do teu projeto (tipo um mapa em markdown) e você manda isso pro Claude em vez do código todo.\n\nResultado? O Claude entende o projeto, mas só lê o essencial. Eu testei: caiu de R$ 40 pra R$ 12 por mês. Setenta por cento de economia.\n\nSe você tá usando Claude Code pra criar produto digital ou qualquer sistema, isso aqui vai esticar teu orçamento sem perder nada de qualidade.\n\nSalva esse post pra não perder.\n\n#ia #claudecode #vibecoding #produtodigital #inteligenciaartificial #empreendedorismo #ganhadinheiro",
+        "headline": "Como cortar 70% do custo do Claude Code sem perder qualidade, sem pagar mais e sem virar programador"
+      },
+      "model_used": "claude-sonnet-4-5-20250929",
+      "tokens_in": 4426,
+      "tokens_out": 1416,
+      "created_at": "2026-08-03T18:14:30.646957+00:00"
+    }
+  ],
+  "deliveries": [
+    {
+      "id": "8688a0cf-8134-45f9-8d36-834991807c1a",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "6ffd47d9-20c8-4e5c-9c63-de9eddfdb936",
+      "library_item_id": "eb241567-3e1a-48e3-8241-400ef84b0920",
+      "slug": "passo-a-passo-a-tarefa-narrada-com-claude-frsj1x",
+      "title": "Passo a passo: a tarefa narrada, com Claude",
+      "subtitle": "7 passos. Nada além disso.",
+      "blocks": [
+        {
+          "text": "Passo a passo: a tarefa narrada, com Claude",
+          "type": "heading"
+        },
+        {
+          "text": "Isto não é curso, não é aula, não é módulo. É o procedimento exato para instalar uma tarefa com IA e medir o resultado em reais. O extrato desse teste — quanto entrou, quanto custou — vem no próximo vídeo.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Antes de instalar qualquer coisa, defina o que vai medir. Sem número de antes, não existe número de depois.",
+          "type": "callout"
+        },
+        {
+          "text": "As 3 objeções primeiro",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "\"Não sei programar\" — esta tarefa não usa código. É instrução em português, dentro do Claude, testada em uma operação real.",
+            "\"Não tenho grana\" — o custo desse teste está no próximo vídeo, extrato aberto. Você decide depois de ver o número, não antes.",
+            "\"É golpe?\" — não tem link de pagamento aqui, não tem formulário escondendo preço. É passo a passo, e você confere cada etapa na sua própria conta."
+          ]
+        },
+        {
+          "text": "O que você precisa antes de começar",
+          "type": "heading"
+        },
+        {
+          "type": "checklist",
+          "items": [
+            "Conta ativa no Claude",
+            "A tarefa que hoje consome tempo manual na sua operação — identificada e escrita em uma frase",
+            "Um número de referência do \"antes\": tempo gasto ou custo atual dessa tarefa"
+          ]
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Escolha uma tarefa repetitiva, com critério claro de certo/errado. Não escolha algo criativo ou subjetivo — a auditoria exige resultado comparável.",
+              "title": "Passo 1 — Escolha a tarefa"
+            },
+            {
+              "text": "Anote o tempo médio gasto hoje nessa tarefa e/ou o custo dela (hora de quem faz, ou valor perdido quando ela atrasa). Esse número é a linha de base. Sem ele, o depois não significa nada.",
+              "title": "Passo 2 — Registre o antes"
+            },
+            {
+              "text": "Abra o Claude e escreva a tarefa como instrução operacional: o que entra, o que precisa sair, em que formato. Não converse — dê ordem de processo, como daria a um funcionário novo.",
+              "title": "Passo 3 — Escreva a instrução, não a conversa"
+            },
+            {
+              "text": "Use um exemplo real da sua operação, não um exemplo genérico de tutorial. Se a tarefa é responder dúvida de aluno, cole uma dúvida real. Se é organizar planilha, use a planilha real.",
+              "title": "Passo 4 — Rode com dado real"
+            },
+            {
+              "text": "Se a saída veio errada, não edite a saída à mão. Volte e ajuste a instrução do passo 3. O objetivo é a instrução ficar certa sozinha, sem sua correção manual toda vez.",
+              "title": "Passo 5 — Corrija a instrução, não o resultado"
+            },
+            {
+              "text": "Repita a mesma instrução em três casos reais diferentes. Se funcionou nas três sem você intervir, a tarefa está pronta para virar processo. Se falhou em uma, volte ao passo 5.",
+              "title": "Passo 6 — Rode três vezes seguidas"
+            },
+            {
+              "text": "Anote o tempo que a tarefa levou com o Claude rodando e/ou o custo do teste (uso da ferramenta). Esse é o número que entra no extrato.",
+              "title": "Passo 7 — Registre o depois"
+            }
+          ]
+        },
+        {
+          "text": "Guarde os dois números: antes e depois. É exatamente isso que vira o extrato do próximo vídeo.",
+          "type": "callout"
+        },
+        {
+          "text": "Não existe passo 8. A tarefa termina aqui — o que vem depois é a leitura do resultado, não mais instalação.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T20:38:44.199682+00:00",
+      "updated_at": "2026-08-04T20:38:44.199682+00:00"
+    },
+    {
+      "id": "b8d729c1-0ab5-4001-81a8-310e0be1d440",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "c21cb063-d62b-4c77-a705-3966860ac7eb",
+      "library_item_id": "2076c9a5-fea1-4761-a56e-d079981ab351",
+      "slug": "modelo-de-extrato-medir-o-antes-a6dk4i",
+      "title": "Modelo de extrato — medir o antes",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Isto é o documento que preenche antes de instalar qualquer IA na operação. Sem ele, não existe 'depois' para comparar. Preencha uma vez, por processo, antes de mexer em qualquer ferramenta.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Regra: se não dá para preencher um número aqui, o processo não está pronto para receber IA. Meça primeiro.",
+          "type": "callout"
+        },
+        {
+          "text": "Campo 1 — Identificação do processo",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Nome do processo (ex: recuperação de carrinho, resposta de suporte, follow-up de lead)",
+            "Quem executa hoje (pessoa, time ou nenhuma execução — o processo simplesmente não acontece)",
+            "Frequência: quantas vezes esse processo roda por mês"
+          ]
+        },
+        {
+          "text": "Campo 2 — Número em reais, antes",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Receita gerada por esse processo no último mês fechado (em R$)",
+            "Custo do processo no último mês fechado: hora de pessoa, ferramenta, o que for (em R$)",
+            "Saldo: receita menos custo"
+          ]
+        },
+        {
+          "text": "Se o processo não gera receita direta, meça o custo evitado ou o tempo devolvido, convertido em R$ por hora da pessoa que hoje faz isso.",
+          "type": "callout"
+        },
+        {
+          "text": "Campo 3 — Número em tempo, antes",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Horas por semana gastas neste processo, somando todas as pessoas envolvidas",
+            "Prazo médio de execução (ex: resposta ao lead em 4 horas, follow-up em 2 dias)"
+          ]
+        },
+        {
+          "text": "Campo 4 — Data de corte",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Data exata em que este extrato foi fechado (dia/mês/ano)",
+            "Este é o marco. Tudo que vier depois da IA instalada se compara com esta data, não com uma sensação"
+          ]
+        },
+        {
+          "text": "Como usar",
+          "type": "heading"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Feche os quatro campos com o processo funcionando do jeito que funciona hoje, sem IA nenhuma.",
+              "title": "Preencha antes de instalar"
+            },
+            {
+              "text": "Anote o dia exato. É a linha que separa antes e depois.",
+              "title": "Guarde a data de corte"
+            },
+            {
+              "text": "Trinta dias após a instalação, preencha os mesmos campos, com os mesmos números, no mesmo formato.",
+              "title": "Repita o mesmo extrato depois"
+            },
+            {
+              "text": "Depois menos antes. Esse é o resultado real — não a expectativa, não o print do dashboard da ferramenta.",
+              "title": "Subtraia"
+            }
+          ]
+        },
+        {
+          "text": "Aula não é entrega. Processo rodando, com número antes e depois que você mesmo confere, é.",
+          "type": "quote"
+        },
+        {
+          "text": "O próximo passo mostra a linha negativa inteira, publicada — o caso em que o extrato fechou no vermelho e a ferramenta foi desinstalada. Segue para não perder.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T20:37:55.025731+00:00",
+      "updated_at": "2026-08-04T20:37:55.025731+00:00"
+    },
+    {
+      "id": "c6abdddc-21bb-43c2-a4fb-19ac9ea218d3",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "34d70c62-33e2-496c-a785-1ea3950d18e4",
+      "library_item_id": "70347370-6ccb-4a26-9831-9e5a001dfd6c",
+      "slug": "as-quatro-etapas-modelo-de-extrato-4fjr7e",
+      "title": "As quatro etapas + modelo de extrato",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "As quatro etapas + modelo de extrato",
+          "type": "heading"
+        },
+        {
+          "text": "Isso não é aula. É o processo que separa IA instalada de IA testada. Abaixo do R$50 mil por mês a conta não fecha — não instale.",
+          "type": "paragraph"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Não é 'colocar IA no negócio'. É achar um processo específico que já sangra dinheiro ou tempo: carrinho abandonado, resposta de suporte, qualificação de lead. Um só. Se você aponta pra três, você não mede nenhum.",
+              "title": "Etapa 1 — Escolher UM ponto de sangria"
+            },
+            {
+              "text": "Antes de instalar qualquer ferramenta, você escreve o número de hoje. Quanto esse processo custa ou deixa de gerar por mês, sem IA. Sem esse número anotado antes, não existe depois pra comparar — só opinião.",
+              "title": "Etapa 2 — Medir o ANTES, em reais ou horas"
+            },
+            {
+              "text": "Sobe a IA no processo escolhido e deixa rodar um ciclo fechado. Não mexe, não 'ajusta o prompt' toda semana. Se mexer no meio, o antes e depois viram números de coisas diferentes.",
+              "title": "Etapa 3 — Instalar e rodar 30 dias, sem trocar nada no meio"
+            },
+            {
+              "text": "Fim do ciclo: depois menos antes menos custo da ferramenta. Se o saldo é positivo, fica. Se é negativo ou zero, desinstala. A decisão não é sentimento, é subtração.",
+              "title": "Etapa 4 — Fechar o extrato e decidir com o número"
+            }
+          ]
+        },
+        {
+          "text": "Modelo de extrato",
+          "type": "heading"
+        },
+        {
+          "text": "Copia essa estrutura pro seu processo. Preenche com o número real do seu negócio.",
+          "type": "paragraph"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Processo auditado: [NOME DO PROCESSO]",
+            "Período: [MÊS/ANO]",
+            "Resultado do processo ANTES da IA: R$ [SEU NÚMERO AQUI]",
+            "Resultado do processo DEPOIS da IA: R$ [SEU NÚMERO AQUI]",
+            "Custo da ferramenta/operação no período: R$ [SEU NÚMERO AQUI]",
+            "Saldo real (depois − antes − custo): R$ [SEU RESULTADO AQUI]",
+            "Decisão: manter ou desinstalar"
+          ]
+        },
+        {
+          "text": "Se o saldo não fecha em reais, não é vitória. É gasto com nome bonito.",
+          "type": "callout"
+        },
+        {
+          "text": "As três objeções, quebradas",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Não sei programar: nenhuma das quatro etapas pede código. Pede número escrito antes de instalar. Isso é planilha, não engenharia.",
+            "Não tenho grana: a etapa 2 existe justamente pra isso — você só descobre se vale gastar depois de medir o antes. Sem essa etapa, sim, dá pra perder dinheiro. Com ela, você mede antes de decidir.",
+            "É golpe?: o modelo de extrato acima é público e você confere com os próprios números, na sua própria planilha. Não tem link, não tem senha, não tem acesso a nada seu."
+          ]
+        },
+        {
+          "text": "Aula não é entrega. Processo rodando, com número antes e depois que você mesmo confere, é.",
+          "type": "quote"
+        },
+        {
+          "text": "Segue o perfil: o próximo vídeo mostra a linha negativa de um extrato de verdade — o mês em que uma IA foi desinstalada porque o saldo fechou no vermelho.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T20:37:03.680621+00:00",
+      "updated_at": "2026-08-04T20:37:03.680621+00:00"
+    },
+    {
+      "id": "b9ed0289-cfd2-42b8-a2bf-4cc7ab754ee8",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "c15959ee-531e-4439-9dee-fd4a54f92fa5",
+      "library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "slug": "o-teste-dos-dois-lados-102wjj",
+      "title": "O teste dos dois lados",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "O teste dos dois lados",
+          "type": "heading"
+        },
+        {
+          "text": "Isso não é prompt. É um jeito de comparar o antes e o depois com números que você mesmo confere.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Serve para qualquer processo que hoje é feito por uma pessoa: responder lead, montar proposta, dar suporte, escrever e-mail de recuperação.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Passo a passo do teste",
+          "type": "heading"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Não escolha 'atendimento'. Escolha uma tarefa específica: 'responder a primeira mensagem de quem abandonou o carrinho', por exemplo. Um processo por teste, nunca vários.",
+              "title": "Escolha UM processo"
+            },
+            {
+              "text": "Deixe a pessoa fazer exatamente como sempre fez. Sem mudar nada. Anote três números: quantas vezes foi feito, quanto tempo levou no total, e quanto retornou em reais (venda recuperada, resposta enviada, o que for mensurável no seu processo).",
+              "title": "Rode o lado HUMANO por 7 dias"
+            },
+            {
+              "text": "No mesmo período — ou no período seguinte, se não der para rodar em paralelo — deixe a IA fazer a mesma tarefa, sozinha, sem revisão humana no meio. Anote os mesmos três números: quantas vezes, quanto tempo (do seu lado, configurando e supervisionando) e quanto retornou em reais.",
+              "title": "Rode o lado IA pelos mesmos 7 dias"
+            },
+            {
+              "text": "Uma linha para o humano, uma linha para a IA. Mesma tarefa, mesmo período, mesma métrica de retorno. Se um dos lados não tem número, o teste não terminou — ele só parece que terminou.",
+              "title": "Ponha os dois lados lado a lado"
+            },
+            {
+              "text": "Retorno da IA menos o custo da ferramenta no período (mensalidade, tokens, o que você pagou) menos o seu tempo configurando. O que sobra é o saldo real, não o retorno bruto.",
+              "title": "Subtraia o custo"
+            }
+          ]
+        },
+        {
+          "text": "Se o saldo for negativo ou igual ao do humano, o teste não falhou. Ele fez o trabalho: te disse que ali não é para instalar IA agora.",
+          "type": "callout"
+        },
+        {
+          "text": "A folha do Marco Zero",
+          "type": "heading"
+        },
+        {
+          "text": "Antes de rodar qualquer teste, você precisa saber de onde está partindo. Sem isso, qualquer 'melhorou' é opinião, não extrato.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Preencha esta folha ANTES do dia 1 do teste.",
+          "type": "paragraph"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Nome do processo testado (uma frase, específica)",
+            "Quem executa hoje (nome ou função, não 'a equipe')",
+            "Quantas vezes esse processo roda por semana",
+            "Quanto tempo, em horas, esse processo consome por semana",
+            "Quanto esse processo gera ou recupera em reais, por semana (se não gera direto em reais, qual é o número mais próximo disso: taxa de resposta, taxa de conversão, o que for rastreável)",
+            "Custo atual desse processo em reais (salário proporcional, ferramenta já usada, o que for)",
+            "Data de início do teste"
+          ]
+        },
+        {
+          "text": "Sem Marco Zero preenchido, não existe antes. Sem antes, não existe depois — só sensação de que melhorou.",
+          "type": "callout"
+        },
+        {
+          "text": "Guarde essa folha. Ela é a régua que vai medir os dois lados do teste, e depois, o extrato real.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T20:35:51.678126+00:00",
+      "updated_at": "2026-08-04T20:35:51.678126+00:00"
+    },
+    {
+      "id": "ac3681ae-5a26-4503-9b13-cb67c7ea477f",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "dd1fe7fc-fff2-4933-82ac-0449cc83895b",
+      "library_item_id": "eb241567-3e1a-48e3-8241-400ef84b0920",
+      "slug": "passo-a-passo-como-gravar-teu-processo-para-eu-automatizar-85is2u",
+      "title": "Passo a passo: como gravar teu processo para eu automatizar",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Antes de gravar",
+          "type": "heading"
+        },
+        {
+          "text": "Eu preciso ver o processo do jeito que ele acontece hoje, do teu lado, na tua tela. Não é reunião de escopo com slide bonito. É gravação de tela, sem edição, mostrando o trabalho manual real.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Isso substitui semanas de levantamento de requisito que agência de software cobra caro para fazer. Você grava, eu assisto, eu já sei onde entra automação.",
+          "type": "paragraph"
+        },
+        {
+          "text": "O que grava (passo a passo)",
+          "type": "heading"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Não tenta gravar 'o processo todo do negócio'. Escolhe uma tarefa específica que alguém do teu time faz toda semana e que dá aquele desânimo de olhar. Copiar dado de planilha, responder mensagem parecida, montar relatório, atualizar cadastro.",
+              "title": "1. Escolhe UMA tarefa repetitiva"
+            },
+            {
+              "text": "No celular: ative a gravação de tela nativa (iPhone: Central de Controle; Android: atalho de gravação). No computador: Loom, ou o gravador nativo do Windows/Mac. Não precisa de ferramenta paga.",
+              "title": "2. Abre o gravador de tela"
+            },
+            {
+              "text": "Fala o que você está pensando enquanto clica. 'Agora eu abro essa planilha porque preciso conferir se o cliente já pagou.' O raciocínio importa tanto quanto o clique.",
+              "title": "3. Narra em voz alta enquanto faz"
+            },
+            {
+              "text": "Todo processo tem aquele caso torto: o cliente que não preenche o campo certo, o pedido que chega fora do padrão. Mostra o que você faz quando isso acontece. É ali que mora metade da automação.",
+              "title": "4. Mostra as exceções, não só o caminho perfeito"
+            },
+            {
+              "text": "Mesmo a parte chata de esperar carregar. Eu preciso ver o processo inteiro, não o trecho editado. 3 a 8 minutos costuma ser suficiente para uma tarefa bem recortada.",
+              "title": "5. Grava do início ao fim, sem cortar"
+            },
+            {
+              "text": "Isso é o número que vira a conta: 'isso leva 20 minutos e eu faço isso 4 vezes por semana' já mostra quanto tempo do time está preso ali.",
+              "title": "6. Diz em voz alta quanto tempo isso leva e quantas vezes por semana"
+            },
+            {
+              "text": "Sem editar, sem cortar as partes 'feias'. O jeito torto e manual é exatamente o que eu preciso ver para saber o que a máquina consegue assumir.",
+              "title": "7. Manda o vídeo"
+            }
+          ]
+        },
+        {
+          "text": "Quanto mais cru o vídeo, melhor. Vídeo editado esconde justamente os atritos que a automação resolve.",
+          "type": "callout"
+        },
+        {
+          "text": "3 dúvidas que sempre aparecem",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "\"Não sei programar, isso serve pra mim?\" — Serve. Você não vai escrever código nenhum. O vídeo que você grava é o material bruto; quem traduz isso em sistema funcionando sou eu.",
+            "\"Não tenho orçamento de projeto de dezenas de milhares.\" — Sistema sob medida com IA não roda no mesmo orçamento nem no mesmo prazo de uma agência de software tradicional. A gravação já é o primeiro passo justamente porque reduz o trabalho de escopo, que é a parte mais cara de qualquer projeto assim.",
+            "\"Isso é golpe? Vou ficar refém de quem construir?\" — Você recebe o sistema rodando antes de qualquer decisão final, e o processo que você gravou continua sendo seu, documentado, mesmo que um dia você queira trocar de fornecedor."
+          ]
+        },
+        {
+          "text": "Checklist antes de mandar o vídeo",
+          "type": "heading"
+        },
+        {
+          "type": "checklist",
+          "items": [
+            "Escolhi uma tarefa específica, não o processo inteiro",
+            "Narrei em voz alta o raciocínio, não só os cliques",
+            "Mostrei pelo menos um caso torto/exceção",
+            "Disse quanto tempo isso leva e quantas vezes por semana acontece",
+            "Não editei nem cortei nada"
+          ]
+        },
+        {
+          "text": "Toda semana eu abro por aqui sistema que já está no ar: o processo antes, o que ele custava em tempo ou em assinatura, e como ficou depois. Continua acompanhando pra ver por dentro.",
+          "type": "paragraph"
+        },
+        {
+          "text": "O vídeo cru do teu processo vale mais que qualquer reunião de escopo.",
+          "type": "quote"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T20:15:55.097332+00:00",
+      "updated_at": "2026-08-04T20:15:55.097332+00:00"
+    },
+    {
+      "id": "9ebc58f2-8047-4c0e-a1d7-9c4fbac8c0b7",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "12cd490d-1035-4196-aa61-df1a36ce484e",
+      "library_item_id": "2076c9a5-fea1-4761-a56e-d079981ab351",
+      "slug": "o-passo-a-passo-de-como-esse-sistema-foi-montado-qw0kfu",
+      "title": "O passo a passo de como esse sistema foi montado",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Sem enrolação: aqui está a estrutura real por trás do sistema que você viu funcionando no vídeo. Não é teoria. É a ordem em que cada parte foi construída.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Antes de qualquer linha de código, teve um problema específico rodando de forma manual — alguém fazendo à mão o que a máquina podia fazer sozinha. É sempre daí que começa.",
+          "type": "paragraph"
+        },
+        {
+          "text": "O passo a passo",
+          "type": "heading"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Antes de pensar em IA ou automação, o processo manual foi observado de ponta a ponta: onde a informação entra, por quantas mãos passa, e onde ela trava ou se perde. Sem esse mapa, qualquer sistema construído resolve o problema errado.",
+              "title": "1. Mapear a tarefa repetitiva"
+            },
+            {
+              "text": "Toda tarefa repetitiva tem duas partes: passos que seguem uma regra fixa (isso automatiza) e decisões que exigem critério humano (isso não). Misturar as duas é o motivo mais comum de uma automação travar.",
+              "title": "2. Separar o que é regra do que é julgamento"
+            },
+            {
+              "text": "Claude Code foi usado nas partes em que o sistema precisa interpretar texto livre, entender contexto ou tomar uma decisão que uma regra fixa não cobre. Nas partes puramente mecânicas, não tem IA nenhuma — é automação simples, mais barata e mais previsível.",
+              "title": "3. Escolher onde a IA entra — e onde ela não entra"
+            },
+            {
+              "text": "O sistema não substitui o que o negócio já usa — ele liga as pontas. A planilha continua sendo a planilha, o WhatsApp continua sendo o WhatsApp. O que muda é que a informação passa a viajar sozinha entre eles, sem alguém copiando e colando.",
+              "title": "4. Conectar as ferramentas que já existiam"
+            },
+            {
+              "text": "Todo sistema quebra na primeira rodada com dado de verdade — nome escrito errado, campo em branco, formato diferente do esperado. É nessa fase que aparece o que realmente precisa ser tratado.",
+              "title": "5. Testar com dado real, não com exemplo bonito"
+            },
+            {
+              "text": "O sistema não substitui o time da noite para o dia. Ele roda ao lado do processo antigo até provar que sustenta o volume real, sem parar, sem exigir alguém revisando cada saída.",
+              "title": "6. Colocar no ar em paralelo ao processo manual"
+            },
+            {
+              "text": "A última etapa não é técnica: é deixar registrado, em português simples, o que o sistema faz, o que ele não faz, e o que fazer se algo sair do esperado. Isso é o que evita depender para sempre de quem construiu.",
+              "title": "7. Documentar o que o dono do negócio precisa saber"
+            }
+          ]
+        },
+        {
+          "text": "Nenhuma dessas etapas exige que você aprenda a programar. Exige entender o que cada uma resolve — e é exatamente isso que este passo a passo mostrou.",
+          "type": "callout"
+        },
+        {
+          "text": "Isso é a estrutura geral. Nos próximos posts a ideia é abrir cada uma dessas partes por dentro, com tela, processo e o que deu errado no meio do caminho.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Se você tem uma tarefa repetitiva rodando na sua operação hoje, comenta aqui embaixo qual é. Vale a pena olhar de perto se ela se encaixa em alguma dessas etapas.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T20:14:39.235409+00:00",
+      "updated_at": "2026-08-04T20:14:39.235409+00:00"
+    },
+    {
+      "id": "da54486f-c7a1-4581-82a8-6cabd749e5dc",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "cdf44d7e-83ab-40a1-8cac-9c58220feca1",
+      "library_item_id": "70347370-6ccb-4a26-9831-9e5a001dfd6c",
+      "slug": "as-4-etapas-do-dm-flow-nd22lq",
+      "title": "As 4 etapas do dm-flow",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "As 4 etapas do dm-flow",
+          "type": "heading"
+        },
+        {
+          "text": "Isso aqui é o funil que roda dentro do direct do Instagram. Alguém comenta uma palavra no Reel, o sistema responde na hora, qualifica e leva pra conversa — sem ninguém digitando manualmente. É o mesmo tipo de estrutura por trás do material que você acabou de receber.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Vou abrir as 4 etapas por dentro. O que cada uma faz, com o que ela se parece no seu processo hoje, e onde a maioria trava.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Etapa 1 — Gatilho do comentário",
+          "type": "heading"
+        },
+        {
+          "text": "O sistema fica escutando os comentários do Reel. Quando alguém escreve a palavra-chave combinada (no seu caso, CLAUDE), ele identifica esse comentário específico e dispara uma ação — sem você abrir o Instagram.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Tradução pra quem não mexe com código: é parecido com uma regra de e-mail marketing que dispara quando alguém clica num link. Só que aqui o gatilho é uma palavra num comentário, e a plataforma é o Instagram.",
+          "type": "paragraph"
+        },
+        {
+          "text": "O que NÃO dá pra fazer aqui: ele não entende intenção solta tipo 'adorei, quero saber mais'. Precisa ser uma palavra-chave definida. Isso é proposital — evita disparo errado.",
+          "type": "callout"
+        },
+        {
+          "text": "Etapa 2 — Envio automático no direct",
+          "type": "heading"
+        },
+        {
+          "text": "Assim que o gatilho dispara, a pessoa recebe uma mensagem no direct dela. Não é um bot genérico respondendo qualquer coisa — é uma mensagem fixa, pensada pra aquele Reel específico, que entrega exatamente o que foi prometido no vídeo.",
+          "type": "paragraph"
+        },
+        {
+          "text": "É aqui que mora a diferença entre 'parece golpe' e 'parece profissional': a mensagem chega rápido, vem com a entrega prometida, e não fica empurrando pra outro lugar antes de cumprir o que disse no CTA.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Etapa 3 — Qualificação dentro da conversa",
+          "type": "heading"
+        },
+        {
+          "text": "Depois da entrega, o sistema pode fazer 1 ou 2 perguntas simples dentro do próprio direct — tipo um mini-formulário conversado. Isso separa quem só queria o material de quem tem uma dor real que vale uma conversa.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Pensa assim: em vez de você (ou alguém do seu time) abrir cada DM e perguntar 'me conta mais sobre seu negócio', o sistema já faz essa triagem antes de chegar em qualquer humano.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Etapa 4 — Encaminhamento pra conversa humana",
+          "type": "heading"
+        },
+        {
+          "text": "Quando a resposta indica que faz sentido continuar, o sistema encaminha essa pessoa — com o contexto já coletado — pra conversa direta com quem vai atender de verdade.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Ninguém compra dentro do direct. Essa etapa não é checkout, é a virada de 'lead anônimo no comentário' pra 'conversa qualificada com contexto na mão'.",
+          "type": "paragraph"
+        },
+        {
+          "text": "As 3 objeções que sempre aparecem",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "'Não sei programar' — quem opera esse tipo de sistema no dia a dia não escreve código. A parte técnica é montada uma vez; o que você usa depois é a conversa e o resultado, não a linha de comando.",
+            "'Não tenho grana' — isso não é uma ferramenta de assinatura mensal genérica cobrando por recurso que você não usa. É construído pro seu processo específico, então o custo se compara com o que você já paga hoje em ferramenta parada ou hora de time — não com plano de SaaS.",
+            "'É golpe?' — não tem link de pagamento, não tem checkout, não tem promessa de resultado mágico. O que existe é um sistema técnico entregando o que o vídeo prometeu, com as etapas que você acabou de ler."
+          ]
+        },
+        {
+          "text": "O sistema não substitui a conversa — ele decide quem chega até ela.",
+          "type": "quote"
+        },
+        {
+          "text": "Isso não serve pra qualquer processo. Se o seu fluxo de atendimento muda toda semana ou depende 100% de julgamento humano caso a caso, o dm-flow qualifica, mas não substitui essa etapa final.",
+          "type": "callout"
+        },
+        {
+          "text": "Quer ver o dm-flow rodando por dentro?",
+          "type": "heading"
+        },
+        {
+          "text": "Comenta CLAUDE aqui mesmo que eu te mando o acesso pra ver essa estrutura por dentro, com as telas reais.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T20:13:36.93713+00:00",
+      "updated_at": "2026-08-04T20:13:36.93713+00:00"
+    },
+    {
+      "id": "2d39bc9d-773d-4302-9bd6-d7d4998b2f32",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "770fb56e-a2f8-48bc-856b-4a4ee257721c",
+      "library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "slug": "as-perguntas-que-impedem-a-ia-de-te-dar-razao-gk5bu2",
+      "title": "As perguntas que impedem a IA de te dar razão",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Claude Code, ChatGPT, qualquer IA generativa: por padrão, ela concorda com você. Você descreve o processo do seu jeito, ela valida, monta o sistema em cima da sua versão dos fatos. Se essa versão tiver um furo, o sistema nasce com o furo.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Isso não é falha da ferramenta. É comportamento padrão. Ela foi treinada para ser útil, e concordar soa mais útil do que discordar.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Essas perguntas existem pra quebrar esse padrão antes da IA construir qualquer coisa. Faça nessa ordem, antes de pedir o sistema em si.",
+          "type": "paragraph"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Não pergunte se o plano é bom. Pergunte onde ele quebra. Peça pelo menos três cenários diferentes de falha, não um.",
+              "title": "1. \"Onde esse plano falha?\""
+            },
+            {
+              "text": "Força a IA a admitir a informação que falta, em vez de preencher o buraco com suposição e seguir em frente como se soubesse.",
+              "title": "2. \"O que eu não te contei que muda essa resposta?\""
+            },
+            {
+              "text": "Essa é a que mais incomoda a IA a concordar por padrão. Ela precisa citar um critério concreto de verificação, não uma opinião solta.",
+              "title": "3. \"Se eu estivesse errado sobre isso, como você saberia?\""
+            },
+            {
+              "text": "Não peça 'contras'. Peça o argumento MAIS forte. A diferença de redação muda a qualidade da resposta.",
+              "title": "4. \"Me dê o argumento contrário mais forte que existe.\""
+            },
+            {
+              "text": "Processo descrito e processo real quase nunca são o mesmo. Essa pergunta separa os dois antes de virarem sistema.",
+              "title": "5. \"Isso resolve o processo real ou o processo que eu descrevi?\""
+            },
+            {
+              "text": "Coloque a IA no papel de quem duvida por profissão, não no papel de quem quer te agradar.",
+              "title": "6. \"O que um especialista cético diria dessa solução?\""
+            }
+          ]
+        },
+        {
+          "text": "Se a resposta vier igual à anterior, só reformulada, a IA ainda está te dando razão. Repita a pergunta com outras palavras até ela mudar de posição em algum ponto.",
+          "type": "callout"
+        },
+        {
+          "text": "Sistema sob medida que nasce de um processo mal descrito não é sistema sob medida. É a ferramenta genérica de sempre, só que com a sua cara. Essas seis perguntas são o que separa uma coisa da outra.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Segue o perfil pra não perder os próximos: aqui mostro o sistema rodando, o processo por trás e o que ele resolveu de verdade, sem promessa vaga e sem hype.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T20:12:16.656861+00:00",
+      "updated_at": "2026-08-04T20:12:16.656861+00:00"
+    },
+    {
+      "id": "4962e528-c779-43e1-b2f4-cd8d8930897f",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "dc80a083-4dd2-4c45-b428-ba878d0c9d39",
+      "library_item_id": "eb241567-3e1a-48e3-8241-400ef84b0920",
+      "slug": "configurando-o-claude-code-na-sua-maquina-passo-a-passo-r51ci6",
+      "title": "Configurando o Claude Code na sua máquina — passo a passo",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Configurando o Claude Code na sua máquina — passo a passo",
+          "type": "heading"
+        },
+        {
+          "text": "Isso aqui é o passo a passo completo de instalação. Sem enrolação, sem pular etapa. Se travar em algum passo, lê de novo com calma — quase sempre é vírgula ou espaço faltando.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Antes de começar: 'terminal' é só uma tela preta onde você digita comandos em vez de clicar em botão. Parece coisa de hacker de filme, mas é só isso. Você vai copiar e colar comandos, não escrever código do zero.",
+          "type": "callout"
+        },
+        {
+          "text": "O que você precisa ter antes",
+          "type": "heading"
+        },
+        {
+          "type": "checklist",
+          "items": [
+            "Computador (Windows, Mac ou Linux)",
+            "Conexão com internet",
+            "Uma conta na Anthropic (é quem faz o Claude) — se não tiver, cria em claude.ai antes de seguir",
+            "20 minutos sem distração pra fazer isso com calma"
+          ]
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "O Claude Code roda em cima de uma coisa chamada Node.js. Não precisa entender o que é, só instalar. Vai em nodejs.org, baixa a versão recomendada (LTS) pro seu sistema operacional e instala clicando em 'Próximo' até o final, igual qualquer programa.",
+              "title": "Passo 1 — Instalar o Node.js"
+            },
+            {
+              "text": "No Mac: aperta Command + Espaço, digita 'Terminal' e dá Enter. No Windows: aperta a tecla Windows, digita 'PowerShell' e dá Enter. É essa tela preta (ou branca) que vai abrir — é onde tudo vai acontecer daqui pra frente.",
+              "title": "Passo 2 — Abrir o terminal"
+            },
+            {
+              "text": "Com o terminal aberto, cola esse comando e aperta Enter: npm install -g @anthropic-ai/claude-code . Ele vai baixar e instalar sozinho. Espera terminar (a tela para de 'rodar' e volta o cursor piscando).",
+              "title": "Passo 3 — Instalar o Claude Code"
+            },
+            {
+              "text": "Ainda no terminal, digita: claude e aperta Enter. Vai abrir uma página no navegador pedindo pra você logar com sua conta Anthropic. Loga normalmente, igual entrar em qualquer site.",
+              "title": "Passo 4 — Fazer login"
+            },
+            {
+              "text": "Escolhe onde vai ficar o que você criar. No terminal, digita mkdir meu-projeto e depois cd meu-projeto . Isso cria uma 'pasta' (chamada de 'repositório' quando você já sabe mexer) e entra dentro dela.",
+              "title": "Passo 5 — Criar a pasta do seu projeto"
+            },
+            {
+              "text": "Dentro da pasta, digita claude de novo e aperta Enter. Agora ele está 'ligado' e esperando você pedir o que quer construir — um app, uma landing page, um produto digital, o que for.",
+              "title": "Passo 6 — Chamar o Claude pra dentro dessa pasta"
+            },
+            {
+              "text": "Escreve em português mesmo, por exemplo: 'cria uma página simples de vendas com um título, um botão e um formulário de e-mail'. Aperta Enter e observa ele escrever o código sozinho na sua frente.",
+              "title": "Passo 7 — Testar com um pedido simples"
+            }
+          ]
+        },
+        {
+          "text": "Se aparecer erro de permissão no Mac, coloca sudo antes do comando do Passo 3 (sudo npm install -g @anthropic-ai/claude-code) e digita a senha do computador quando pedir.",
+          "type": "callout"
+        },
+        {
+          "text": "É isso. Você não escreveu uma linha de código — só instalou, logou e pediu em português o que queria. O resto quem escreve é o Claude.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Semana que vem",
+          "type": "heading"
+        },
+        {
+          "text": "Segue o perfil que semana que vem mostro o que saiu dessa mesma gravação que você acabou de configurar — o resultado real, na tela, passo a passo.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T19:25:40.120053+00:00",
+      "updated_at": "2026-08-04T19:25:40.120053+00:00"
+    },
+    {
+      "id": "aa3597cc-2e55-4c53-8373-c3f40e2d37d7",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "2090d2c0-0a86-4403-acca-bc9823c7ff59",
+      "library_item_id": "2076c9a5-fea1-4761-a56e-d079981ab351",
+      "slug": "como-eu-escolho-o-que-modelar-antes-de-criar-qualquer-produt-nlsbmn",
+      "title": "Como eu escolho o que modelar antes de criar qualquer produto com IA",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Antes de abrir o Claude ou qualquer ferramenta, tem uma pergunta que resolve 90% do travamento: o que eu vou criar?",
+          "type": "paragraph"
+        },
+        {
+          "text": "Quem trava aqui não trava porque é ruim com IA. Trava porque tenta inventar do zero. E inventar do zero é o jeito mais difícil de começar qualquer coisa.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Modelar é diferente de copiar. É pegar algo que já funciona, que já provou que resolve um problema, e usar como base pra construir a sua versão. É assim que eu escolho o que fazer.",
+          "type": "paragraph"
+        },
+        {
+          "text": "O passo a passo",
+          "type": "heading"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Procuro produtos, ferramentas ou infoprodutos que já vendem e resolvem uma dor específica. Não invento o problema, eu vou atrás de quem já provou que aquele problema existe e que as pessoas pagam pra resolver.",
+              "title": "Passo 1 — Vá onde o problema já está sendo resolvido"
+            },
+            {
+              "text": "Não olho só o produto pronto. Olho o que ele entrega: é uma planilha? Um checklist? Um sistema simples de organizar informação? Isso é o esqueleto que eu vou modelar.",
+              "title": "Passo 2 — Olhe o que está por trás, não só a fachada"
+            },
+            {
+              "text": "Todo produto tem duas partes: a estrutura (o que resolve o problema de verdade) e a roupagem (design, nome, comunicação). Eu foco em entender a estrutura. A roupagem eu crio do meu jeito depois.",
+              "title": "Passo 3 — Separe a estrutura da roupagem"
+            },
+            {
+              "text": "Pergunto: dá pra fazer essa mesma solução de um jeito mais simples, mais rápido, ou mais barato usando IA? Se a resposta for sim, ali tem uma oportunidade real de modelar.",
+              "title": "Passo 4 — Teste se dá pra simplificar"
+            },
+            {
+              "text": "Só quando tenho clareza do problema e da estrutura que resolve ele, é que eu vou pro Claude Code ou qualquer IA pra construir. Nessa hora já não estou mais inventando, estou executando algo que eu sei que tem chão.",
+              "title": "Passo 5 — Só depois disso eu abro a ferramenta"
+            }
+          ]
+        },
+        {
+          "text": "O erro mais comum não é técnico. É tentar ter uma ideia genial do zero antes de olhar o que já está funcionando.",
+          "type": "callout"
+        },
+        {
+          "text": "Esse passo a passo é a base. Os próximos conteúdos são a continuação direta dele: depois de escolher o que modelar, o próximo movimento é transformar isso em algo real usando IA.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Salva essa página. Ela é a raiz de tudo que vem depois.",
+          "type": "callout"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T19:24:30.749689+00:00",
+      "updated_at": "2026-08-04T19:24:30.749689+00:00"
+    },
+    {
+      "id": "4be9072c-3970-4229-a3df-a4161648f4f9",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "1cb47987-0f72-4d73-9e76-3f186d870bdf",
+      "library_item_id": "70347370-6ccb-4a26-9831-9e5a001dfd6c",
+      "slug": "as-4-etapas-pra-criar-e-vender-produto-digital-com-claude-co-ra3dh7",
+      "title": "As 4 etapas pra criar e vender produto digital com Claude Code",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Isso aqui é o passo a passo completo. Sem enrolação, sem prometer o resto lá na frente. As 4 etapas são: escolher o produto, montar com Claude Code, publicar e vender. Bora.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Antes de tudo, uma tradução rápida",
+          "type": "heading"
+        },
+        {
+          "text": "Claude Code é um programa de IA que escreve código pra você a partir do que você digita em português. Você não escreve nenhuma linha de código. Você descreve o que quer, e ele constrói na sua frente, igual um funcionário que você vai guiando por texto.",
+          "type": "paragraph"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Pensa em algo que resolve UM problema específico de um nicho que você já entende (pode ser o seu trabalho atual, um hobby, uma dor que você mesmo teve). Exemplos de formato: planilha automatizada, mini ferramenta web, calculadora, gerador de algo, checklist interativo. Não precisa ser genial. Precisa resolver uma coisa só, bem resolvida.",
+              "title": "Etapa 1 — Escolher o produto digital"
+            },
+            {
+              "text": "Você abre o Claude Code e descreve o que quer construir, como se estivesse explicando pra uma pessoa: 'quero uma ferramenta onde o usuário coloca X e recebe Y'. Ele monta a estrutura, você testa, pede ajuste ('muda essa cor', 'adiciona esse campo'), e ele corrige na hora. Você vai conversando até o produto ficar do jeito que você imaginou — sem precisar saber programar.",
+              "title": "Etapa 2 — Montar o produto com Claude Code"
+            },
+            {
+              "text": "Publicar é só colocar o produto em um link que funciona pra qualquer pessoa acessar, de qualquer celular ou computador. O próprio Claude Code te ajuda a gerar esse link. Depois disso o produto existe na internet, mesmo que ninguém tenha comprado ainda.",
+              "title": "Etapa 3 — Publicar"
+            },
+            {
+              "text": "Com o link pronto, você cria uma página simples de venda explicando o problema que o produto resolve e coloca o preço. Divulga onde seu público já está: Reels mostrando o produto funcionando, print de resultado, comentário de quem usou. O produto trabalha 24h, você não precisa estar online pra ele vender.",
+              "title": "Etapa 4 — Vender"
+            }
+          ]
+        },
+        {
+          "text": "As 3 objeções que travam todo mundo",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "'Não sei programar' — você não precisa. Você descreve o que quer em português e o Claude Code constrói. A parte técnica é dele, a parte de ideia é sua.",
+            "'Não tenho grana pra começar' — o custo aqui não é abrir empresa nem contratar time. É usar uma ferramenta de IA e o seu tempo pra montar o primeiro produto.",
+            "'Isso é golpe / hype que vai passar' — o que muda é a ferramenta, não o modelo de negócio. Produto digital resolvendo um problema específico existe há anos. A IA só tirou a barreira técnica de quem tinha ideia mas não sabia executar."
+          ]
+        },
+        {
+          "text": "Você segue as 4 etapas na ordem: escolhe o problema, monta com o Claude Code, publica, divulga e vende. Não precisa dominar tudo antes de começar a primeira etapa.",
+          "type": "callout"
+        },
+        {
+          "text": "O trava não é técnico. É começar a etapa 1 sem ter certeza de 100%.",
+          "type": "quote"
+        },
+        {
+          "type": "checklist",
+          "items": [
+            "Escolhi um problema específico que sei resolver",
+            "Abri o Claude Code e descrevi o produto em português",
+            "Testei e pedi ajustes até ficar do jeito certo",
+            "Gerei o link de publicação",
+            "Montei a página de venda e comecei a divulgar"
+          ]
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T19:23:30.219712+00:00",
+      "updated_at": "2026-08-04T19:23:30.219712+00:00"
+    },
+    {
+      "id": "0dce2e62-cd57-479b-8a34-9b58f3d76814",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "65a1882a-187c-4c3f-9e89-64e3ac326fa8",
+      "library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "slug": "o-mapa-pra-montar-contexto-no-claude-code-sem-inventar-do-ze-c9qgh5",
+      "title": "O mapa pra montar contexto no Claude Code (sem inventar do zero)",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Isso aqui é o passo a passo pra criar um mapa do teu projeto antes de pedir qualquer coisa pro Claude Code. Esse mapa é o que evita ele viajar, inventar função que não existe ou sugerir código que não bate com o resto do teu projeto.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Você não precisa saber programar pra fazer isso. É organização de informação, não código.",
+          "type": "callout"
+        },
+        {
+          "text": "Por que esse mapa existe",
+          "type": "heading"
+        },
+        {
+          "text": "Quando você abre o Claude Code e já sai perguntando 'cria uma tela de login', ele não sabe nada do teu projeto. Não sabe que ferramenta você usa, não sabe o nome dos arquivos, não sabe como as partes conversam entre si. Resultado: ele inventa. Cria coisa duplicada, ignora o que já existe, sugere um jeito diferente do resto do projeto.",
+          "type": "paragraph"
+        },
+        {
+          "text": "O mapa resolve isso. É um arquivo de texto simples que descreve o projeto pra IA antes de ela mexer em qualquer coisa.",
+          "type": "paragraph"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Na pasta principal do teu projeto, crie um arquivo chamado CLAUDE.md. Esse nome não é por acaso: o Claude Code procura esse arquivo automaticamente toda vez que você abre ele pra trabalhar no projeto.",
+              "title": "1. Crie o arquivo do mapa"
+            },
+            {
+              "text": "No topo do arquivo, escreva em 2-3 frases o que o projeto é e pra quem ele serve. Tipo: 'App de gestão de tarefas pra times pequenos. Usuário cria lista, marca tarefa como feita, recebe lembrete.' Isso dá contexto de negócio, não só de código.",
+              "title": "2. Descreva o que o projeto faz"
+            },
+            {
+              "text": "Escreva quais tecnologias o projeto usa: linguagem, framework, banco de dados. Se você não escolheu ainda, deixa em branco e deixa o Claude Code sugerir na primeira conversa — mas depois que ele sugerir, volta aqui e anota, pra ele não trocar de ideia no meio do caminho.",
+              "title": "3. Liste as ferramentas usadas"
+            },
+            {
+              "text": "Descreva em poucas linhas onde fica cada parte: onde estão as telas, onde fica a lógica que processa os dados, onde fica o que grava informação. Não precisa listar arquivo por arquivo — só as pastas principais e pra que servem.",
+              "title": "4. Mapeie a estrutura de pastas"
+            },
+            {
+              "text": "Aqui entram as decisões que você já tomou e não quer que a IA mude sem avisar. Exemplo: 'sempre em português', 'nomes de variável em inglês', 'nunca usar biblioteca X'. Toda vez que o Claude Code sugerir algo fora dessas regras, você vai perceber na hora.",
+              "title": "5. Anote as regras do projeto"
+            },
+            {
+              "text": "Coloque uma lista curta das funções ou telas que já foram criadas. Isso é o que impede o Claude Code de recriar algo do zero achando que não existe ainda.",
+              "title": "6. Liste o que já existe (pra não duplicar)"
+            },
+            {
+              "text": "Sempre que travar em algo e resolver, volta no CLAUDE.md e anota em uma linha: o problema e a solução. Da próxima vez que aparecer um erro parecido, a IA já lê essa anotação e não repete o mesmo caminho errado.",
+              "title": "7. Guarde os erros que já resolveu"
+            }
+          ]
+        },
+        {
+          "text": "O mapa não é escrito de uma vez só. Ele cresce toda vez que você resolve um problema novo — é assim que o Claude Code vai 'aprendendo' o teu projeto com o tempo.",
+          "type": "callout"
+        },
+        {
+          "text": "Como usar o mapa na prática",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Antes de pedir qualquer coisa pro Claude Code, confirma que o CLAUDE.md está atualizado com o que mudou desde a última vez",
+            "Quando ele sugerir algo estranho, a primeira pergunta é: 'isso tá no meu CLAUDE.md?' — se não tá, é por isso que ele errou",
+            "Todo projeto novo que você começar, o primeiro arquivo que você cria é esse, antes até de pedir a primeira funcionalidade"
+          ]
+        },
+        {
+          "text": "Ferramenta boa não substitui contexto. Ela só executa rápido o que você organizou antes.",
+          "type": "quote"
+        },
+        {
+          "text": "Toda ferramenta nova de Claude Code que sai, o conteúdo sobre ela vem primeiro aqui. Continua seguindo pra não perder.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T19:22:16.338894+00:00",
+      "updated_at": "2026-08-04T19:22:16.338894+00:00"
+    },
+    {
+      "id": "2595daec-9741-43bc-98b9-21357857fc4b",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "672aaaa4-3d6a-4a37-8570-e0dea3d51412",
+      "library_item_id": "70347370-6ccb-4a26-9831-9e5a001dfd6c",
+      "slug": "os-prompts-das-4-etapas-com-claude-code-1aphw9",
+      "title": "Os prompts das 4 etapas com Claude Code",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Os prompts das 4 etapas com Claude Code",
+          "type": "heading"
+        },
+        {
+          "text": "Aqui embaixo estão os prompts prontos das 4 etapas que eu uso pra criar um produto digital do zero com Claude Code. Copia, cola, ajusta o que tá em colchete e roda.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Antes de rodar: você vai usar o Claude Code, que é tipo um funcionário que escreve e roda código pra você a partir do que você digita em português. Você não escreve uma linha de código. Você conversa com ele.",
+          "type": "callout"
+        },
+        {
+          "text": "Etapa 1 — Definir o produto",
+          "type": "heading"
+        },
+        {
+          "text": "Aqui você define o que vai criar antes de abrir qualquer ferramenta. Sem isso, você fica pulando de ideia em ideia e não sai nada.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Aja como um estrategista de produtos digitais. Quero criar um produto digital de baixo ticket sobre [SEU NICHO/TEMA AQUI], voltado pra [SEU PÚBLICO-ALVO AQUI]. Me sugira 3 formatos de produto (ex: mini app, planilha interativa, ferramenta simples) que resolvam UMA dor específica desse público, e me explique em 3 linhas cada como funcionaria na prática.",
+          "type": "quote"
+        },
+        {
+          "text": "Você escolhe uma das 3 opções que ele te der e parte pra etapa 2.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Etapa 2 — Construir com Claude Code",
+          "type": "heading"
+        },
+        {
+          "text": "Aqui entra o Claude Code de verdade. Você cola o prompt abaixo dentro dele, trocando o que tá em colchete pela ideia que você escolheu na etapa 1.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Quero construir um [TIPO DE PRODUTO ESCOLHIDO NA ETAPA 1] que faça o seguinte: [DESCREVA A FUNÇÃO PRINCIPAL EM 1 FRASE]. O usuário final não sabe nada de tecnologia, então a interface precisa ser simples e visual. Construa isso passo a passo, me explicando cada parte em português simples antes de rodar.",
+          "type": "quote"
+        },
+        {
+          "text": "Trava comum aqui: 'não sei programar'. Você não precisa. O Claude Code entende o pedido em português e escreve o código sozinho. Seu trabalho é descrever o que você quer, não escrever a lógica.",
+          "type": "callout"
+        },
+        {
+          "text": "Etapa 3 — Testar e ajustar",
+          "type": "heading"
+        },
+        {
+          "text": "Nenhum produto sai perfeito na primeira tentativa. Essa etapa é pra você usar o próprio Claude Code pra achar e consertar os erros, sem precisar entender o que tá escrito ali dentro.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Testei o que você construiu e encontrei o seguinte problema: [DESCREVA O QUE ACONTECEU DE ERRADO]. Identifique a causa, me explique em uma frase simples o que estava errado, e corrija.",
+          "type": "quote"
+        },
+        {
+          "text": "Repete esse prompt quantas vezes precisar até o produto funcionar do jeito que você imaginou na etapa 1.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Etapa 4 — Deixar pronto pra vender",
+          "type": "heading"
+        },
+        {
+          "text": "Aqui você pede pra ele colocar o produto no ar, num link que qualquer pessoa consegue abrir e usar, sem precisar instalar nada.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Agora publique esse projeto e me gere um link funcional que eu possa enviar pra qualquer pessoa acessar direto do celular ou computador, sem precisar instalar nada. Me explique em 2 frases como esse link funciona por trás dos panos.",
+          "type": "quote"
+        },
+        {
+          "text": "Esse link é o que você vai usar pra vender: manda pro cliente, cola na bio, usa no anúncio.",
+          "type": "paragraph"
+        },
+        {
+          "text": "As 3 travas que sempre aparecem",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "'Não sei programar' — você não escreve código, você descreve o que quer e o Claude Code escreve por você. É igual pedir pra alguém fazer algo, só que essa pessoa nunca erra de cansaço.",
+            "'Não tenho grana pra investir' — o que você precisa aqui é de acesso ao Claude Code, não de um time de devs ou de um servidor caro.",
+            "'Isso é golpe/mentira?' — não tem mágica: você segue as 4 etapas, testa, corrige e publica. O trabalho é seu, a ferramenta só tira a barreira técnica."
+          ]
+        },
+        {
+          "type": "checklist",
+          "items": [
+            "Rodei o prompt da Etapa 1 e escolhi o formato do produto",
+            "Colei o prompt da Etapa 2 dentro do Claude Code",
+            "Testei o produto e usei o prompt da Etapa 3 pra corrigir",
+            "Publiquei e tenho um link funcional (Etapa 4)"
+          ]
+        },
+        {
+          "text": "Toda semana eu mostro esses sistemas rodando na tela, do zero até publicado. Fica ligado nos próximos vídeos pra ver na prática.",
+          "type": "callout"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T01:25:05.894154+00:00",
+      "updated_at": "2026-08-04T01:25:05.894154+00:00"
+    },
+    {
+      "id": "22de9152-5ed1-47cc-82ae-d26b8c32c70e",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "a4b62cb3-9837-4e73-b48f-0b0c52893344",
+      "library_item_id": "82d279ab-97ac-4d83-a2db-05d2dedbf58e",
+      "slug": "o-passo-a-passo-dos-5-conselheiros-nkatb1",
+      "title": "O passo a passo dos 5 conselheiros",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "O passo a passo dos 5 conselheiros",
+          "type": "heading"
+        },
+        {
+          "text": "Isso aqui é um sistema de prompt pra usar dentro do Claude (ou do ChatGPT, se você ainda não tem acesso). Em vez de pedir uma resposta pra IA e aceitar de cara, você monta um 'conselho' de 5 personas diferentes que analisam a mesma ideia por ângulos diferentes antes de você decidir qualquer coisa — criar o produto, escrever a oferta, definir o preço.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Isso substitui o que seria uma reunião com 5 especialistas diferentes. Uma pessoa, com o prompt certo, rodando o que seria um pequeno time de consultores.",
+          "type": "callout"
+        },
+        {
+          "text": "Quem são os 5 conselheiros",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "O Cético — só acha furo. Função: achar por que seu produto digital NÃO vai vender, antes do mercado achar por você.",
+            "O Cliente — pensa só no bolso e no tempo dele. Função: dizer se ISSO resolve um problema real ou se é só 'mais um produto'.",
+            "O Estrategista — pensa em preço, posicionamento e ticket. Função: dizer se o preço faz sentido pro que você está entregando.",
+            "O Operador — pensa em execução: o que dá pra fazer com o que você tem hoje (tempo, ferramenta, grana). Função: te tirar da ideia perfeita e te colocar na ideia possível.",
+            "O Vendedor — pensa em como isso é anunciado. Função: pegar a ideia e te dizer se ela cabe numa legenda de Reel ou não."
+          ]
+        },
+        {
+          "text": "Passo a passo pra usar",
+          "type": "heading"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Cole este texto no início da conversa: 'Quero que você simule um conselho de 5 personas: Cético, Cliente, Estrategista, Operador e Vendedor. Cada um vai analisar minha ideia separadamente, com um parágrafo cada, sendo direto e crítico, sem me agradar.'",
+              "title": "Passo 1 — Abra o Claude e cole o prompt-base"
+            },
+            {
+              "text": "Não precisa ser bonito. Ex: 'Quero criar um produto digital de [TEMA] pra vender a [PREÇO], pro público [PÚBLICO]'. Quanto mais específico, melhor a resposta.",
+              "title": "Passo 2 — Descreva sua ideia em 2 ou 3 frases"
+            },
+            {
+              "text": "Escreva: 'Comece pelo Cético.' Deixe ele responder. Depois peça o próximo: 'Agora o Cliente.' E assim por diante até os 5 falarem.",
+              "title": "Passo 3 — Peça a resposta dos 5, um de cada vez"
+            },
+            {
+              "text": "No final, escreva: 'Agora, com base nos 5 pareceres, me dê um resumo: essa ideia vale a pena seguir, precisa de ajuste, ou eu devo descartar?' Isso obriga a IA a cruzar os 5 pontos de vista e te dar uma resposta objetiva, não genérica.",
+              "title": "Passo 4 — Peça o veredito final"
+            },
+            {
+              "text": "Se o veredito for 'precisa de ajuste', muda a ideia com base no que os conselheiros falaram e roda o prompt inteiro de novo. Antes de tirar 1 real do bolso ou gastar 1 hora criando, você já sabe onde a ideia falha.",
+              "title": "Passo 5 — Ajuste e rode de novo"
+            }
+          ]
+        },
+        {
+          "text": "Sobre as travas que aparecem na cabeça",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "'Não sei programar' — esse sistema é só texto colado numa caixa de chat. Não abre terminal, não mexe em código.",
+            "'Não tenho grana' — dá pra rodar isso com plano gratuito de IA. O investimento aqui é o tempo de rodar o prompt antes de criar o produto.",
+            "'É golpe?' — não tem nada de mágico. É engenharia de prompt: você organiza a pergunta pra IA responder por ângulos diferentes, em vez de uma resposta só."
+          ]
+        },
+        {
+          "text": "O prompt não cria a ideia por você. Ele te mostra onde ela quebra antes do mercado mostrar.",
+          "type": "quote"
+        },
+        {
+          "text": "Segue o perfil — semana que vem tem outro sistema montado na tela, ao vivo, do zero.",
+          "type": "callout"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T01:23:54.031815+00:00",
+      "updated_at": "2026-08-04T01:23:54.031815+00:00"
+    },
+    {
+      "id": "971d4217-6223-4108-9e79-ccd86f1cadd6",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "ab7461e5-4a6c-44ef-9c0b-9ffefb6bc4e4",
+      "library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "slug": "repositorio-passo-a-passo-de-instalacao-claude-code-6xeuci",
+      "title": "Repositório + passo a passo de instalação do Claude Code",
+      "subtitle": null,
+      "blocks": [
+        {
+          "text": "Aqui está o link do repositório e o passo a passo completo pra instalar e rodar. Segue exatamente a ordem abaixo, sem pular etapa.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Link do repositório: [LINK DO REPOSITÓRIO AQUI]",
+          "type": "callout"
+        },
+        {
+          "text": "Antes de instalar, 3 coisas que travam todo mundo",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "\"Não sei programar\" — você não vai escrever código. Você vai escrever em português o que quer que o app faça, e o Claude Code escreve o código sozinho. Sua função é dar instrução clara, não digitar linha de programação.",
+            "\"Não tenho grana pra isso\" — a instalação em si não custa nada. O que pode ter custo depois é o uso da ferramenta, mas dá pra começar e testar sem virar o mês no vermelho.",
+            "\"Isso é golpe?\" — não é link de curso, não é grupo fechado vendendo nada. É o repositório oficial da ferramenta. Você instala na sua própria máquina, do seu jeito."
+          ]
+        },
+        {
+          "text": "O que você precisa ter instalado antes",
+          "type": "heading"
+        },
+        {
+          "type": "checklist",
+          "items": [
+            "Node.js instalado no computador (é o programa que faz o Claude Code rodar por trás)",
+            "Um terminal aberto — no Mac é o app \"Terminal\", no Windows pode ser o \"PowerShell\" ou \"CMD\". É só uma telinha preta onde você digita comando em vez de clicar em botão",
+            "Conta ativa na Anthropic (empresa que faz o Claude) pra autenticar o Claude Code"
+          ]
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "No seu computador, abra o app de terminal (Terminal no Mac, PowerShell no Windows). É essa telinha que vai rodar os comandos abaixo.",
+              "title": "Passo 1 — Abrir o terminal"
+            },
+            {
+              "text": "Se ainda não tem, baixe e instale o Node.js no site oficial [nodejs.org]. Sem ele, o Claude Code não roda.",
+              "title": "Passo 2 — Instalar o Node.js"
+            },
+            {
+              "text": "No terminal, cole o comando de instalação: [COMANDO DE INSTALAÇÃO AQUI]. Aperte Enter e espere terminar.",
+              "title": "Passo 3 — Instalar o Claude Code"
+            },
+            {
+              "text": "Digite o comando [COMANDO DE LOGIN AQUI] e siga o link que aparecer pra conectar sua conta da Anthropic.",
+              "title": "Passo 4 — Fazer login"
+            },
+            {
+              "text": "Ainda no terminal, digite: git clone [LINK DO REPOSITÓRIO AQUI]. Isso baixa a pasta do projeto pro seu computador.",
+              "title": "Passo 5 — Clonar o repositório"
+            },
+            {
+              "text": "Digite cd [NOME DA PASTA] pra entrar dentro da pasta que acabou de baixar.",
+              "title": "Passo 6 — Entrar na pasta do projeto"
+            },
+            {
+              "text": "Digite claude e aperte Enter. A partir daqui você conversa com ele em português, pedindo o que quer que o projeto faça.",
+              "title": "Passo 7 — Rodar o Claude Code"
+            }
+          ]
+        },
+        {
+          "text": "Pronto. A partir do passo 7 é você e o Claude Code numa conversa — você descreve o que quer, ele monta o código.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Ferramenta nova de Claude Code eu testo aqui primeiro. Me segue pra não perder quando sair a próxima.",
+          "type": "callout"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-04T01:22:21.949176+00:00",
+      "updated_at": "2026-08-04T01:22:21.949176+00:00"
+    },
+    {
+      "id": "a34a6709-7408-4e6c-b810-5c247d98cf90",
+      "account_id": "eff7e88e-ef23-41b2-9c55-a62f28dcb501",
+      "script_id": "0c80173d-c023-4cb8-961e-12fdfa42b743",
+      "library_item_id": "99fc4804-1f76-46bd-b6be-3699e2b39317",
+      "slug": "como-usar-claude-code-para-criar-produtos-digitais-passo-a-p-e24fvn",
+      "title": "Como usar Claude Code para criar produtos digitais — passo a passo completo",
+      "subtitle": "O processo exato que eu uso pra tirar ideia da cabeça e colocar no ar, sem saber programar",
+      "blocks": [
+        {
+          "text": "Eu travava igual você. Tinha ideia de infoproduto, ferramenta, landing page — mas morria tudo na gaveta porque eu não sabia programar e pagar dev tava fora do orçamento.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Aí descobri que o problema não era eu. Era tentar criar do zero. Claude Code mudou isso: você descreve o que quer em português, e ele escreve o código, testa, corrige e entrega funcionando.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Aqui embaixo tá o passo a passo completo que eu sigo toda vez que vou criar algo novo. Salvei ele aqui pra você voltar sempre que travar.",
+          "type": "paragraph"
+        },
+        {
+          "text": "O que é Claude Code (e por que funciona pra quem não programa)",
+          "type": "heading"
+        },
+        {
+          "text": "Claude Code é o apelido do Claude 3.5 Sonnet (modo Projects + código ativado). É tipo ChatGPT, mas focado em criar sistemas, sites e ferramentas. A diferença: ele não só escreve código — ele roda, testa, vê o erro e corrige sozinho.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Você fala 'quero uma calculadora de ticket médio pra coaches', e ele cria a página inteira: botões, campos, cálculo, design. Você testa, pede ajuste, e ele refaz na hora. É como ter um dev júnior trabalhando 24h por R$ 0,50 centavos por projeto.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Passo a passo completo: da ideia ao produto funcionando",
+          "type": "heading"
+        },
+        {
+          "type": "steps",
+          "items": [
+            {
+              "text": "Não precisa ser complexo. Exemplos reais que funcionam: calculadora de faturamento pra freela, gerador de bio de Instagram, quiz 'qual nicho combina com você', página de captura com timer. Anota em uma frase: 'Quero criar [o quê] pra [quem] que [resolve o quê]'.",
+              "title": "Defina o que você quer criar (1 frase)"
+            },
+            {
+              "text": "Acessa claude.ai e faz conta. A versão grátis trava rápido. A Pro (US$ 20/mês, sai ~R$ 110) libera uso pesado. Dentro da conta, clica em 'Projects' no menu lateral esquerdo e cria um projeto novo com o nome do seu produto.",
+              "title": "Entre no Claude (versão paga, R$ 110/mês)"
+            },
+            {
+              "text": "Cole seu pedido em português, direto e simples. Exemplo real que eu usei: 'Cria uma calculadora onde a pessoa coloca quantos clientes tem, ticket médio, e mostra quanto fatura por mês e por ano. Quero design limpo, fundo branco, botão azul.' Ele vai entregar o código completo em segundos.",
+              "title": "Peça pro Claude criar a primeira versão"
+            },
+            {
+              "text": "Claude mostra uma prévia ao vivo do que ele criou, do lado direito da tela (chama Artifact). Você clica, testa, preenche os campos, vê se funciona. Sem precisar entender código, sem instalar nada.",
+              "title": "Visualize o resultado (botão Artifact)"
+            },
+            {
+              "text": "Testou e não gostou da cor? Escreve: 'muda o botão pra verde'. Quer adicionar um campo? 'Adiciona um campo pra pessoa colocar quantos meses quer projetar'. Claude refaz na hora e mostra a nova versão. Vai ajustando até satisfazer.",
+              "title": "Peça ajustes até ficar do jeito que você quer"
+            },
+            {
+              "text": "Quando estiver satisfeito, clica nos 3 pontinhos no canto do Artifact e escolhe 'Download'. Salva um arquivo .html no seu computador. Esse arquivo É o seu produto — abre em qualquer navegador, funciona offline.",
+              "title": "Baixe o arquivo pronto"
+            },
+            {
+              "text": "Opção 1 (gratuita): sobe no GitHub Pages ou Netlify, fica no ar com link próprio, zero custo. Opção 2 (R$ 40/ano): registra um domínio e hospeda. Tem tutorial de 5 minutos no YouTube de 'como subir HTML no Netlify'. Não precisa de servidor caro nem WordPress.",
+              "title": "Coloque no ar (de graça ou quase)"
+            }
+          ]
+        },
+        {
+          "text": "Exemplos reais do que você consegue criar (testado por mim)",
+          "type": "heading"
+        },
+        {
+          "type": "list",
+          "items": [
+            "Calculadora de nicho (pessoa responde 3 perguntas, o sistema sugere nicho rentável)",
+            "Gerador de headline pra vendas (insere nicho + problema, sai 10 headlines prontas)",
+            "Quiz diagnóstico (tipo BuzzFeed, mas pro seu nicho — resultado personalizado no final)",
+            "Landing page de captura com timer de oferta (design responsivo, já sai pronto pra conectar com email)",
+            "Ferramenta de análise de concorrente (coloca Instagram do concorrente, retorna insights)",
+            "Simulador de investimento / economia (quanto junta em X meses com Y por mês)"
+          ]
+        },
+        {
+          "text": "Quanto custa e o que você precisa",
+          "type": "heading"
+        },
+        {
+          "text": "Claude Pro: R$ 110/mês (cartão de crédito, aceita Nubank). Um único produto criado e vendido a R$ 27 já paga o mês inteiro e sobra. Você não precisa de computador potente — funciona até em notebook velho, porque tudo roda na nuvem do Claude.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Hospedagem: gratuita (Netlify/GitHub Pages) ou R$ 40/ano se quiser domínio próprio tipo seunome.com.br. Sem mensalidade, sem taxa surpresa.",
+          "type": "paragraph"
+        },
+        {
+          "text": "O que fazer se travar (eu travei aqui também)",
+          "type": "heading"
+        },
+        {
+          "text": "Se Claude responder algo que não faz sentido ou der erro: copie a mensagem de erro, cola de volta pra ele e escreve 'corrige isso'. Ele entende o próprio erro e conserta. Parece mágica, mas é o diferencial dele.",
+          "type": "callout"
+        },
+        {
+          "text": "Se não souber o que criar: começa resolvendo um problema seu de 6 meses atrás. Eu criei uma calculadora de pricing pra freela porque EU precisava e errava na mão. Virou meu produto mais vendido.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Se tiver medo de não saber mexer: guarda esse passo a passo e executa linha por linha, sem pular. Eu fiz isso na primeira vez e funcionou. Você também consegue.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Recapitulando: o que você faz AGORA",
+          "type": "heading"
+        },
+        {
+          "type": "checklist",
+          "items": [
+            "Anota 1 ideia de produto digital que resolve problema real (calculadora, quiz, gerador)",
+            "Cria conta no Claude.ai e assina o plano Pro (R$ 110/mês)",
+            "Abre um Project novo e descreve o que quer criar, em português, 1 frase clara",
+            "Testa o resultado no Artifact, pede ajustes até satisfazer",
+            "Baixa o arquivo .html pronto",
+            "Sobe no Netlify (gratuito) seguindo tutorial de 5min no YouTube",
+            "Compartilha o link, valida com 10 pessoas, ajusta e depois vende"
+          ]
+        },
+        {
+          "text": "Eu travei 2 anos tentando aprender a programar antes de aceitar que não precisava. Claude Code é o atalho que eu queria ter tido. Agora você tem.",
+          "type": "paragraph"
+        },
+        {
+          "text": "Qualquer trava, qualquer dúvida: me chama aqui no direct. Eu respondo todo mundo.",
+          "type": "paragraph"
+        }
+      ],
+      "cta_label": null,
+      "cta_url": null,
+      "status": "draft",
+      "published_at": null,
+      "created_at": "2026-08-03T18:15:26.720578+00:00",
+      "updated_at": "2026-08-03T18:15:26.720578+00:00"
+    }
+  ]
+}

@@ -194,9 +194,15 @@ export function DeliveryRow({
             </p>
           )}
 
-          {publicada && !editando && (
-            <DeliveryLinkFlow deliveryId={delivery.id} flows={flows} />
-          )}
+          {/* Aparece em rascunho TAMBÉM, e isto é a correção de um erro:
+              esconder o vinculador até publicar contradizia o próprio
+              `DeliveryPicker` do editor de automação, que aceita rascunho e
+              avisa. Pior, criava um beco — o dono lia "vincule a entrega",
+              abria a tela e não achava o controle, sem nada explicando por quê.
+              Montar o fluxo antes de publicar o material é ordem legítima de
+              trabalho; o que não pode é a DM sair com link de rascunho, e disso
+              cuida o aviso dentro do componente. */}
+          {!editando && <DeliveryLinkFlow deliveryId={delivery.id} flows={flows} status={delivery.status} />}
 
           {erro && <p className="mt-2 text-[11px] text-danger">{erro}</p>}
         </div>

@@ -23,9 +23,12 @@ import { Select } from '@/components/ui'
 export function DeliveryLinkFlow({
   deliveryId,
   flows,
+  status,
 }: {
   deliveryId: string
   flows: FlowTarget[]
+  /** Rascunho pode ser vinculado, mas o dono tem que saber que o link é 404. */
+  status?: string
 }) {
   const router = useRouter()
   const [pending, start] = useTransition()
@@ -65,6 +68,13 @@ export function DeliveryLinkFlow({
             </option>
           ))}
       </Select>
+
+      {status === 'draft' && vinculada.length > 0 && (
+        <p className="mt-2 text-[11px] leading-relaxed text-warning">
+          Esta entrega ainda é rascunho: enquanto não for publicada, o link que a DM manda
+          responde 404. Publique antes de o vídeo ir ao ar.
+        </p>
+      )}
 
       {vinculada.length > 0 && (
         <ul className="mt-2 space-y-1">
