@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
  */
 const TABS = [
   { id: 'biblioteca', label: 'Biblioteca', href: '/biblioteca' },
+  { id: 'roteiros', label: 'Roteiros', href: '/biblioteca/roteiros' },
   { id: 'entregas', label: 'Entregas', href: '/biblioteca/entregas' },
 ] as const
 
