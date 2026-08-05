@@ -51,6 +51,13 @@ const TOOL_DESCRIPTION =
 /** Quanto da legenda do vídeo-molde entra no prompt. */
 const CAPTION_EXCERPT = 220
 
+/**
+ * Teto de duração. Decisão de formato do dono, 04/08/2026: vídeo curto é o
+ * padrão, e longo só quando o assunto exigir de verdade. Modelar continua
+ * valendo — a estrutura vem da referência — mas o tempo é nosso.
+ */
+export const MAX_DURATION_SEC = 50
+
 function themeLine(input: GenerateScriptInput): string {
   return input.theme?.trim() || '(livre, escolha o ângulo mais forte do pilar)'
 }
@@ -71,7 +78,14 @@ export function buildUserPrompt(input: GenerateScriptInput): string {
     // 120s "modelado" num vídeo de 42s não produz uma versão longa do mesmo
     // conteúdo — produz outro conteúdo, com estrutura de página de venda
     // pendurada num gancho emprestado. Foi exatamente o que saiu em 04/08.
-    const duracaoDoMolde = molde.duration_sec ? `${molde.duration_sec}` : input.duration
+    //
+    // MAS COM TETO. O dono grava vídeo curto por decisão de formato (04/08):
+    // longo só quando o assunto exigir. Molde de 77s vira roteiro de 50s — e o
+    // prompt precisa dizer COMO encurtar, senão o modelo mantém os mesmos
+    // beats e só fala mais rápido, que é o pior dos dois mundos.
+    const segundosDoMolde = molde.duration_sec ?? (Number(input.duration) || MAX_DURATION_SEC)
+    const precisaCondensar = segundosDoMolde > MAX_DURATION_SEC
+    const duracaoAlvo = Math.min(segundosDoMolde, MAX_DURATION_SEC)
 
     return `Crie um roteiro de Reel NOVO para ${input.persona.name}, MODELADO neste conteúdo real que JÁ PERFORMOU no nicho. Copie a INTELIGÊNCIA (formato, estrutura, tipo de gancho) — NÃO o texto. Reescreva tudo na voz dele, no tema dele (${input.persona.niche}).
 
@@ -84,7 +98,11 @@ export function buildUserPrompt(input: GenerateScriptInput): string {
 
 PILAR: ${input.pillar}
 TEMA/ÂNGULO: ${themeLine(input)}
-DURAÇÃO ALVO: ${duracaoDoMolde} segundos — a MESMA do vídeo de referência, e isso não é negociável. Menos tempo significa MENOS beats e um ponto só, não a mesma quantidade de ideias falada mais rápido.
+DURAÇÃO ALVO: ${duracaoAlvo} segundos.${
+      precisaCondensar
+        ? ` A referência tem ${segundosDoMolde}s e você vai condensar. Condensar é CORTAR IDEIA, não acelerar a fala: fique com o arco principal e o ponto mais forte, e descarte os secundários inteiros. Um roteiro de ${duracaoAlvo}s falado no ritmo normal cabe em cerca de ${Math.round((duracaoAlvo / 60) * 140)} palavras — se passar disso, você escreveu longo demais e vai sair corrido no vídeo.`
+        : ` É a MESMA do vídeo de referência, e isso não é negociável. Menos tempo significa MENOS beats e um ponto só, não a mesma quantidade de ideias falada mais rápido.`
+    }
 ${input.stage.cta_instruction}
 
 # A REFERÊNCIA MANDA NA FORMA
