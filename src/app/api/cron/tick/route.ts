@@ -8,6 +8,8 @@ import { isQuiet } from '@/lib/flow/quiet-hours'
 import { assertUnderSendCap, isUnderPublicReplyCap, logSend } from '@/lib/flow/send-cap'
 import { replyToComment } from '@/lib/instagram/api'
 import { isPermanentError } from '@/lib/instagram/errors'
+import { recomputeProfileMetrics } from '@/lib/library/ingest'
+import { syncOwnPlaysFromInsights } from '@/lib/library/own-plays'
 import { pollAll } from '@/lib/webhook/poll'
 import { processPending } from '@/lib/webhook/process'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -219,6 +221,50 @@ async function resumeSleepingRuns(): Promise<number> {
 }
 
 /** Token longo dura 60 dias. Renova faltando 10 — se deixar vencer, precisa reconectar na mão. */
+/**
+ * Fecha o laço entre o que a Meta mediu e o que a biblioteca ordena.
+ *
+ * `media_insights` guarda o número; `library_items` guarda o conteúdo. Sem
+ * este passo os posts do dono ficam com `plays = 0` para sempre — presentes na
+ * tabela, invisíveis em toda ordenação, e nunca escolhidos pela análise de IA,
+ * que só olha item com `outlier`. Ver `src/lib/library/own-plays.ts` para a
+ * questão da régua (view da Graph × play da Apify).
+ *
+ * Falha aqui é `console.error` como toda métrica: o 503 do tick é exclusivo do
+ * polling, que é a única coisa que avisa que a ENTREGA parou.
+ */
+async function syncOwnLibraryPlays(): Promise<{ atualizados: number; perfis: number }> {
+  const { data } = await supabaseAdmin.from('accounts').select('id').eq('is_active', true)
+
+  let atualizados = 0
+  let perfis = 0
+
+  for (const account of (data ?? []) as Array<{ id: string }>) {
+    try {
+      const result = await syncOwnPlaysFromInsights(account.id)
+      atualizados += result.atualizados
+
+      // Só recalcula quando algum número mudou: a mediana é propriedade do
+      // conjunto, então recalcular à toa é ler o acervo inteiro de graça a
+      // cada minuto.
+      if (result.perfis.length > 0) {
+        const recompute = await recomputeProfileMetrics({
+          accountId: account.id,
+          profileIds: result.perfis,
+        })
+        perfis += recompute.profiles
+        if (recompute.errors.length > 0) {
+          console.error('[dm-flow] régua do perfil próprio:', JSON.stringify(recompute.errors))
+        }
+      }
+    } catch (error) {
+      console.error('[dm-flow] plays da biblioteca própria:', error)
+    }
+  }
+
+  return { atualizados, perfis }
+}
+
 async function refreshExpiringTokens(): Promise<number> {
   const threshold = new Date(Date.now() + REFRESH_WHEN_DAYS_LEFT * 24 * 60 * 60 * 1000)
 
@@ -275,7 +321,21 @@ export async function GET(request: NextRequest) {
     console.error('[dm-flow] coleta de insights de mídia falhou:', error)
   }
 
-  const body = { polled, requeued, processed, resumed, refreshed, publicReplies, mediaInsights }
+  // O número recém-coletado vira régua da biblioteca. Vem DEPOIS da coleta de
+  // propósito: no mesmo tick em que a view do post novo chega, o multiplicador
+  // dele já sai atualizado. Acessório como a coleta acima — nunca 503.
+  const ownPlays = await syncOwnLibraryPlays()
+
+  const body = {
+    polled,
+    requeued,
+    processed,
+    resumed,
+    refreshed,
+    publicReplies,
+    mediaInsights,
+    ownPlays,
+  }
 
   // Não conseguir varrer NENHUMA conta é o sistema parado, não um tick
   // tranquilo. Em 30/07 isso durou 22h reportando 200 e "succeeded" no
