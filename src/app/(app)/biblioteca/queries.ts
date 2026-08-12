@@ -35,6 +35,21 @@ import type { LibraryItem } from '@/types/db'
 /** Teto de linhas por consulta. Acima disto a tela avisa que está cortando. */
 export const LIBRARY_LIMIT = 300
 
+/**
+ * A categoria que `sync-own.ts` carimba nos posts do dono.
+ *
+ * A tela é uma biblioteca de REFERÊNCIA — conteúdo dos outros, para modelar. O
+ * acervo do dono entra na mesma tabela por decisão de modelagem (mediana,
+ * outlier e análise funcionam pelo mesmo caminho, sem tabela nova), mas não é
+ * referência: é histórico. Fica oculto por padrão e continua vivo no banco,
+ * alimentando o bloco de desempenho próprio do gerador
+ * (`src/lib/ai/own-performance.ts`).
+ *
+ * Escondido, não apagado — e a diferença importa: filtrar por esta categoria
+ * na tela traz tudo de volta.
+ */
+export const CATEGORIA_PROPRIO = 'próprio'
+
 export interface LibraryFilters {
   search?: string
   category?: string
@@ -106,7 +121,14 @@ export async function getLibraryScreen(filters: LibraryFilters = {}): Promise<Li
 
   let query = supabaseAdmin.from('library_items').select('*', { count: 'exact' })
 
-  if (filters.category) query = query.eq('category', filters.category)
+  if (filters.category) {
+    query = query.eq('category', filters.category)
+  } else {
+    // `neq` sozinho descartaria as linhas de categoria NULA junto: no Postgres,
+    // `null != 'próprio'` é NULL, e NULL não passa no filtro. O `or` com
+    // `is.null` é o que mantém na tela o item que nunca recebeu categoria.
+    query = query.or(`category.is.null,category.neq.${CATEGORIA_PROPRIO}`)
+  }
   if (status === 'vistos') query = query.eq('watched', true)
   if (status === 'nao-vistos') query = query.eq('watched', false)
 
@@ -161,13 +183,18 @@ export async function getLibraryScreen(filters: LibraryFilters = {}): Promise<Li
       is_active: boolean
       last_scraped_at: string | null
     }>
-  ).map((row) => ({
-    id: row.id,
-    username: row.username,
-    category: row.category,
-    isActive: row.is_active,
-    lastScrapedAt: row.last_scraped_at,
-  }))
+  )
+    // O perfil do dono sai da lista pelo mesmo motivo que os posts dele: esta
+    // lista é de perfis RASTREADOS, e o dele não é raspado — vem da Graph API,
+    // de graça, com `is_active = false` para a Apify nunca o pegar.
+    .filter((row) => row.category !== CATEGORIA_PROPRIO)
+    .map((row) => ({
+      id: row.id,
+      username: row.username,
+      category: row.category,
+      isActive: row.is_active,
+      lastScrapedAt: row.last_scraped_at,
+    }))
 
   if (itemsResult.error) {
     console.error('[dm-flow] biblioteca indisponível:', itemsResult.error.message)
