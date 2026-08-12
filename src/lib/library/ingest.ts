@@ -333,7 +333,24 @@ export interface ProfileMetrics {
  * A matemática mora em `outlier.ts` — aqui só se aplica.
  */
 export function profileMetrics(rows: MetricRow[]): ProfileMetrics {
-  const plays = rows.map((row) => toNumber(row.plays) ?? 0)
+  /**
+   * SÓ QUEM TEM PLAY ENTRA NA RÉGUA. Item com zero não é item que foi mal: é
+   * item sem medição — a Apify omite `videoPlayCount` quando o perfil esconde
+   * as contagens, e no perfil próprio o número só existe para as mídias que o
+   * tick alcançou (`media_insights` cobre as dez mais recentes e as com
+   * automação, não o acervo inteiro).
+   *
+   * Contá-los como zero envenena a régua nos dois extremos: com 39 dos 49
+   * vídeos sem medição, a mediana do perfil próprio dava ZERO, e mediana zero
+   * faz `outlierScore` devolver null para TODOS — o perfil inteiro fica sem
+   * multiplicador por causa de dado que nunca foi coletado. É a mesma classe
+   * de falha silenciosa do bug do bigint (01/08), por outro caminho.
+   *
+   * `sampleSize` conta a mesma amostra, e não o total de linhas: quem decide
+   * se há amostra suficiente para afirmar um multiplicador é quem tem número,
+   * não quem está na tabela.
+   */
+  const plays = rows.map((row) => toNumber(row.plays) ?? 0).filter((valor) => valor > 0)
   /**
    * Arredondado porque `tracked_profiles.median_plays` é `bigint`.
    *
@@ -353,7 +370,7 @@ export function profileMetrics(rows: MetricRow[]): ProfileMetrics {
    */
   const medianaCrua = median(plays)
   const medianPlays = medianaCrua === null ? null : Math.round(medianaCrua)
-  const sampleSize = rows.length
+  const sampleSize = plays.length
 
   const changed: ProfileMetrics['changed'] = []
 

@@ -118,6 +118,16 @@ src/components/ui/   index.tsx (primitivos), chart.tsx (BigNumber, Meter, RankBa
   mesmo vídeo — `videoViewCount` (4.719) e `videoPlayCount` (112.806). Trocar os dois muda o
   multiplicador por um fator de 20. E o divisor é a mediana **do próprio autor**: comparar
   perfis entre si não diz nada, porque a base de seguidores é outra.
+  **No perfil do dono a fonte é outra e isso é deliberado**: a Graph API não devolve
+  `playCount`, então `own-plays.ts` grava o `views` dela em `plays`. Fecha porque o outlier é
+  uma razão dentro do mesmo perfil — numerador e denominador saem da mesma régua. O que a
+  troca proíbe é comparar `plays` do dono com o de terceiro em número absoluto, que já era
+  proibido antes, agora por dois motivos.
+- **Item sem medição não entra na mediana.** `plays = 0` quase nunca significa "foi mal":
+  significa que a Apify omitiu `videoPlayCount` ou que o tick nunca alcançou aquela mídia
+  (`media_insights` cobre as dez mais recentes e as com automação, não o acervo). Contá-los
+  como zero derrubava a mediana a zero, e mediana zero faz `outlierScore` devolver `null`
+  para o perfil INTEIRO — 39 dos 49 vídeos do dono zeravam a régua dos outros 10.
 - **Valor derivado não entra em coluna `bigint`.** Mediana de um número par de vídeos tem `.5`,
   o Postgres recusa, e o perfil fica **sem régua nenhuma** — nenhum vídeo dele ganha
   multiplicador. Aconteceu em 01/08 e passou despercebido porque o erro ia para o array
