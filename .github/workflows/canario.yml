@@ -1,0 +1,58 @@
+# O vigia que sobrevive à queda.
+#
+# POR QUE ISTO EXISTE: em 12/08/2026 o projeto do Supabase pausou por
+# inatividade (plano free pausa com 7 dias de baixa atividade) e a ferramenta
+# ficou 8 dias sem dados sem emitir um único sinal. O motivo de ninguém
+# perceber é estrutural: quem vigia a automação é o pg_cron, que mora DENTRO do
+# Supabase e pausa junto. Um vigia que morre com o vigiado não é vigia.
+#
+# Este roda no GitHub, fora de toda a infraestrutura que ele observa. Falhou =
+# e-mail automático do GitHub para o dono do repositório.
+#
+# O ALVO É UMA PÁGINA QUE DEPENDE DO BANCO, e não a home: `/e/<slug>` consulta
+# `deliveries` e devolve 404 quando a consulta não traz nada — inclusive quando
+# não traz nada porque o banco sumiu (`src/app/e/[slug]/page.tsx` descarta o
+# `error` e trata como "não achei"). Bater numa rota estática responderia 200
+# com o banco no chão, que é exatamente o falso "está tudo bem" que custou os
+# 8 dias.
+#
+# FRAGILIDADE CONHECIDA: se esta entrega for despublicada, o alarme dispara sem
+# haver problema. Troque o slug abaixo por outra entrega publicada, ou apague
+# este arquivo — nesse dia o alarme já cumpriu o papel de te fazer olhar.
+
+name: canário
+
+on:
+  schedule:
+    # De hora em hora. Detecta a pausa no mesmo dia, e cabe folgado nos minutos
+    # gratuitos do Actions (720 execuções/mês contra o teto de 2000 minutos).
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+jobs:
+  entrega-no-ar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: A entrega pública responde 200
+        run: |
+          URL="https://dm.nocodepedro.site/e/o-teste-dos-dois-lados-102wjj"
+
+          # Duas tentativas com um minuto de intervalo: deploy em andamento e
+          # blip de rede não são pausa de banco, e alarme que grita à toa vira
+          # alarme que ninguém lê.
+          for tentativa in 1 2; do
+            codigo=$(curl -s -o /dev/null -m 30 -w '%{http_code}' "$URL" || echo "000")
+            if [ "$codigo" = "200" ]; then
+              echo "ok: $URL respondeu $codigo"
+              exit 0
+            fi
+            echo "tentativa $tentativa: $codigo"
+            [ "$tentativa" = "1" ] && sleep 60
+          done
+
+          echo ""
+          echo "A entrega pública não respondeu 200 (último código: $codigo)."
+          echo "Causa mais provável: projeto do Supabase pausado."
+          echo "Confira em https://supabase.com/dashboard e clique em Restore."
+          echo "Depois rode: npx tsx --env-file=.env.local --tsconfig scripts/tsconfig.json scripts/pronto-para-usar.mts"
+          exit 1
