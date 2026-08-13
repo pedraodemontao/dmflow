@@ -167,6 +167,14 @@ export interface Persona {
   named_mechanisms: unknown
   recording_guidance: string
   headline_formula: string
+  /**
+   * Quem ASSISTE (migration 0020). Opcional no tipo porque a migration é colada
+   * à mão: código novo lendo banco antigo recebe `undefined`, e o prompt sai sem
+   * o bloco em vez de sair com "undefined" escrito dentro dele.
+   */
+  audience?: string
+  /** Crenças limitantes do público — banco de ganchos (migration 0020). */
+  beliefs?: string[]
   offer: string
   /** A palavra que o lead comenta — liga a biblioteca ao resto do produto. */
   cta_keyword: string

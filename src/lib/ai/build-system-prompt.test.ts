@@ -200,3 +200,94 @@ describe('trava: público não vira passado do creator', () => {
     expect(prompt).toContain('SEGUNDA pessoa')
   })
 })
+
+/**
+ * O público e as crenças chegaram como COLUNA (migration 0020), e o teste
+ * afirma as duas metades: que os dados entram no prompt, e que o prompt
+ * continua saindo inteiro quando eles não existem.
+ *
+ * A segunda metade não é zelo: a migration é colada à mão no SQL Editor, então
+ * existe uma janela real em que o código novo lê o banco velho. Prompt com a
+ * palavra "undefined" dentro produz roteiro ruim sem nenhum erro visível.
+ */
+describe('público e crenças (migration 0020)', () => {
+  it('escreve o público e manda calibrar vocabulário por ele', () => {
+    const prompt = buildSystemPrompt(
+      persona({ audience: 'Mulheres de 40-60 que vendem doce por encomenda no bairro.' }),
+    )
+
+    expect(prompt).toContain('QUEM ESTÁ DO OUTRO LADO')
+    expect(prompt).toContain('vendem doce por encomenda no bairro')
+  })
+
+  it('vira banco de ganchos e manda quebrar UMA por roteiro', () => {
+    const prompt = buildSystemPrompt(
+      persona({ beliefs: ['doce caseiro não dá dinheiro', 'já tem gente demais vendendo'] }),
+    )
+
+    expect(prompt).toContain('- doce caseiro não dá dinheiro')
+    expect(prompt).toContain('Escolha UMA por roteiro')
+  })
+
+  it('sem as colunas, o prompt sai sem os blocos — nunca com "undefined"', () => {
+    // O estado real do banco entre subir o código e colar a migration.
+    const prompt = buildSystemPrompt(persona({ audience: undefined, beliefs: undefined }))
+
+    expect(prompt).not.toContain('undefined')
+    expect(prompt).not.toContain('QUEM ESTÁ DO OUTRO LADO')
+    expect(prompt).toContain('# VOZ')
+  })
+
+  it('a entrega também conhece o público — ela é lida pela mesma pessoa', () => {
+    const prompt = buildDeliverySystemPrompt(persona({ audience: 'Não sabe o que é terminal.' }))
+
+    expect(prompt).toContain('QUEM VAI LER')
+    expect(prompt).toContain('Não sabe o que é terminal')
+  })
+
+  it('entrega sem público não quebra no filtro de seções nulas', () => {
+    expect(() => buildDeliverySystemPrompt(persona({ audience: undefined }))).not.toThrow()
+  })
+})
+
+/**
+ * A régua de temperatura é do OFÍCIO — vale para qualquer creator, por isso
+ * mora no código. O que ela combate é o gerador escrever peça vendedora para
+ * público frio, que é o default dele: "copy boa" no treino é copy de página de
+ * vendas.
+ */
+describe('temperatura e oferta', () => {
+  it('proíbe preço e produto no roteiro de topo', () => {
+    const prompt = buildSystemPrompt(persona())
+
+    expect(prompt).toContain('TEMPERATURA')
+    expect(prompt).toContain('SEM preço, SEM produto')
+  })
+
+  it('a oferta entra travada na etapa de fundo, não solta no prompt', () => {
+    const prompt = buildSystemPrompt(persona({ offer: 'Curso Doces que Vendem, R$ 197' }))
+
+    expect(prompt).toContain('OFERTA (só quando a etapa for de FUNDO)')
+    expect(prompt).toContain('Em topo e meio, esta oferta NÃO aparece')
+  })
+})
+
+/**
+ * `headline_formula` está VAZIA no banco de produção hoje. A linha saía como
+ * `a fórmula ""` — instrução em branco não é instrução neutra: ocupa atenção e
+ * o modelo tenta obedecer a alguma coisa.
+ */
+describe('fórmula de headline vazia', () => {
+  it('não manda seguir uma fórmula em branco', () => {
+    const prompt = buildSystemPrompt(persona({ headline_formula: '   ' }))
+
+    expect(prompt).not.toContain('a fórmula ""')
+    expect(prompt).toContain('sem fórmula fixa')
+  })
+
+  it('com fórmula, continua mandando segui-la', () => {
+    const prompt = buildSystemPrompt(persona({ headline_formula: 'Como X sem Y' }))
+
+    expect(prompt).toContain('a fórmula "Como X sem Y"')
+  })
+})

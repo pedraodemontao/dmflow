@@ -77,8 +77,41 @@ const FACT_RULES = `# FATO (a regra que vence todas as outras acima)
 - Número que VEIO do material: use exatamente como está, com a mesma unidade e a mesma condição. "70x em projetos grandes" não vira "70%" nem perde o "em projetos grandes".
 - Pode afirmar livremente o que é conhecimento geral e verificável do nicho. A trava é contra fato ESPECÍFICO sem fonte, não contra explicar como algo funciona.`
 
+/**
+ * A régua de temperatura — do ofício, não do nicho.
+ *
+ * O erro que ela combate é o mais caro da copy de resposta direta: escrever
+ * peça de nível 3 (vendedora, com preço e produto) para público de nível 1, que
+ * ainda nem sabe que tem o problema. O gerador tende a isso sozinho, porque
+ * "copy boa" no treino dele é copy de página de vendas.
+ *
+ * A etapa do funil chega no prompt do PEDIDO (`stage.cta_instruction`); esta
+ * régua diz o que fazer com ela.
+ */
+const TEMPERATURE_RULES = `# TEMPERATURA (o erro que queima dinheiro)
+A mesma pessoa em três estágios pede três roteiros diferentes. A etapa do funil vem no pedido — obedeça a ela:
+- TOPO (frio): ele acha que o problema é ELE. Nomeie o inimigo, tire a culpa dele. SEM preço, SEM produto, SEM oferta. Um Reel de topo que menciona preço queima o lead.
+- MEIO (morno): ele pergunta "funciona pra mim? é golpe?". Prova + mecanismo + as objeções na ordem em que aparecem na cabeça dele.
+- FUNDO (quente): ele já quer. Remova atrito, NÃO traga informação nova — informação nova aqui reabre a dúvida que já estava fechada.`
+
 function bullets(lines: string[], fallback: string): string {
   return lines.length > 0 ? lines.map((line) => `- ${line}`).join('\n') : fallback
+}
+
+/**
+ * A fórmula de headline só entra quando existe.
+ *
+ * Com `headline_formula` vazia — que é o estado do banco hoje — a linha saía
+ * literalmente como `a fórmula ""`, mandando o modelo seguir uma fórmula em
+ * branco. Instrução vazia não é instrução neutra: ela ocupa espaço de atenção e
+ * o modelo tenta obedecer a alguma coisa.
+ */
+function headlineLine(persona: Persona): string {
+  const formula = persona.headline_formula?.trim()
+
+  return formula
+    ? `- Headline: a fórmula "${formula}" serve para conteúdo de COMO FAZER. Para notícia, opinião, bastidor ou comparativo, NÃO force a fórmula — use o formato que o ângulo pedir.`
+    : '- Headline: sem fórmula fixa. Ela divide o mundo em dois grupos e convida para o menor — identidade, não benefício. Nunca descreva o produto na headline.'
 }
 
 /**
@@ -95,9 +128,29 @@ export function buildSystemPrompt(persona: Persona, hookPatterns?: string | null
     '(nenhum mecanismo nomeado ainda)',
   )
   const forbiddenBlock = bullets(persona.forbidden_rules, '(sem regras definidas)')
+  const audience = persona.audience?.trim()
+  const beliefs = persona.beliefs ?? []
 
   const sections = [
     `Você é a copy-chefe do creator ${persona.name} (nicho: ${persona.niche}). Escreve roteiros de Reel para ele GRAVAR.`,
+
+    // Vem ANTES do princípio de modelagem de propósito: o modelo precisa saber
+    // para quem escreve antes de saber o que imitar. Na ordem inversa, ele
+    // modela a estrutura do vídeo de referência e importa junto o vocabulário
+    // do autor da referência — que fala com outra audiência.
+    audience
+      ? `# QUEM ESTÁ DO OUTRO LADO (escreva PARA ele)
+${audience}
+
+Use isto para calibrar VOCABULÁRIO e escolher o exemplo, nunca para descrever o creator. Fale com ele na SEGUNDA pessoa.`
+      : null,
+
+    beliefs.length > 0
+      ? `# NO QUE ELE NÃO ACREDITA (banco de ganchos — quebrar UMA é o Reel)
+${bullets(beliefs, '')}
+
+Escolha UMA por roteiro, a mais próxima do tema, e construa o gancho em cima dela. Duas crenças no mesmo Reel divide a atenção e não quebra nenhuma. A crença é o que ele já pensa antes de te ouvir: comece por ela, não pela sua conclusão.`
+      : null,
 
     `# PRINCÍPIO CENTRAL
 Quando receber CONTEÚDOS REAIS que performaram no nicho, eles são sua INTELIGÊNCIA. Modele a ESTRUTURA, o ÂNGULO e o tipo de gancho que funcionou — reescrevendo 100% na voz do creator, sem copiar texto. Prefira a lógica do conteúdo real à sua própria invenção. Não entregue gancho genérico: ancore no que já deu certo.`,
@@ -108,6 +161,7 @@ ${persona.voice_prompt}`,
     hookPatterns ?? null,
 
     COPY_RULES,
+    TEMPERATURE_RULES,
     FACT_RULES,
 
     `# PROIBIDO (nunca)
@@ -115,7 +169,7 @@ ${forbiddenBlock}`,
 
     `# FORMATO (siga à risca)
 ${persona.format_rules}
-- Headline: a fórmula "${persona.headline_formula}" serve para conteúdo de COMO FAZER. Para notícia, opinião, bastidor ou comparativo, NÃO force a fórmula — use o formato que o ângulo pedir.`,
+${headlineLine(persona)}`,
 
     `# SUGESTÃO DE GRAVAÇÃO (campo "format" — SEMPRE preencher)
 ${persona.recording_guidance}`,
@@ -123,7 +177,15 @@ ${persona.recording_guidance}`,
     `# MECANISMOS NOMEADOS (grafia exata, use quando couber)
 ${mechanismsBlock}`,
 
-    persona.offer ? `# OFERTA (fundo de funil)\n${persona.offer}` : null,
+    // A oferta está no system prompt, que vale para TODA geração — inclusive a
+    // de topo. Sem esta trava, o modelo lê "existe produto" e enfia preço num
+    // Reel frio, que é exatamente o erro que a régua de temperatura combate.
+    persona.offer
+      ? `# OFERTA (só quando a etapa for de FUNDO)
+${persona.offer}
+
+Em topo e meio, esta oferta NÃO aparece: nem nome, nem preço, nem "link na bio". Ela existe aqui para você saber para onde a pessoa caminha, não para citá-la.`
+      : null,
 
     'Gere SEMPRE em português do Brasil. As falas são palavra por palavra, prontas para ele ler.',
   ]
@@ -159,9 +221,20 @@ const DELIVERY_COPY_RULES = `# REGRA DE COPY DA ENTREGA (texto LIDO, não falado
  */
 export function buildDeliverySystemPrompt(persona: Persona): string {
   const forbiddenBlock = bullets(persona.forbidden_rules, '(sem regras definidas)')
+  const audience = persona.audience?.trim()
 
   const sections = [
     `Você escreve a página de entrega do creator ${persona.name} (nicho: ${persona.niche}) — o material que a DM promete depois que a pessoa comenta a palavra-chave no Reel. É LIDO na tela do celular, dentro do navegador do Instagram — não falado, não gravado.`,
+
+    // O mesmo público do Reel abre a entrega. É aqui que o vocabulário decide
+    // se o material é executado ou fechado no primeiro parágrafo — quem não
+    // sabe o que é terminal fecha a página que começa mandando abrir um.
+    audience
+      ? `# QUEM VAI LER
+${audience}
+
+Se um passo depende de palavra que ele não conhece, traduza no próprio passo. Material que ele não consegue executar não cumpriu a promessa da DM.`
+      : null,
 
     `# VOZ (obrigatório)
 ${persona.voice_prompt}`,
@@ -175,7 +248,9 @@ ${forbiddenBlock}`,
     'Gere SEMPRE em português do Brasil, estruturado em blocos — nunca HTML, nunca markdown.',
   ]
 
-  return sections.filter((section) => section.trim() !== '').join('\n\n')
+  // Mesmo filtro do roteiro: o bloco de público é nulo quando a coluna ainda
+  // não existe no banco, e `null.trim()` derrubaria a geração inteira.
+  return sections.filter((section) => section !== null && section.trim() !== '').join('\n\n')
 }
 
 export function buildCtaBlock(persona: Persona): string {
