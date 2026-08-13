@@ -24,7 +24,8 @@ const { data } = await supabaseAdmin
 for (const item of (data ?? []) as Array<{
   id: string
   owner_handle: string
-  outlier: number
+  /** `numeric` chega como string, e é NULO em perfil sem amostra para régua. */
+  outlier: string | number | null
   duration_sec: number | null
 }>) {
   const loaded = await loadModelingContext({ libraryItemId: item.id, funnelStage: 'meio', theme: null })
@@ -45,7 +46,11 @@ for (const item of (data ?? []) as Array<{
     tokens_in: g.tokensIn, tokens_out: g.tokensOut,
   })
 
-  console.log(`── modelado em @${item.owner_handle} · ${item.duration_sec}s · ${item.outlier?.toFixed(1)}×`)
+  // Perfil com menos de 6 vídeos medidos não tem mediana, então o item não tem
+  // multiplicador — e "undefined×" no log parece defeito da geração quando é
+  // ausência de régua. Ver `MIN_AMOSTRA` em `outlier.ts`.
+  const regua = item.outlier === null ? 'sem régua' : `${Number(item.outlier).toFixed(1)}×`
+  console.log(`── modelado em @${item.owner_handle} · ${item.duration_sec}s · ${regua}`)
   console.log(`   ${g.output.headline}`)
   for (const b of g.output.beats) console.log(`   [${b.beat}] ${b.fala}`)
   console.log(`   CTA: ${g.output.ctas.instagram.fala}\n`)
