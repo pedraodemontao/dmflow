@@ -105,7 +105,10 @@ for (const conta of (contas ?? []) as Array<Record<string, never> & {
 
   // ---- fluxos -------------------------------------------------------------
   console.log(`\n=== FLUXOS de @${conta.username} ===`)
-  const urls = new Map<string, string[]>()
+  // Só o que está no ar vira problema: link quebrado dentro de fluxo desligado
+  // não perde lead nenhum, e tratá-lo como falha ensina o dono a ignorar a
+  // auditoria inteira — que é o jeito mais rápido de perder o próximo de verdade.
+  const urls = new Map<string, { onde: string[]; ativo: boolean }>()
 
   for (const f of (fluxos ?? []) as Array<{
     id: string
@@ -143,7 +146,11 @@ for (const conta of (contas ?? []) as Array<Record<string, never> & {
       const bruto = JSON.stringify(node)
       for (const m of bruto.matchAll(/https?:\/\/[^"'\s\\]+/g)) {
         const url = m[0].replace(/[.,)]+$/, '')
-        urls.set(url, [...(urls.get(url) ?? []), `${f.name} / ${id}`])
+        const antes = urls.get(url)
+        urls.set(url, {
+          onde: [...(antes?.onde ?? []), `${f.name} / ${id}`],
+          ativo: (antes?.ativo ?? false) || f.is_active,
+        })
       }
     }
 
@@ -161,15 +168,15 @@ for (const conta of (contas ?? []) as Array<Record<string, never> & {
   // ---- links --------------------------------------------------------------
   console.log(`\n=== LINKS citados nos fluxos ===`)
   if (urls.size === 0) console.log('  (nenhum)')
-  for (const [url, onde] of urls) {
-    let status = 'ERRO'
+  for (const [url, { onde, ativo }] of urls) {
+    const rotulo = `${url}  [${onde.join(', ')}]${ativo ? '' : ' (fluxo desligado)'}`
+    const ruim = ativo ? falha : aviso
     try {
       const r = await fetch(url, { redirect: 'follow' })
-      status = String(r.status)
-      if (r.ok) ok(`${status} ${url}  [${onde.join(', ')}]`)
-      else falha(`${status} ${url}  [${onde.join(', ')}]`)
+      if (r.ok) ok(`${r.status} ${rotulo}`)
+      else ruim(`${r.status} ${rotulo}`)
     } catch (e) {
-      falha(`inacessível ${url} (${(e as Error).message})  [${onde.join(', ')}]`)
+      ruim(`inacessível ${rotulo} (${(e as Error).message})`)
     }
   }
 
