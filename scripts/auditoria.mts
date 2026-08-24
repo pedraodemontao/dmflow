@@ -202,6 +202,52 @@ for (const conta of (contas ?? []) as Array<Record<string, never> & {
     if ((d.blocks ?? []).length === 0) aviso(`entrega "${d.slug}" está sem blocos de conteúdo`)
   }
 
+
+  // ---- quem entregou cada evento ------------------------------------------
+  //
+  // Os dois caminhos gravam o MESMO `dedup_key` (`msg:{mid}` / `comment:{id}`),
+  // então a chave não diz nada. O que separa é a forma do `value`: o polling
+  // monta o objeto à mão (`poll.ts`, `toCommentEvent` e o laço de mensagens) e
+  // só põe ali o que vai usar — `{sender, message}` para DM, `{id, text, from,
+  // media:{id}}` para comentário. A Meta manda o objeto inteiro, com
+  // `recipient` e `timestamp` na DM e `media_product_type` no comentário.
+  // Campo que o polling não tem como inventar é prova de que veio pelo webhook.
+  console.log(`\n=== QUEM ENTREGOU OS EVENTOS (histórico inteiro) ===`)
+  const { data: todos } = await supabaseAdmin
+    .from('webhook_events')
+    .select('payload, created_at')
+    .order('created_at', { ascending: false })
+    .limit(1000)
+
+  const origem = { webhook: 0, varredura: 0, indeterminado: 0 }
+  let ultimoWebhook: string | null = null
+  for (const e of (todos ?? []) as Array<Record<string, any>>) {
+    const v = e.payload?.value ?? {}
+    const kind = e.payload?.kind
+    let quem: keyof typeof origem
+    if (kind === 'messaging') {
+      quem = v.recipient || v.timestamp ? 'webhook' : 'varredura'
+    } else if (kind === 'comment') {
+      quem = v.media?.media_product_type || v.timestamp ? 'webhook' : 'varredura'
+    } else {
+      quem = 'indeterminado'
+    }
+    origem[quem]++
+    if (quem === 'webhook' && !ultimoWebhook) ultimoWebhook = String(e.created_at)
+  }
+
+  console.log(`  pela varredura (polling) . ${origem.varredura}`)
+  console.log(`  pelo webhook ............. ${origem.webhook}`)
+  if (origem.indeterminado) console.log(`  indeterminado ............ ${origem.indeterminado}`)
+  if (origem.webhook === 0 && origem.varredura > 0) {
+    aviso(
+      'nenhum evento chegou pelo webhook — a entrega está saindo 100% pela varredura, ' +
+        'o que funciona mas custa até um tick de atraso. Confira a assinatura no nível do APP (README).',
+    )
+  } else if (ultimoWebhook) {
+    ok(`último evento pelo webhook: ${ultimoWebhook.slice(0, 16)}`)
+  }
+
   // ---- fila e saúde recente ----------------------------------------------
   console.log(`\n=== FILA E SAÚDE (últimas 24h) ===`)
   const desde = new Date(Date.now() - 86_400_000).toISOString()
