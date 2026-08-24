@@ -221,14 +221,18 @@ for (const conta of (contas ?? []) as Array<Record<string, never> & {
 
   const origem = { webhook: 0, varredura: 0, indeterminado: 0 }
   let ultimoWebhook: string | null = null
-  for (const e of (todos ?? []) as Array<Record<string, any>>) {
-    const v = e.payload?.value ?? {}
-    const kind = e.payload?.kind
+  for (const e of (todos ?? []) as Array<{
+    payload: Record<string, unknown>
+    created_at: string
+  }>) {
+    const v = (e.payload.value ?? {}) as Record<string, unknown>
+    const media = (v.media ?? {}) as Record<string, unknown>
+    const kind = e.payload.kind
     let quem: keyof typeof origem
     if (kind === 'messaging') {
       quem = v.recipient || v.timestamp ? 'webhook' : 'varredura'
     } else if (kind === 'comment') {
-      quem = v.media?.media_product_type || v.timestamp ? 'webhook' : 'varredura'
+      quem = media.media_product_type || v.timestamp ? 'webhook' : 'varredura'
     } else {
       quem = 'indeterminado'
     }
