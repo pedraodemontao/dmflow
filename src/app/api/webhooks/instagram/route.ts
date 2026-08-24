@@ -1,7 +1,7 @@
 import { after, type NextRequest } from 'next/server'
 
 import { env } from '@/lib/env'
-import { isValidSignature } from '@/lib/instagram/signature'
+import { checkSignature } from '@/lib/instagram/signature'
 import { enqueue, flattenPayload, processPending } from '@/lib/webhook/process'
 
 export const dynamic = 'force-dynamic'
@@ -28,9 +28,24 @@ export function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const rawBody = await request.text()
 
-  if (!isValidSignature(rawBody, request.headers.get('x-hub-signature-256'))) {
+  const assinatura = checkSignature(rawBody, request.headers.get('x-hub-signature-256'))
+
+  // Assinatura recusada era a ÚNICA falha do webhook que não deixava rastro:
+  // saía 401 antes de qualquer log, a Meta não reclama, e o sintoma virava
+  // "entrega zero sem pista". Custou não saber, por semanas, se a Meta sequer
+  // estava postando. O corpo cru não vai para o log — só o tamanho e o começo
+  // do hash recebido, que não revelam segredo nenhum.
+  if (!assinatura.valid) {
+    console.error(
+      `[dm-flow] webhook recusado (${assinatura.reason}): ${rawBody.length} bytes, ` +
+        `x-hub-signature-256=${request.headers.get('x-hub-signature-256')?.slice(0, 20) ?? 'ausente'}…`,
+    )
     return new Response('Invalid signature', { status: 401 })
   }
+
+  // Qual app assinou é a resposta que nem a documentação nem o painel dão. Com
+  // ela no log, o segredo que não for usado pode sair da configuração.
+  console.log(`[dm-flow] webhook aceito, assinado pelo app do ${assinatura.source}`)
 
   try {
     const payload = JSON.parse(rawBody)

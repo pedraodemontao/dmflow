@@ -60,6 +60,24 @@ const schema = z.object({
    * variáveis do Instagram/Supabase.
    */
   APP_URL: z.string().url().optional(),
+  /**
+   * Chave Secreta do **Facebook App** (`1300921041880198`), que é diferente da
+   * `INSTAGRAM_APP_SECRET` — esta última pertence ao app do Instagram
+   * (`2815946815447454`), criado à parte pelo produto Instagram.
+   *
+   * Existe porque a Meta assina o POST do webhook com o segredo do app QUE
+   * DONO DA INSCRIÇÃO, e a inscrição (`POST /{app-id}/subscriptions`,
+   * `object=instagram`) está no app do Facebook. Validar o HMAC com o segredo
+   * do Instagram nesse caso nunca bate: a rota devolve 401 e a Meta não
+   * reclama, então o sintoma é entrega ZERO sem erro, sem log e sem pista —
+   * medido em 24/08/2026, 68 eventos no histórico e nenhum pelo webhook.
+   *
+   * Opcional de propósito: sem ela o comportamento é o de antes (só o segredo
+   * do Instagram vale), e a entrega continua pela varredura. Configurada, o
+   * webhook passa a aceitar as duas assinaturas — que é o mesmo padrão de
+   * quem rotaciona segredo sem derrubar o tráfego.
+   */
+  META_APP_SECRET: z.string().min(1).optional(),
 })
 
 type Env = z.infer<typeof schema>
@@ -87,6 +105,7 @@ function load(): Env {
     CONVERSION_SECRET: process.env.CONVERSION_SECRET,
     DELIVERY_TOKEN_SECRET: process.env.DELIVERY_TOKEN_SECRET,
     APP_URL: process.env.APP_URL,
+    META_APP_SECRET: process.env.META_APP_SECRET,
   })
 
   if (!parsed.success) {

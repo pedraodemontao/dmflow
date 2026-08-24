@@ -173,6 +173,7 @@ foi versionado. A lista real é o schema Zod em `src/lib/env.ts`:
 |---|---|---|
 | `INSTAGRAM_APP_ID` | sim | app do **Instagram**, não o do Facebook |
 | `INSTAGRAM_APP_SECRET` | sim | troca de code no OAuth e validação de assinatura do webhook |
+| `META_APP_SECRET` | não | Chave Secreta do app do **Facebook** (`1300921041880198`). Só para o HMAC do webhook: a inscrição `object=instagram` vive nesse app, então é com esse segredo que a Meta assina. Sem ela, só a chave do Instagram vale e a entrega segue pela varredura |
 | `INSTAGRAM_REDIRECT_URI` | sim | tem que bater caractere por caractere com a cadastrada |
 | `INSTAGRAM_WEBHOOK_VERIFY_TOKEN` | sim | handshake `GET` do webhook |
 | `SUPABASE_URL` | sim | |
@@ -360,7 +361,8 @@ para não trancar você para fora sem explicação. Defina antes de expor.
 | Bloco de mídia não envia em fluxo de comentário | É o comportamento correto: ele espera a janela abrir. Confira se a mensagem anterior tem botão |
 | `flow_runs` parado em `sleeping` | O tick não está rodando. Chame `/api/cron/tick?secret=…` na mão |
 | Comentário some sem resposta | Veja "Precisa de ação" no painel: evento que esgotou as 12 tentativas aparece lá, com opção de responder ou dispensar |
-| Webhook devolve `401 Invalid signature` | `INSTAGRAM_APP_SECRET` errado — tem que ser o do app do **Instagram** |
+| Webhook devolve `401 Invalid signature` | O log diz o motivo desde 24/08 (`webhook recusado (nao_confere\|formato_invalido\|sem_cabecalho)`). `nao_confere` = nenhum dos segredos bate: confira `INSTAGRAM_APP_SECRET` (app do **Instagram**) e configure `META_APP_SECRET` (app do **Facebook**), porque quem assina é o app dono da inscrição |
+| Webhook nunca entrega, sem erro nenhum | Rode `scripts/auditoria.mts`: a seção "quem entregou os eventos" separa o que veio pela Meta do que veio pela varredura, olhando campos que o polling não tem como inventar (`recipient`/`timestamp` na DM, `media_product_type` no comentário) |
 | OAuth volta com `state-invalido` | Login iniciado em domínio diferente do `redirect_uri` |
 | OAuth volta com `redirect_uri` inválido | A URI tem que bater caractere por caractere, inclusive a barra final |
 

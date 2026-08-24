@@ -164,6 +164,62 @@ for (const nome of ['Nova automação', 'Comentário → checklist']) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// 4. Contato preso num fluxo desligado.
+//
+// `startFlow` recusa quem já tem run ativo — é a trava contra dois fluxos
+// mandando DM ao mesmo tempo. Só que run parado em `waiting_reply` num fluxo
+// que foi DESLIGADO nunca mais avança nem termina: ninguém vai retomá-lo, e o
+// contato fica imune a todo gatilho futuro, para sempre, sem aparecer em lugar
+// nenhum como problema. @mvfsouza estava assim desde 31/07 — 24 dias.
+// ---------------------------------------------------------------------------
+console.log('\nCONTATOS PRESOS')
+const { data: presos } = await supabaseAdmin
+  .from('flow_runs')
+  .select('id, status, current_node, updated_at, contact_id, flow_id')
+  .eq('account_id', conta.id)
+  .in('status', ['running', 'waiting_reply', 'sleeping'])
+
+let algumPreso = false
+for (const r of (presos ?? []) as Array<{
+  id: string
+  status: string
+  current_node: string | null
+  updated_at: string
+  contact_id: string
+  flow_id: string
+}>) {
+  const fluxo = (fluxos ?? []).find((f) => (f as { id: string }).id === r.flow_id) as
+    | { name: string; is_active: boolean }
+    | undefined
+  if (fluxo?.is_active) continue
+
+  algumPreso = true
+  const { data: ct } = await supabaseAdmin
+    .from('contacts')
+    .select('username')
+    .eq('id', r.contact_id)
+    .maybeSingle()
+  const quem = (ct as { username: string | null } | null)?.username ?? r.contact_id
+  const dias = Math.round((Date.now() - new Date(r.updated_at).getTime()) / 86_400_000)
+
+  plano(
+    `soltar @${quem} — parado em "${r.current_node}" [${r.status}] há ${dias} dias no fluxo desligado "${fluxo?.name ?? '?'}"`,
+  )
+  if (APLICAR) {
+    // Claim pelo status anterior, como todo o resto que mexe em run: até cinco
+    // ticks convivem (`maxDuration` 300s, cron de 60s), e um deles pode estar
+    // retomando este mesmo run agora.
+    const { error } = await supabaseAdmin
+      .from('flow_runs')
+      .update({ status: 'done' })
+      .eq('id', r.id)
+      .eq('status', r.status)
+    if (error) throw new Error(`falha ao soltar @${quem}: ${error.message}`)
+  }
+}
+if (!algumPreso) console.log('  = ninguém preso')
+
 console.log(
   `\n${mudancas.length} mudança(s) ${APLICAR ? 'aplicada(s)' : 'previstas — rode com --aplicar para gravar'}`,
 )
