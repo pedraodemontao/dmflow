@@ -236,6 +236,24 @@ describe('flowNodeSchema', () => {
     ).toBe(true)
   })
 
+  it('aceita {{presente}} como link de botão, e só ela sozinha', () => {
+    const comUrl = (url: string) =>
+      flowNodeSchema.safeParse({ type: 'buttons', text: 'oi', buttons: [{ title: 'Abrir', url }] })
+        .success
+
+    // O engine resolve a variável para a página da entrega antes de enviar, e
+    // `leaks.ts` já procura por ela dentro de `button.url`. Sem este caso o
+    // editor recusava salvar o link do presente no lugar mais natural dele.
+    expect(comUrl('{{presente}}')).toBe(true)
+    expect(comUrl('https://dm.nocodepedro.site/e/algum-slug')).toBe(true)
+
+    // A URL da entrega já vem com o token do contato na query; concatenar
+    // depois dela produz link quebrado que só aparece na DM.
+    expect(comUrl('{{presente}}?utm=ig')).toBe(false)
+    expect(comUrl('{{nome}}')).toBe(false)
+    expect(comUrl('nocodepedro.site/mapa')).toBe(false)
+  })
+
   it('recusa formato de mídia fora da lista da Meta — mp3 é a pegadinha do áudio', () => {
     expect(flowNodeSchema.safeParse({ type: 'audio', url: 'https://x.com/a.mp3' }).success).toBe(false)
     expect(flowNodeSchema.safeParse({ type: 'audio', url: 'https://x.com/a.wav' }).success).toBe(true)

@@ -138,9 +138,33 @@ const quickReplySchema = z.object({
   payload: z.string().min(1),
 })
 
+/**
+ * `{{presente}}` sozinho é link válido — só não em tempo de schema. O engine
+ * resolve a variável para a página da entrega vinculada antes de enviar
+ * (`resolvePresenteUrl` em `engine.ts`), mas `.url()` a rejeita por não ter
+ * esquema, e com isso o lugar mais natural do link do presente — o botão —
+ * ficava inalcançável pelo editor: quem tentasse salvar levava "Invalid URL"
+ * sem explicação. `leaks.ts` já lê `button.url` procurando por ela
+ * (`textsOf`), ou seja, o resto do sistema sempre esperou encontrá-la aqui.
+ *
+ * Só a variável SOZINHA passa. Concatenação (`{{presente}}?utm=x`) continua
+ * recusada de propósito: a URL da entrega já vem com o token do contato na
+ * query, e colar coisa depois dela produz link quebrado que só aparece na DM.
+ */
+const DELIVERY_URL_VARIABLE = '{{presente}}'
+
+const buttonUrlSchema = z.string().superRefine((url, ctx) => {
+  if (url === DELIVERY_URL_VARIABLE) return
+  if (z.string().url().safeParse(url).success) return
+  ctx.addIssue({
+    code: 'custom',
+    message: `Link inválido. Use uma URL completa (começando com https://) ou exatamente ${DELIVERY_URL_VARIABLE}, que vira o link da entrega vinculada à automação.`,
+  })
+})
+
 const buttonSchema = z.object({
   title: z.string().min(1).max(META_LIMITS.BUTTON_TITLE_CHARS),
-  url: z.string().url().optional(),
+  url: buttonUrlSchema.optional(),
   /** Volta no webhook `messaging_postbacks` quando o botão é tocado. */
   payload: z
     .string()
