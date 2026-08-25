@@ -203,7 +203,18 @@ async function upsertContact(args: {
     const existingContact = existing as Contact
     const patch: Record<string, unknown> = {}
     if (args.markInbound) patch.last_inbound_at = new Date().toISOString()
-    if (args.username && !existingContact.username) patch.username = args.username
+
+    // ATUALIZA quando muda, não só quando está vazio. Gente renomeia a conta do
+    // Instagram, e o contato é casado por `ig_user_id` — que não muda. Com o
+    // "preenche uma vez" que estava aqui, o handle guardado envelhecia para
+    // sempre e `{{nome}}` cumprimentava pelo nome antigo: em 25/08/2026
+    // @portal_prosperidade.pt comentou e recebeu "Fala dra.minaseo!", que é
+    // como ela se chamava em julho. A Meta é a fonte da verdade do handle, e
+    // nenhuma tela do painel edita este campo — não há edição manual a
+    // preservar (o painel edita notas, etiquetas e campos personalizados).
+    if (args.username && args.username !== existingContact.username) {
+      patch.username = args.username
+    }
 
     // Primeiro toque manda: só preenche origem se ainda estiver vazia.
     if (args.source && !existingContact.source_type) {
@@ -224,8 +235,13 @@ async function upsertContact(args: {
       }).catch(() => null)
 
       if (profile) {
-        if (profile.username && !existingContact.username) patch.username = profile.username
-        if (profile.name && !existingContact.name) patch.name = profile.name
+        // Mesma regra do handle acima: a Meta manda, e conta renomeada tem que
+        // aparecer renomeada. Vale para o nome de exibição pelo mesmo motivo —
+        // ele também muda, e também não é editável em tela nenhuma do painel.
+        if (profile.username && profile.username !== existingContact.username) {
+          patch.username = profile.username
+        }
+        if (profile.name && profile.name !== existingContact.name) patch.name = profile.name
         Object.assign(patch, profileFields(profile))
       }
     }

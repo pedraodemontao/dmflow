@@ -86,8 +86,11 @@ vi.mock('@/lib/supabase/admin', () => ({
   supabaseAdmin: { from: (table: string) => fakeQuery(table) },
 }))
 
+/** O que a Meta devolve no perfil do contato. Nulo = perfil indisponível. */
+let profileToReturn: { username?: string; name?: string } | null = null
+
 vi.mock('@/lib/instagram/api', () => ({
-  fetchContactProfile: async () => null,
+  fetchContactProfile: async () => profileToReturn,
 }))
 
 vi.mock('@/lib/flow/engine', () => ({
@@ -120,6 +123,7 @@ beforeEach(() => {
   findTriggerCalls.length = 0
   accountFlows = []
   clickInsertError = null
+  profileToReturn = null
 
   contactRow = {
     id: 'contact-1',
@@ -307,6 +311,61 @@ describe('handleMessaging', () => {
     })
 
     expect(startFlowCalls).toHaveLength(0)
+  })
+})
+
+describe('nome do contato quando a conta é renomeada', () => {
+  /**
+   * O contato é casado por `ig_user_id`, que não muda quando a pessoa troca o
+   * @ do Instagram. Enquanto o handle só era gravado se estivesse VAZIO, o
+   * guardado envelhecia para sempre: em 25/08/2026 @portal_prosperidade.pt
+   * comentou e recebeu "Fala dra.minaseo!", o nome dela em julho.
+   *
+   * O caminho do comentário (`handleComment`, que recebe `from.username` cru)
+   * segue exatamente a mesma regra, no mesmo `upsertContact`.
+   */
+  it('atualiza o handle e o nome quando a Meta devolve outros', async () => {
+    contactRow = {
+      id: 'contact-1',
+      account_id: 'acc-1',
+      ig_user_id: 'lead-1',
+      username: 'nome_antigo',
+      name: 'Nome Antigo',
+      automation_paused: false,
+      source_type: null,
+      profile_synced_at: null,
+    }
+    profileToReturn = { username: 'nome_novo', name: 'Nome Novo' }
+
+    await handleMessaging(account as never, {
+      sender: { id: 'lead-1' },
+      message: { mid: 'm1', text: 'oi' },
+    })
+
+    expect(contactRow.username).toBe('nome_novo')
+    expect(contactRow.name).toBe('Nome Novo')
+  })
+
+  it('não apaga o que já existe quando a Meta não devolve nada', async () => {
+    contactRow = {
+      id: 'contact-1',
+      account_id: 'acc-1',
+      ig_user_id: 'lead-1',
+      username: 'continua',
+      name: 'Continua',
+      automation_paused: false,
+      source_type: null,
+      profile_synced_at: null,
+    }
+    profileToReturn = null
+
+    await handleMessaging(account as never, {
+      sender: { id: 'lead-1' },
+      message: { mid: 'm1', text: 'oi' },
+    })
+
+    expect(contactRow.username).toBe('continua')
+    expect(contactRow.name).toBe('Continua')
   })
 })
 
