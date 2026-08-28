@@ -3,7 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-import { deliverySchema } from '@/lib/ai/schemas'
+import { storedDeliverySchema } from '@/lib/ai/schemas'
+import { DELIVERY_FILES_BUCKET } from '@/lib/delivery/file-url'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 /**
@@ -28,10 +29,10 @@ const uuid = z.string().uuid()
  * ajuste de tom, um número certo ou um nome próprio; refazer tudo por causa
  * disso é caro e não converge.
  *
- * Valida contra o MESMO schema que o modelo preenche (`deliverySchema`): o
- * conteúdo editado à mão passa pelas mesmas regras que o gerado, senão a
- * página pública viraria o lugar onde se descobre que um bloco ficou sem
- * texto.
+ * Valida contra `storedDeliverySchema`, que é o schema do modelo mais o bloco
+ * de anexo: o conteúdo editado à mão passa pelas mesmas regras que o gerado,
+ * senão a página pública viraria o lugar onde se descobre que um bloco ficou
+ * sem texto.
  */
 export async function updateDelivery(
   id: string,
@@ -39,7 +40,7 @@ export async function updateDelivery(
 ): Promise<DeliveryActionResult> {
   if (!uuid.safeParse(id).success) return { ok: false, error: 'Entrega inválida.' }
 
-  const parsed = deliverySchema.safeParse(content)
+  const parsed = storedDeliverySchema.safeParse(content)
   if (!parsed.success) {
     const primeiro = parsed.error.issues[0]
     return {
@@ -115,4 +116,72 @@ export async function setFlowDelivery(
 
   revalidatePath('/automacoes')
   return { ok: true }
+}
+
+/**
+ * Sobe o anexo da entrega e devolve o CAMINHO no bucket — nunca a URL, que é
+ * montada na renderização (`src/lib/delivery/file-url.ts`).
+ *
+ * O caminho é derivado do id da entrega e de um nome higienizado; nada do que
+ * o navegador manda entra nele cru. Nome de arquivo é dado de usuário, e dado
+ * de usuário virando caminho de storage é travessia de diretório esperando
+ * acontecer.
+ *
+ * Falha fechado: extensão fora da lista ou arquivo grande demais são recusados
+ * ANTES do upload, porque o bucket é público — o que entra ali fica servido na
+ * internet com a marca da conta.
+ */
+const EXTENSOES = ['pdf', 'xlsx', 'csv', 'docx', 'png', 'jpg', 'jpeg', 'zip'] as const
+const TAMANHO_MAXIMO = 25 * 1024 * 1024
+
+export interface UploadResult {
+  ok: boolean
+  error?: string
+  path?: string
+  sizeBytes?: number
+}
+
+export async function uploadDeliveryFile(
+  deliveryId: string,
+  formData: FormData,
+): Promise<UploadResult> {
+  if (!uuid.safeParse(deliveryId).success) return { ok: false, error: 'Entrega inválida.' }
+
+  const file = formData.get('file')
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: 'Escolha um arquivo.' }
+  }
+
+  if (file.size > TAMANHO_MAXIMO) {
+    return { ok: false, error: 'Arquivo maior que 25 MB.' }
+  }
+
+  const extensao = file.name.split('.').pop()?.toLowerCase() ?? ''
+  if (!(EXTENSOES as readonly string[]).includes(extensao)) {
+    return { ok: false, error: `Extensão não aceita. Use: ${EXTENSOES.join(', ')}.` }
+  }
+
+  // Só o miolo do nome sobrevive, e mesmo assim higienizado. O que garante que
+  // o caminho é seguro é ele ser CONSTRUÍDO aqui, não recebido.
+  const base = file.name
+    .slice(0, -(extensao.length + 1))
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+
+  const path = `${deliveryId}/${base || 'arquivo'}.${extensao}`
+
+  const { error } = await supabaseAdmin.storage
+    .from(DELIVERY_FILES_BUCKET)
+    .upload(path, await file.arrayBuffer(), {
+      contentType: file.type || 'application/octet-stream',
+      upsert: true,
+    })
+
+  if (error) return { ok: false, error: `Falha ao subir: ${error.message}` }
+
+  return { ok: true, path, sizeBytes: file.size }
 }

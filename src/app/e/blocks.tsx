@@ -1,8 +1,9 @@
 import { Card } from '@/components/ui'
+import { deliveryFileUrl } from '@/lib/delivery/file-url'
 import type { DeliveryBlock } from '@/lib/ai/schemas'
 
 /**
- * Os sete tipos de bloco, renderizados por componentes nossos — nunca HTML
+ * Os tipos de bloco, renderizados por componentes nossos — nunca HTML
  * vindo do modelo (ver `deliverySchema`, `src/lib/ai/schemas.ts`). Mobile
  * primeiro, direção "Marcador": quase todo mundo abre pelo navegador do
  * Instagram, no celular.
@@ -69,6 +70,51 @@ function Callout({ text }: { text: string }) {
   )
 }
 
+function formatSize(bytes: number): string {
+  const mb = bytes / 1024 / 1024
+  return mb >= 1 ? `${mb.toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`
+}
+
+/**
+ * O anexo. Sem `supabaseUrl` configurada o link some e sobra o nome do arquivo:
+ * botão que leva a `undefined/storage/...` é pior que botão nenhum, porque a
+ * pessoa clica, falha, e conclui que o presente não existe.
+ */
+function FileBlock({
+  path,
+  label,
+  sizeBytes,
+}: {
+  path: string
+  label: string
+  sizeBytes?: number
+}) {
+  const href = deliveryFileUrl(path, process.env.SUPABASE_URL)
+  const meta = sizeBytes ? formatSize(sizeBytes) : null
+
+  if (!href) {
+    return (
+      <Card className="mt-4 p-4 text-[15px] text-muted">
+        {label}
+        {meta ? ` · ${meta}` : ''}
+      </Card>
+    )
+  }
+
+  return (
+    <a
+      href={href}
+      className="mt-4 flex items-center justify-between gap-3 rounded-md border border-border p-4 text-[15px] text-foreground transition-colors duration-150 hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+    >
+      <span className="min-w-0">
+        <span className="block truncate font-medium">{label}</span>
+        {meta && <span className="label block text-[10px] text-muted">{meta}</span>}
+      </span>
+      <span className="label shrink-0 text-[10px] text-accent">Baixar</span>
+    </a>
+  )
+}
+
 export function DeliveryBlocks({ blocks }: { blocks: DeliveryBlock[] }) {
   return (
     <div>
@@ -88,6 +134,15 @@ export function DeliveryBlocks({ blocks }: { blocks: DeliveryBlock[] }) {
             return <Quote key={index} text={block.text} />
           case 'callout':
             return <Callout key={index} text={block.text} />
+          case 'file':
+            return (
+              <FileBlock
+                key={index}
+                path={block.path}
+                label={block.label}
+                sizeBytes={block.sizeBytes}
+              />
+            )
         }
       })}
     </div>

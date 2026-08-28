@@ -127,6 +127,41 @@ const calloutBlockSchema = z.object({
   text: z.string().min(1).describe('Aviso ou ponto que precisa saltar aos olhos'),
 })
 
+/**
+ * O anexo. Guarda o CAMINHO no bucket, nunca a URL — quem monta a URL é
+ * `deliveryFileUrl` (`src/lib/delivery/file-url.ts`). Aceitar URL aqui deixaria
+ * um bloco apontar para fora, o que é phishing servido do domínio da conta.
+ *
+ * `..` fica de fora explicitamente: o caminho vira URL sem passar por
+ * normalização, e `a/../../outro-bucket` é travessia de diretório.
+ */
+const fileBlockSchema = z.object({
+  type: z.literal('file'),
+  path: z
+    .string()
+    .min(1)
+    .regex(/^[A-Za-z0-9][A-Za-z0-9/_.-]*$/, 'Caminho inválido')
+    .refine((value) => !value.includes('..'), 'Caminho inválido'),
+  label: z.string().min(1),
+  sizeBytes: z.number().int().positive().optional(),
+})
+
+/**
+ * O que o MODELO pode escrever: os sete de texto. `file` fica de fora de
+ * propósito — o modelo não sobe arquivo, então um `file` gerado por ele
+ * apontaria para um caminho que não existe, e o botão de baixar levaria a 404.
+ */
+const generatedBlockSchema = z.discriminatedUnion('type', [
+  headingBlockSchema,
+  paragraphBlockSchema,
+  listBlockSchema,
+  checklistBlockSchema,
+  stepsBlockSchema,
+  quoteBlockSchema,
+  calloutBlockSchema,
+])
+
+/** O que a PÁGINA renderiza: os sete acima mais o anexo, que o dono sobe. */
 export const deliveryBlockSchema = z.discriminatedUnion('type', [
   headingBlockSchema,
   paragraphBlockSchema,
@@ -135,6 +170,7 @@ export const deliveryBlockSchema = z.discriminatedUnion('type', [
   stepsBlockSchema,
   quoteBlockSchema,
   calloutBlockSchema,
+  fileBlockSchema,
 ])
 
 export type DeliveryBlock = z.infer<typeof deliveryBlockSchema>
@@ -146,7 +182,7 @@ export const deliverySchema = z.object({
   title: z.string().min(1).describe('Título da página de entrega'),
   subtitle: z.string().min(1).optional().describe('Subtítulo opcional, uma linha'),
   blocks: z
-    .array(deliveryBlockSchema)
+    .array(generatedBlockSchema)
     .min(MIN_DELIVERY_BLOCKS)
     .describe('O conteúdo completo da entrega, em blocos, na ordem de leitura'),
 })
@@ -157,6 +193,22 @@ export const deliverySchema = z.object({
  * — não a linha inteira, que também tem `id`, `slug`, `status` etc.
  */
 export type DeliveryContent = z.infer<typeof deliverySchema>
+
+/**
+ * O que o DONO pode salvar: tudo que o modelo escreve, mais o anexo que só ele
+ * consegue subir. Existe separado de `deliverySchema` porque este é o schema da
+ * edição à mão, e aquele é o contrato da ferramenta que o modelo preenche.
+ *
+ * Validar a edição com o schema de geração recusaria a entrega no exato momento
+ * em que ela ganha o anexo — e o erro apareceria só no botão de salvar, depois
+ * do upload já feito.
+ */
+export const storedDeliverySchema = deliverySchema.extend({
+  blocks: z
+    .array(deliveryBlockSchema)
+    .min(MIN_DELIVERY_BLOCKS)
+    .describe('O conteúdo completo da entrega, em blocos, na ordem de leitura'),
+})
 
 /**
  * `deliveries.blocks` é `jsonb` — o banco aceita qualquer coisa ali. Linha

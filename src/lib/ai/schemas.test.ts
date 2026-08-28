@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import { toolInputSchema } from '@/lib/ai/anthropic'
-import { HOOK_VARIANTS, deliverySchema, scriptSchema, type Script } from '@/lib/ai/schemas'
+import {
+  HOOK_VARIANTS,
+  deliverySchema,
+  parseDeliveryBlocks,
+  scriptSchema,
+  type Script,
+} from '@/lib/ai/schemas'
 
 /**
  * A trava entre o modelo e o banco.
@@ -168,5 +174,41 @@ describe('deliverySchema', () => {
     }
 
     expect(json.properties.blocks.items?.oneOf).toHaveLength(7)
+  })
+})
+
+/**
+ * A separação entre o que o MODELO escreve e o que a PÁGINA renderiza.
+ *
+ * O modelo não sobe arquivo. Se ele pudesse emitir um bloco `file`, o caminho
+ * seria inventado e o botão de baixar levaria a 404 — falha que só aparece
+ * quando o lead clica, que é o pior momento possível.
+ *
+ * E `parseDeliveryBlocks` valida o ARRAY inteiro: um bloco inválido derruba a
+ * lista toda e a página fica em branco. Por isso o anexo precisa estar do lado
+ * de dentro aqui, e do lado de fora lá.
+ */
+describe('anexo: geração × renderização', () => {
+  const anexo = { type: 'file', path: 'entrega-1/guia.pdf', label: 'Guia' }
+
+  it('o modelo NÃO pode emitir bloco de arquivo', () => {
+    const result = deliverySchema.safeParse({
+      title: 'Entrega',
+      blocks: [{ type: 'paragraph', text: 'oi' }, anexo],
+    })
+
+    expect(result.success).toBe(false)
+  })
+
+  it('a página renderiza o anexo salvo pelo dono', () => {
+    expect(parseDeliveryBlocks([{ type: 'paragraph', text: 'oi' }, anexo])).toHaveLength(2)
+  })
+
+  it('recusa caminho com travessia de diretório', () => {
+    expect(parseDeliveryBlocks([{ ...anexo, path: 'a/../../outro/guia.pdf' }])).toEqual([])
+  })
+
+  it('recusa caminho que na verdade é URL', () => {
+    expect(parseDeliveryBlocks([{ ...anexo, path: 'https://malicioso.com/x.pdf' }])).toEqual([])
   })
 })

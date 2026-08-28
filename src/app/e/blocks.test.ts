@@ -1,6 +1,6 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
 import { DeliveryBlocks } from '@/app/e/blocks'
 import type { DeliveryBlock } from '@/lib/ai/schemas'
@@ -87,5 +87,53 @@ describe('DeliveryBlocks', () => {
 
     expect(positions.every((position) => position !== -1)).toBe(true)
     expect([...positions].sort((a, b) => a - b)).toEqual(positions)
+  })
+})
+
+/**
+ * O anexo é o único bloco que depende de configuração para funcionar — os
+ * outros sete são texto puro. Por isso os dois caminhos estão travados aqui:
+ * com bucket configurado tem link de baixar, sem ele sobra o nome do arquivo.
+ * Botão que leva a `undefined/storage/...` é pior que botão nenhum.
+ */
+describe('bloco de arquivo', () => {
+  const original = process.env.SUPABASE_URL
+
+  afterEach(() => {
+    if (original === undefined) delete process.env.SUPABASE_URL
+    else process.env.SUPABASE_URL = original
+  })
+
+  it('monta o link de download a partir do caminho, nunca de uma URL do bloco', () => {
+    process.env.SUPABASE_URL = 'https://exemplo.supabase.co'
+
+    const html = render([
+      { type: 'file', path: 'entrega-1/planilha.xlsx', label: 'Planilha de controle' },
+    ])
+
+    expect(html).toContain('Planilha de controle')
+    expect(html).toContain(
+      'https://exemplo.supabase.co/storage/v1/object/public/delivery-files/entrega-1/planilha.xlsx?download',
+    )
+  })
+
+  it('mostra o tamanho quando ele veio junto', () => {
+    process.env.SUPABASE_URL = 'https://exemplo.supabase.co'
+
+    const html = render([
+      { type: 'file', path: 'e/guia.pdf', label: 'Guia', sizeBytes: 2 * 1024 * 1024 },
+    ])
+
+    expect(html).toContain('2.0 MB')
+  })
+
+  it('sem SUPABASE_URL mostra o nome sem link em vez de um botão quebrado', () => {
+    delete process.env.SUPABASE_URL
+
+    const html = render([{ type: 'file', path: 'e/guia.pdf', label: 'Guia' }])
+
+    expect(html).toContain('Guia')
+    expect(html).not.toContain('<a')
+    expect(html).not.toContain('undefined')
   })
 })

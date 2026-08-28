@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
 
-import { updateDelivery } from '@/app/(app)/biblioteca/entregas/actions'
+import { updateDelivery, uploadDeliveryFile } from '@/app/(app)/biblioteca/entregas/actions'
 import { Button, Input, Textarea } from '@/components/ui'
 import type { DeliveryBlock } from '@/lib/ai/schemas'
 
@@ -30,6 +30,7 @@ const NOVOS: Array<{ type: DeliveryBlock['type']; label: string }> = [
   { type: 'steps', label: 'Passo a passo' },
   { type: 'quote', label: 'Citação' },
   { type: 'callout', label: 'Destaque' },
+  { type: 'file', label: 'Anexo para baixar' },
 ]
 
 const ROTULO: Record<DeliveryBlock['type'], string> = {
@@ -40,6 +41,7 @@ const ROTULO: Record<DeliveryBlock['type'], string> = {
   steps: 'passo a passo',
   quote: 'citação',
   callout: 'destaque',
+  file: 'anexo',
 }
 
 function blocoVazio(type: DeliveryBlock['type']): DeliveryBlock {
@@ -50,6 +52,10 @@ function blocoVazio(type: DeliveryBlock['type']): DeliveryBlock {
       return { type, items: [''] }
     case 'steps':
       return { type, items: [{ title: '', text: '' }] }
+    case 'file':
+      // Nasce com caminho vazio de propósito: o schema recusa salvar assim, o
+      // que impede publicar uma entrega com botão de baixar que não baixa nada.
+      return { type, path: '', label: '' }
     default:
       return { type, text: '' } as DeliveryBlock
   }
@@ -65,6 +71,77 @@ function textoParaItems(texto: string): string[] {
     .split('\n')
     .map((linha) => linha.trim())
     .filter(Boolean)
+}
+
+/**
+ * O anexo. Sobe na hora de escolher o arquivo, não no salvar: assim o dono vê
+ * o erro de extensão ou de tamanho enquanto ainda está olhando para o campo,
+ * em vez de perder o formulário inteiro no fim.
+ *
+ * O caminho vem do servidor e o campo dele não é editável aqui — caminho
+ * digitado à mão é o vetor que o schema recusa do outro lado.
+ */
+function CampoArquivo({
+  deliveryId,
+  bloco,
+  onChange,
+}: {
+  deliveryId: string
+  bloco: Extract<DeliveryBlock, { type: 'file' }>
+  onChange: (next: DeliveryBlock) => void
+}) {
+  const [subindo, setSubindo] = useState(false)
+  const [erro, setErro] = useState<string | null>(null)
+
+  async function escolher(file: File | undefined) {
+    if (!file) return
+    setErro(null)
+    setSubindo(true)
+
+    const dados = new FormData()
+    dados.set('file', file)
+    const resultado = await uploadDeliveryFile(deliveryId, dados)
+
+    setSubindo(false)
+    if (!resultado.ok || !resultado.path) {
+      setErro(resultado.error ?? 'Falha ao subir o arquivo.')
+      return
+    }
+
+    onChange({
+      ...bloco,
+      path: resultado.path,
+      sizeBytes: resultado.sizeBytes,
+      label: bloco.label || file.name,
+    })
+  }
+
+  return (
+    <div className="space-y-2">
+      <Input
+        placeholder="nome do botão (ex: Planilha de controle)"
+        value={bloco.label}
+        onChange={(e) => onChange({ ...bloco, label: e.target.value })}
+      />
+
+      <input
+        type="file"
+        accept=".pdf,.xlsx,.csv,.docx,.png,.jpg,.jpeg,.zip"
+        disabled={subindo}
+        onChange={(e) => escolher(e.target.files?.[0])}
+        className="block w-full text-xs text-muted file:mr-3 file:rounded-md file:border file:border-border file:bg-transparent file:px-3 file:py-1.5 file:text-xs file:text-foreground"
+      />
+
+      {subindo && <p className="label text-[9px] text-muted">subindo…</p>}
+      {erro && <p className="label text-[9px] text-danger">{erro}</p>}
+      {!subindo && !erro && bloco.path && (
+        <p className="label text-[9px] text-muted">arquivo no ar: {bloco.path}</p>
+      )}
+      {!subindo && !erro && !bloco.path && (
+        <p className="label text-[9px] text-danger">sem arquivo — não dá para salvar assim</p>
+      )}
+    </div>
+  )
 }
 
 export function DeliveryEditor({
@@ -180,6 +257,14 @@ export function DeliveryEditor({
                 />
                 <p className="label mt-1 text-[9px] text-muted">um item por linha</p>
               </>
+            )}
+
+            {bloco.type === 'file' && (
+              <CampoArquivo
+                deliveryId={id}
+                bloco={bloco}
+                onChange={(next) => troca(index, next)}
+              />
             )}
 
             {bloco.type === 'steps' && (
