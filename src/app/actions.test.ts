@@ -18,10 +18,14 @@ const OTHER_ACCOUNT_ID = 'acc-2'
 type Row = Record<string, unknown>
 
 let flowRuns: Row[] = []
+let contacts: Row[] = []
 let accountRow: Row | null = null
+let sent: Row[] = []
 
 function rowsOf(table: string): Row[] {
-  return table === 'flow_runs' ? flowRuns : []
+  if (table === 'flow_runs') return flowRuns
+  if (table === 'contacts') return contacts
+  return []
 }
 
 /** Encadeamento mínimo do PostgREST usado pelas actions de disparo falhado. */
@@ -66,6 +70,8 @@ function fakeQuery(table: string) {
     return builder
   }
 
+  builder.insert = () => builder
+
   builder.maybeSingle = async () => {
     const { data } = settle()
     return { data: data[0] ?? null, error: null }
@@ -87,11 +93,25 @@ vi.mock('@/lib/data', () => ({
 
 vi.mock('next/cache', () => ({ revalidatePath: () => {} }))
 
+vi.mock('@/lib/instagram/api', () => ({
+  sendText: async (args: Row) => {
+    sent.push(args)
+  },
+  setIceBreakers: async () => {},
+  clearIceBreakers: async () => {},
+}))
+
+vi.mock('@/lib/flow/send-cap', () => ({
+  assertUnderSendCap: async () => {},
+  logSend: async () => {},
+}))
+
 const {
   dismissAllFailedRuns,
   dismissFailedRun,
   retryAllFailedRuns,
   retryFailedRun,
+  sendManualMessage,
 } = await import('@/app/actions')
 
 const { DISMISSED_ERROR_PREFIX } = await import('@/lib/flow/dismissed')
@@ -114,9 +134,23 @@ function failedRun(overrides: Row = {}): Row {
   }
 }
 
+const CONTACT_ID = '33333333-3333-4333-8333-333333333333'
+
+function contactRow(overrides: Row = {}): Row {
+  return {
+    id: CONTACT_ID,
+    account_id: ACCOUNT_ID,
+    ig_user_id: 'ig-contact-1',
+    last_inbound_at: new Date().toISOString(),
+    ...overrides,
+  }
+}
+
 beforeEach(() => {
   accountRow = { id: ACCOUNT_ID, ig_user_id: 'ig-1', access_token: 't' }
   flowRuns = [failedRun()]
+  contacts = [contactRow()]
+  sent = []
 })
 
 describe('retryFailedRun', () => {
@@ -283,5 +317,34 @@ describe('ações em lote', () => {
     const result = await dismissAllFailedRuns()
 
     expect(result.affected).toBe(0)
+  })
+})
+
+/**
+ * A guarda que separa as contas no inbox.
+ *
+ * `getAccount()` devolve sempre a conta mais antiga, e as listas do inbox ainda
+ * não filtram por conta: com uma segunda conta conectada, a conversa dela
+ * aparece na tela e o envio sairia com o token da conta errada. O segundo teste
+ * existe para a guarda não passar por "recusa sempre" — sem ele, `return
+ * { ok: false }` no topo da função deixaria o primeiro verde.
+ */
+describe('sendManualMessage com mais de uma conta', () => {
+  it('recusa conversa de outra conta em vez de enviar com o token errado', async () => {
+    contacts = [contactRow({ account_id: OTHER_ACCOUNT_ID })]
+
+    const result = await sendManualMessage(CONTACT_ID, 'oi')
+
+    expect(result.ok).toBe(false)
+    expect(sent).toHaveLength(0)
+  })
+
+  it('envia normalmente quando o contato é da conta conectada', async () => {
+    const result = await sendManualMessage(CONTACT_ID, 'oi')
+
+    expect(result.ok).toBe(true)
+    expect(sent).toEqual([
+      { igUserId: 'ig-1', accessToken: 't', recipientId: 'ig-contact-1', text: 'oi' },
+    ])
   })
 })

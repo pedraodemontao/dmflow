@@ -233,6 +233,17 @@ export async function sendManualMessage(contactId: string, text: string): Promis
   const contact = data as Contact | null
   if (!contact) return { ok: false, error: 'Contato não encontrado.' }
 
+  // Com mais de uma conta conectada, `getAccount()` devolve sempre a mais antiga
+  // enquanto o inbox lista contato de todas: responder aqui sairia com o token da
+  // conta errada. A Meta recusa o IGSID que não é dela, mas com erro genérico —
+  // e uma tentativa recusada ainda conta no `send_log` da conta inocente.
+  if (contact.account_id !== account.id) {
+    return {
+      ok: false,
+      error: 'Esta conversa pertence a outra conta conectada. Não dá para responder pela conta atual.',
+    }
+  }
+
   const windowOpen =
     contact.last_inbound_at &&
     Date.now() - new Date(contact.last_inbound_at).getTime() < DM_WINDOW_MS
