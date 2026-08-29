@@ -1,7 +1,11 @@
 # As notas do canvas — o que criar e onde ligar
 
-Cinco notas. Quatro são **ponteiros curtos** para arquivos versionados; uma é **estado vivo** e
+Sete notas. Seis são **ponteiros curtos** para arquivos versionados; uma é **estado vivo** e
 só existe na canvas.
+
+Desde 29/08 o CLI cria e liga nota (`maestri note create`, `maestri connect`) —
+`scripts/maestri-publicar.sh` já faz isso para os cards 04 e 05. Nota ↔ agente só liga **no
+mesmo andar**; é um dos motivos de o 04/05 isolarem por worktree em vez de andar.
 
 Por que ponteiro em vez de cópia: nota que repete o conteúdo do arquivo vira uma segunda verdade,
 e as duas divergem na primeira correção. O arquivo está no git, o agente lê de lá.
@@ -25,6 +29,9 @@ e as duas divergem na primeira correção. O arquivo está no git, o agente lê 
 │card-01 │ │card-02 │ │ revisor │ │  orquestra  │
 └────────┘ └────────┘ └─────────┘ └─────────────┘
 ```
+
+Prelo (card 04) e Forja (card 05) entram no mesmo desenho: ligados ao quadro, ao contexto, ao
+protocolo e à Peneira.
 
 O Regente liga-se ao quadro e aos três agentes. Não liga-se aos cards: ele não implementa nada,
 e dar-lhe o card só o tentaria a opinar sobre código.
@@ -58,6 +65,21 @@ Seu card é docs/maestri/01-entrega.md. Cinco fases, uma por vez.
 Seu card é docs/maestri/02-insights.md.
 A fase 0 é do dono e bloqueia o resto: confirme comigo que a reconexão do
 Instagram já foi feita antes de começar a fase 2.
+```
+
+**Nota `card-publicar`** → ligar ao Prelo
+
+```
+Seu card é docs/maestri/04-publicar.md. Cinco fases, uma por vez.
+A fase 0 é do dono e bloqueia a fase 2 em diante: confirme no quadro que a
+reconexão com instagram_business_content_publish foi feita antes de codar publish.ts.
+```
+
+**Nota `card-criar`** → ligar à Forja
+
+```
+Seu card é docs/maestri/05-criar.md. Três fases.
+Fases 1 e 2 agora; a fase 3 só quando o quadro disser 'card 04 fase 4 — FECHADA'.
 ```
 
 **Nota `quadro`** → ligar a todos, inclusive ao Regente

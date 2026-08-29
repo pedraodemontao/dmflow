@@ -49,24 +49,7 @@ echo
 # texto inteiro aqui. O conteúdo fica versionado, e corrigir uma regra vira um
 # commit — não um papel reescrito à mão que ninguém lembra de onde veio.
 # --------------------------------------------------------------------------
-BASE='Projeto: dm-flow, automação de DM/comentário do Instagram (clone do núcleo do ManyChat), em produção em https://dm.nocodepedro.site, com uma conta real que já tomou restrição da Meta. Errar aqui custa um ativo, não um build quebrado.
-
-ANTES DE QUALQUER COISA, leia nesta ordem:
-  docs/maestri/00-contexto.md  — as regras que não se negociam
-  CLAUDE.md                    — os invariantes, cada um com um incidente atrás
-  HANDOFF.md                   — o que já quebrou e o que nunca foi provado
-  AGENTS.md                    — este Next.js não é o que você conhece
-
-As cinco que valem repetir aqui:
-1. NUNCA rode `npm run dev`. O .env.local aponta para o banco de PRODUÇÃO; subir o servidor mexe em dado real e um tick manual dispara DM de verdade. Não existe staging.
-2. Você ESCREVE migration, nunca aplica. Arquivo em supabase/migrations/ com o próximo número, e AVISE. Não há CLI nem psql: o dono cola no SQL Editor.
-3. NÃO encoste em nada da Meta: developers.facebook.com, business.facebook.com, instagram.com. Automação de navegador em site da Meta foi o que causou a restrição de 30/07/2026.
-4. NÃO enfraqueça a blindagem anti-spam: spintax em todo texto, jitter no evento de comentário, cap por hora que falha fechado. As três são invariantes.
-5. Não commite segredo nem arquivo .env.
-
-Valide com: npx tsc --noEmit && npm run lint && npm test && npm run build
-
-Rode `maestri list` para ver seus colegas e com quem falar.'
+BASE="$(base_role_text)"
 
 echo "=== criando papéis (o que já existir é mantido) ==="
 
@@ -146,6 +129,6 @@ echo "   Acompanhar:  maestri check \"Estafeta\""
 echo "   Delegar:     maestri ask \"Sonar\" \"...\""
 echo "   Integrar (só você): merge das branches, migration no SQL Editor e deploy."
 echo
-echo "   Notas na canvas (o CLI não cria): faça três, curtas, apontando para os"
-echo "   arquivos — nota que copia o card vira uma segunda verdade que diverge"
-echo "   na primeira correção."
+echo "   Notas na canvas: \`maestri note create\` + \`maestri connect\` (ver"
+echo "   docs/maestri/notas/README.md). Ponteiro curto para o arquivo — nota que"
+echo "   copia o card vira uma segunda verdade que diverge na primeira correção."

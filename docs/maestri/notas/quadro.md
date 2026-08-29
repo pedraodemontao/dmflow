@@ -14,6 +14,8 @@ Legenda: 🟢 andando · 🟡 aguarda revisão · 🔴 bloqueado · ⚪ ocioso
 [Estafeta]  ⚪ ocioso — esperando OK do plano da fase 1
 [Sonar]     ⚪ ocioso — esperando OK do plano da fase 1
 [Peneira]   ⚪ ocioso
+[Prelo]     ⚪ ocioso — card 04, esperando OK do plano da fase 1
+[Forja]     ⚪ ocioso — card 05, esperando OK do plano da fase 1
 ```
 
 ## Arquivos declarados
@@ -33,6 +35,11 @@ O que só o Pedro pode destravar. Enquanto estiver aqui, alguém está parado.
       (sem isso toda métrica responde "Application does not have permission")
 - [ ] migration 0016_entregas.sql — colar no SQL Editor quando o Estafeta avisar
 - [ ] migration 0017_insights_de_midia.sql — idem, quando o Sonar avisar
+- [ ] card 04 fase 0: reconectar o Instagram com o escopo instagram_business_content_publish
+      (a MESMA reconexão resolve a pendência do card 02)
+- [ ] criar o bucket PÚBLICO `publication-media` no dashboard do Supabase
+- [ ] migration 0021_publicacoes.sql — colar quando o Prelo avisar
+- [ ] migration 0022_roteiro_tem_tipo.sql — idem, quando a Forja avisar
 ```
 
 ## Fechado

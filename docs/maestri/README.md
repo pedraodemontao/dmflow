@@ -14,8 +14,8 @@ a ela é quem executa. O padrão é sempre o mesmo: **a nota manda, o agente obe
      ┌───────────┼───────────┐
      │           │           │
 ┌────▼────┐ ┌────▼────┐ ┌────▼────┐
-│ 01-     │ │ 02-     │ │ (card   │
-│ entrega │ │ insights│ │ futuro) │
+│ 01-     │ │ 02-     │ │ 04-/05- │
+│ entrega │ │ insights│ │ publicar│
 └────┬────┘ └────┬────┘ └─────────┘
      │           │
 ┌────▼────┐ ┌────▼────┐
@@ -36,6 +36,15 @@ parte que não pode ficar desatualizada.
 telas de métrica. O único encontro é a linha `delivery_views` no funil da fase 3 do card 02 — que
 o 02 lê como opcional. **Se rodarem em paralelo, use floor isolado** (`maestri floor create`),
 senão os dois disputam a mesma árvore.
+
+**Cards 04 e 05 (29/08/2026) correm em paralelo, com uma dependência declarada.** O 04
+(`Prelo`) é dono de `src/lib/instagram/publish.ts`, `src/lib/publications/`, da chamada no tick e
+de `src/app/(app)/publicacoes/` (menos `gerar/`); o 05 (`Forja`) é dono de
+`src/lib/ai/generate-carousel*`, `src/lib/render/` e `src/app/(app)/publicacoes/gerar/`. A fase 3
+do 05 importa `createPublication` do 04 e só começa quando o quadro disser
+`card 04 fase 4 — FECHADA`. Montagem: `bash scripts/maestri-publicar.sh` — isolamento por
+**worktree**, não por andar: a worktree não tem `.env.local`, então o recruta não alcança o banco
+de produção nem por engano. Merge do 04 antes do 05.
 
 ## Comandos de montagem
 
@@ -140,3 +149,8 @@ consertos de 01/08 (mediana fracionária, mensagem de raspagem).
 
 Pendências do dono estão em `HANDOFF.md` §8 — a mais urgente é o link 404 da automação `mapa`,
 que o card 01 resolve de vez.
+
+**29/08/2026.** Migrations 0001–0020 aplicadas. 50 arquivos de teste. Card 01 entregue; card 02
+com o código no lugar e a reconexão do dono ainda pendente; card 03 escrito e não executado.
+Cards 04 e 05 escritos depois de avaliar e **recusar** o porte do Bravy Publisher — o porquê está
+no topo do `04-publicar.md`, para não ser rediscutido.

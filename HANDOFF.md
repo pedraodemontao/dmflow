@@ -624,6 +624,12 @@ escreve o roteiro e a automação entrega o presente, mas as duas metades não s
 2. **`02-insights.md` — os insights do post voltam para quem escreveu.** Métricas da Meta
    (incluindo `follows`, os seguidores que aquele vídeo trouxe) cruzadas com o funil que só nós
    temos: quantos comentaram, viraram DM, clicaram, seguiram, abriram o presente.
+3. **`04-publicar.md` — o post nasce dentro do painel.** Upload ou carrossel → agendar → o tick
+   publica com claim, cap e jitter → o gatilho da automação escolhida é clonado para o post novo.
+   Mata o bug do gatilho preso a post velho. Escrito em 29/08 depois de avaliar e recusar o porte
+   do Bravy Publisher (o porquê está no topo do card).
+4. **`05-criar.md` — o carrossel nasce do roteiro.** Geração por IA com schema Zod, render em JPEG
+   no servidor (`next/og` + `sharp`), rascunho em `publications`. Depende do 04 para publicar.
 
 Leia `docs/maestri/00-contexto.md` antes das duas — é o que impede um agente de quebrar um
 invariante sem saber que existia.

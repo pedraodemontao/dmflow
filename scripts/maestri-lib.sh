@@ -96,3 +96,72 @@ avisar_duplicados() {
   echo "         maestri dismiss \"<nome>\" # apaga o nó de vez"
   echo "     Depois renomeie a #2 na interface, senão o ask vai para o nome errado."
 }
+
+# --------------------------------------------------------------------------
+# O texto que TODO recruta do dm-flow recebe. Vivia dentro do maestri-setup.sh;
+# saiu de lá em 29/08 quando o maestri-publicar.sh precisou do mesmo texto —
+# dois scripts com a cópia cada um é a segunda verdade que diverge na primeira
+# correção. Curto de propósito: aponta para os arquivos do repositório.
+# --------------------------------------------------------------------------
+base_role_text() {
+  cat <<'EOF'
+Projeto: dm-flow, automação de DM/comentário do Instagram (clone do núcleo do ManyChat), em produção em https://dm.nocodepedro.site, com uma conta real que já tomou restrição da Meta. Errar aqui custa um ativo, não um build quebrado.
+
+ANTES DE QUALQUER COISA, leia nesta ordem:
+  docs/maestri/00-contexto.md  — as regras que não se negociam
+  CLAUDE.md                    — os invariantes, cada um com um incidente atrás
+  HANDOFF.md                   — o que já quebrou e o que nunca foi provado
+  AGENTS.md                    — este Next.js não é o que você conhece
+
+As cinco que valem repetir aqui:
+1. NUNCA rode `npm run dev`. O .env.local aponta para o banco de PRODUÇÃO; subir o servidor mexe em dado real e um tick manual dispara DM de verdade. Não existe staging.
+2. Você ESCREVE migration, nunca aplica. Arquivo em supabase/migrations/ com o próximo número, e AVISE. Não há CLI nem psql: o dono cola no SQL Editor.
+3. NÃO encoste em nada da Meta: developers.facebook.com, business.facebook.com, instagram.com. Automação de navegador em site da Meta foi o que causou a restrição de 30/07/2026.
+4. NÃO enfraqueça a blindagem anti-spam: spintax em todo texto, jitter no evento de comentário, cap por hora que falha fechado. As três são invariantes.
+5. Não commite segredo nem arquivo .env.
+
+Valide com: npx tsc --noEmit && npm run lint && npm test && npm run build
+
+Rode `maestri list` para ver seus colegas e com quem falar.
+EOF
+}
+
+# Worktree por implementador, em branch própria, a partir da main.
+#
+# Por que worktree e não andar: a worktree não tem `.env.local` (gitignored),
+# então o recruta não alcança o banco de PRODUÇÃO nem por engano — a regra 1
+# do contexto deixa de depender da memória do agente. E funciona igual seja
+# onde for que o workspace esteja registrado. Idempotente: pasta que já existe
+# é mantida; branch que já existe é reaproveitada.
+criar_worktree() {
+  local dir="$1" branch="$2"
+  if [ -d "$dir" ]; then
+    echo "→ worktree já existe: $dir"
+    return 0
+  fi
+  if git -C "$PROJ" show-ref --verify --quiet "refs/heads/$branch"; then
+    git -C "$PROJ" worktree add "$dir" "$branch" \
+      && echo "→ worktree em $dir (branch $branch, já existia)"
+  else
+    git -C "$PROJ" worktree add -b "$branch" "$dir" main \
+      && echo "→ worktree em $dir (branch $branch, nova, a partir da main)"
+  fi
+}
+
+# Como `recrutar`, mas num diretório próprio (a worktree). Mesma lógica de
+# tentar o replace primeiro — ver o comentário de `recrutar`.
+#
+#   recrutar_em <nome> <papel> <modelo> <dir>
+recrutar_em() {
+  local nome="$1" papel="$2" modelo="$3" dir="$4"
+
+  if "$M" recruit "$nome" --replace "$nome" \
+       --command "claude --model $modelo" --role "$papel" --dir "$dir" >/dev/null 2>&1; then
+    echo "→ $nome já existia: modelo trocado para $modelo em $dir (conexões preservadas)"
+  else
+    echo "→ recrutando $nome com o modelo $modelo em $dir"
+    "$M" recruit "$nome" --role "$papel" \
+      --command "claude --model $modelo" --dir "$dir" \
+      || echo "  ⚠️  não consegui recrutar $nome — confira com: $M list"
+  fi
+}
