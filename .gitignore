@@ -42,3 +42,6 @@ next-env.d.ts
 
 # worktrees de subagentes (moram dentro do repo)
 .claude/worktrees/
+
+# Maestri (papéis do canvas, estado local)
+.maestri/
