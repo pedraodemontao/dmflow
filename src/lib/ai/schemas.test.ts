@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import { toolInputSchema } from '@/lib/ai/anthropic'
 import {
+  CAROUSEL_CAPTION_MAX_CHARS,
+  CAROUSEL_MAX_SLIDES,
+  CAROUSEL_MIN_SLIDES,
   HOOK_VARIANTS,
+  SLIDE_BODY_MAX_CHARS,
+  SLIDE_TITLE_MAX_CHARS,
+  carouselSchema,
   deliverySchema,
   parseDeliveryBlocks,
   scriptSchema,
@@ -210,5 +216,98 @@ describe('anexo: geração × renderização', () => {
 
   it('recusa caminho que na verdade é URL', () => {
     expect(parseDeliveryBlocks([{ ...anexo, path: 'https://malicioso.com/x.pdf' }])).toEqual([])
+  })
+})
+
+/**
+ * A trava do carrossel (card 05): a ordem dos slides e os tetos de caractere.
+ * O satori (`next/og`) não tem shrink-to-fit, então o teto AQUI é a única
+ * cerca contra texto que estoura o slide na hora do render.
+ */
+describe('carouselSchema', () => {
+  function slide(overrides: Record<string, unknown> = {}) {
+    return { kind: 'body', title: 'Título do slide', body: 'Corpo do slide.', ...overrides }
+  }
+
+  function carrossel(overrides: { slides?: unknown[]; caption?: string } = {}) {
+    return {
+      slides: overrides.slides ?? [
+        { kind: 'cover', title: 'A capa' },
+        slide(),
+        slide(),
+        { kind: 'cta', title: 'Comenta PALAVRA', body: 'Comenta aqui embaixo.' },
+      ],
+      caption: overrides.caption ?? 'legenda do post #nicho',
+    }
+  }
+
+  it('aceita um carrossel completo, capa → corpo → cta', () => {
+    expect(carouselSchema.safeParse(carrossel()).success).toBe(true)
+  })
+
+  it('recusa quando o primeiro slide não é cover', () => {
+    const semCapa = carrossel({ slides: [slide(), slide(), { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(semCapa).success).toBe(false)
+  })
+
+  it('recusa quando o último slide não é cta', () => {
+    const semCta = carrossel({ slides: [{ kind: 'cover', title: 'A capa' }, slide(), slide()] })
+    expect(carouselSchema.safeParse(semCta).success).toBe(false)
+  })
+
+  it('recusa cta ou cover no meio', () => {
+    const ctaNoMeio = carrossel({
+      slides: [
+        { kind: 'cover', title: 'A capa' },
+        { kind: 'cta', title: 'Comenta cedo demais' },
+        { kind: 'cta', title: 'Comenta PALAVRA' },
+      ],
+    })
+    expect(carouselSchema.safeParse(ctaNoMeio).success).toBe(false)
+  })
+
+  it(`recusa menos de ${CAROUSEL_MIN_SLIDES} slides`, () => {
+    const curto = carrossel({ slides: [{ kind: 'cover', title: 'A capa' }, { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(curto).success).toBe(false)
+  })
+
+  it(`recusa mais de ${CAROUSEL_MAX_SLIDES} slides`, () => {
+    const meio = Array.from({ length: CAROUSEL_MAX_SLIDES }, () => slide())
+    const longo = carrossel({ slides: [{ kind: 'cover', title: 'A capa' }, ...meio, { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(longo).success).toBe(false)
+  })
+
+  it(`recusa título acima de ${SLIDE_TITLE_MAX_CHARS} caracteres — é o teto de RENDER, não de gosto`, () => {
+    const tituloLongo = carrossel({
+      slides: [
+        { kind: 'cover', title: 'x'.repeat(SLIDE_TITLE_MAX_CHARS + 1) },
+        slide(),
+        { kind: 'cta', title: 'Comenta' },
+      ],
+    })
+    expect(carouselSchema.safeParse(tituloLongo).success).toBe(false)
+  })
+
+  it(`recusa corpo acima de ${SLIDE_BODY_MAX_CHARS} caracteres`, () => {
+    const corpoLongo = carrossel({
+      slides: [
+        { kind: 'cover', title: 'A capa' },
+        slide({ body: 'x'.repeat(SLIDE_BODY_MAX_CHARS + 1) }),
+        { kind: 'cta', title: 'Comenta' },
+      ],
+    })
+    expect(carouselSchema.safeParse(corpoLongo).success).toBe(false)
+  })
+
+  it('aceita capa sem body — a capa costuma não precisar', () => {
+    const semBodyNaCapa = carrossel({
+      slides: [{ kind: 'cover', title: 'A capa' }, slide(), { kind: 'cta', title: 'Comenta' }],
+    })
+    expect(carouselSchema.safeParse(semBodyNaCapa).success).toBe(true)
+  })
+
+  it(`recusa legenda acima de ${CAROUSEL_CAPTION_MAX_CHARS} caracteres — limite da Meta`, () => {
+    const legendaLonga = carrossel({ caption: 'x'.repeat(CAROUSEL_CAPTION_MAX_CHARS + 1) })
+    expect(carouselSchema.safeParse(legendaLonga).success).toBe(false)
   })
 })

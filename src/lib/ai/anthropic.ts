@@ -26,11 +26,18 @@ const API_VERSION = '2023-06-01'
  * O critério não é "o que é mais importante", é **o que é criativo × o que é
  * estruturado**:
  *
- *   roteiro  → decidir ÂNGULO, gancho e ritmo. Não há resposta certa, e a
- *              diferença entre morno e afiado é a diferença entre um vídeo que
- *              performa e uma tarde de gravação jogada fora. Modelo melhor.
- *   entrega  → cumprir uma promessa já definida, em passo a passo e checklist.
- *              A forma está dada; o trabalho é executar bem. Modelo econômico.
+ *   roteiro    → decidir ÂNGULO, gancho e ritmo. Não há resposta certa, e a
+ *                diferença entre morno e afiado é a diferença entre um vídeo
+ *                que performa e uma tarde de gravação jogada fora. Modelo melhor.
+ *   entrega    → cumprir uma promessa já definida, em passo a passo e checklist.
+ *                A forma está dada; o trabalho é executar bem. Modelo econômico.
+ *   carrossel  → o ângulo já foi decidido ANTES (é o pilar/tema, o `modeledOn`
+ *                ou o próprio roteiro em `fromScript`) — o trabalho daqui é
+ *                encaixar uma ideia por slide dentro de um teto de caractere
+ *                rígido (`schemas.ts`, render sem shrink-to-fit). Mais perto de
+ *                "executar bem uma forma dada" do que de "inventar ângulo", e
+ *                por isso desce para o modelo econômico como a entrega — não é
+ *                cópia por reflexo do roteiro, é o mesmo raciocínio aplicado.
  *
  * Repare que a entrega NÃO é menor: a primeira gerou 21 blocos, mais saída que
  * o roteiro. Ela é mais FÁCIL, não mais curta — e por isso desce um degrau, não
@@ -45,6 +52,8 @@ const MODEL_BY_TASK = {
   script: 'claude-opus-5',
   /** Material de entrega: a peça estruturada. */
   delivery: 'claude-sonnet-5',
+  /** Carrossel: forma fixa, teto de caractere por slide — estruturado como a entrega. */
+  carousel: 'claude-sonnet-5',
 } as const
 
 export type AiTask = keyof typeof MODEL_BY_TASK
@@ -56,8 +65,13 @@ export type AiTask = keyof typeof MODEL_BY_TASK
  *
  * A entrega é a peça longa das duas: uma delas veio com 18 blocos. O roteiro
  * tem estrutura fixa (ganchos, beats, CTAs) e não cresce assim.
+ *
+ * O carrossel tem TETO DE VERDADE — 10 slides × (60 + 220 caracteres) + legenda
+ * de 2.200 é o pior caso absoluto do schema, uns 5 mil caracteres de conteúdo.
+ * 3.000 tokens sobra folga para a pontuação do JSON em cima disso sem chegar
+ * perto do teto do roteiro, que não tem tal cerca (beats de tamanho livre).
  */
-const MAX_TOKENS_BY_TASK = { script: 4000, delivery: 8000 } as const
+const MAX_TOKENS_BY_TASK = { script: 4000, delivery: 8000, carousel: 3000 } as const
 
 /**
  * Uma retentativa, não mais. A primeira falha de schema costuma ser descuido e
@@ -74,22 +88,27 @@ export function hasAnthropicKey(): boolean {
 }
 
 /**
- * Qual modelo para qual tarefa, com duas saídas de emergência sem deploy:
+ * Qual modelo para qual tarefa, com saídas de emergência sem deploy:
  *
- *   ANTHROPIC_MODEL_SCRIPT / ANTHROPIC_MODEL_DELIVERY  — por tarefa
- *   ANTHROPIC_MODEL                                    — atropela as duas
+ *   ANTHROPIC_MODEL_SCRIPT / ANTHROPIC_MODEL_DELIVERY / ANTHROPIC_MODEL_CAROUSEL  — por tarefa
+ *   ANTHROPIC_MODEL                                                              — atropela todas
  *
  * O override geral existe para o dia em que um modelo sair do ar: uma variável
- * e tudo volta a funcionar, sem esperar build.
+ * e tudo volta a funcionar, sem esperar build. Lookup por objeto, não `if`
+ * encadeado, para tarefa nova não exigir mais um ramo aqui — só a entrada em
+ * `MODEL_BY_TASK` e a env var por tarefa, se quiser o override.
  */
 function model(task: AiTask = 'script'): string {
   const geral = process.env.ANTHROPIC_MODEL
   if (geral) return geral
 
-  const porTarefa =
-    task === 'delivery' ? process.env.ANTHROPIC_MODEL_DELIVERY : process.env.ANTHROPIC_MODEL_SCRIPT
+  const overridePorTarefa: Record<AiTask, string | undefined> = {
+    script: process.env.ANTHROPIC_MODEL_SCRIPT,
+    delivery: process.env.ANTHROPIC_MODEL_DELIVERY,
+    carousel: process.env.ANTHROPIC_MODEL_CAROUSEL,
+  }
 
-  return porTarefa || MODEL_BY_TASK[task]
+  return overridePorTarefa[task] || MODEL_BY_TASK[task]
 }
 
 /**
