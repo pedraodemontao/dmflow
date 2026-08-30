@@ -10,6 +10,7 @@ import { replyToComment } from '@/lib/instagram/api'
 import { isPermanentError } from '@/lib/instagram/errors'
 import { recomputeProfileMetrics } from '@/lib/library/ingest'
 import { syncOwnPlaysFromInsights } from '@/lib/library/own-plays'
+import { drainScheduledPublications, type DrainResult } from '@/lib/publications/drain'
 import { pollAll } from '@/lib/webhook/poll'
 import { processPending } from '@/lib/webhook/process'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -312,6 +313,16 @@ export async function GET(request: NextRequest) {
   const refreshed = await refreshExpiringTokens()
   const publicReplies = await drainPublicReplies()
 
+  // Publicação agendada é acessório da entrega, como a métrica: falha aqui é
+  // console.error, nunca 503. Vem ANTES da coleta de insights de propósito —
+  // o post recém-publicado já entra na coleta e no sync-own da rodada.
+  let publications: DrainResult = { published: 0, deferred: 0, failed: 0, requeued: 0 }
+  try {
+    publications = await drainScheduledPublications()
+  } catch (error) {
+    console.error('[dm-flow] drenagem de publicações falhou:', error)
+  }
+
   // Métrica é acessório, entrega não: coleta de insights nunca pode responder
   // 503. Erro aqui é console.error — o 503 abaixo é exclusivo do polling.
   let mediaInsights = { collected: 0, skipped: 0 }
@@ -333,6 +344,7 @@ export async function GET(request: NextRequest) {
     resumed,
     refreshed,
     publicReplies,
+    publications,
     mediaInsights,
     ownPlays,
   }

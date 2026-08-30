@@ -33,6 +33,12 @@ const schema = z.object({
   ANTHROPIC_MODEL: z.string().min(1).optional(),
   /** Teto de respostas públicas no MESMO post por hora. DM não tem esse limite. */
   PUBLIC_REPLY_PER_POST_CAP: z.coerce.number().int().positive().default(8),
+  /**
+   * Teto de publicações por conta a cada 24h (card 04). Regime próprio, fora
+   * do `send_log`: o cap por hora é de MENSAGEM, e publicação não é envio.
+   * Baixo de propósito — post de IA em rajada é o padrão que o filtro lê.
+   */
+  PUBLISH_DAILY_CAP: z.coerce.number().int().positive().default(3),
   /** Protege POST /api/conversao. Sem ela, a rota recusa tudo. */
   CONVERSION_SECRET: z.string().min(16).optional(),
   /**
@@ -102,6 +108,7 @@ function load(): Env {
     // SEMPRE 8 e definir a variável na Vercel não surtia efeito nenhum.
     // Configuração que mente em silêncio é pior que configuração inexistente.
     PUBLIC_REPLY_PER_POST_CAP: process.env.PUBLIC_REPLY_PER_POST_CAP,
+    PUBLISH_DAILY_CAP: process.env.PUBLISH_DAILY_CAP,
     CONVERSION_SECRET: process.env.CONVERSION_SECRET,
     DELIVERY_TOKEN_SECRET: process.env.DELIVERY_TOKEN_SECRET,
     APP_URL: process.env.APP_URL,
