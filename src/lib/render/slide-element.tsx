@@ -129,6 +129,18 @@ const MAX_KEYWORD_CHARS = 18
  * mais nada do slide. Borda reta, sem raio — a Nota de Auditoria (seção 08)
  * reprova qualquer `border-radius`.
  */
+/**
+ * O satori não quebra nem encolhe: palavra-chave de 16 letras a 72px vazava
+ * da caixa pela direita (medido no preview com `COMPARTILHAMENTO`). O corpo
+ * desce conforme o comprimento — os degraus foram escolhidos para a
+ * palavra mais longa que `MAX_KEYWORD_CHARS` deixa passar caber na caixa.
+ */
+export function ctaKeywordFontSize(length: number): number {
+  if (length <= 10) return 72
+  if (length <= 13) return 56
+  return 44
+}
+
 function ctaBadge(keyword: string): ReactElement {
   const upper = keyword.toUpperCase()
   const safe = charLength(upper) > MAX_KEYWORD_CHARS ? truncateChars(upper, MAX_KEYWORD_CHARS) : upper
@@ -149,7 +161,7 @@ function ctaBadge(keyword: string): ReactElement {
           display: 'flex',
           marginTop: 8,
           fontFamily: FONT_FAMILY.title,
-          fontSize: 72,
+          fontSize: ctaKeywordFontSize(charLength(safe)),
           color: COLOR.blue,
         }}
       >

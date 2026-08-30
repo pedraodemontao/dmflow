@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { CarouselSlide } from '@/lib/ai/schemas'
-import { FONT_FAMILY, slideElement, type Brand } from '@/lib/render/slide-element'
+import { FONT_FAMILY, ctaKeywordFontSize, slideElement, type Brand } from '@/lib/render/slide-element'
 
 /**
  * O que importa testar aqui é a DECISÃO, não o pixel: satori não roda no
@@ -86,5 +86,13 @@ describe('slideElement', () => {
       body: 'Quantia Body',
       label: 'Quantia Label',
     })
+  })
+})
+
+describe('ctaKeywordFontSize', () => {
+  it('desce em degraus para a palavra longa caber na caixa', () => {
+    expect(ctaKeywordFontSize('DOCE'.length)).toBe(72)
+    expect(ctaKeywordFontSize('COMPARTILHA'.length)).toBe(56)
+    expect(ctaKeywordFontSize('COMPARTILHAMENTO'.length)).toBe(44)
   })
 })
