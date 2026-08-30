@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus, Send } from 'lucide-react'
+import { Plus, Send, Sparkles } from 'lucide-react'
 
 import { PublicationRow } from '@/components/publicacoes/publication-row'
 import { Button, Card, EmptyState } from '@/components/ui'
@@ -32,12 +32,20 @@ export default async function PublicacoesPage() {
             retentativa. Quando a automação vem junto, o gatilho já nasce apontado para o post novo.
           </p>
         </div>
-        <Link href="/publicacoes/nova">
-          <Button size="sm">
-            <Plus className="size-3.5" />
-            Nova
-          </Button>
-        </Link>
+        <div className="flex shrink-0 gap-2">
+          <Link href="/publicacoes/gerar">
+            <Button size="sm">
+              <Sparkles className="size-3.5" />
+              Gerar carrossel
+            </Button>
+          </Link>
+          <Link href="/publicacoes/nova">
+            <Button size="sm" variant="outline">
+              <Plus className="size-3.5" />
+              Subir mídia
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {publications.length > 0 && (
@@ -61,7 +69,7 @@ export default async function PublicacoesPage() {
         <EmptyState
           icon={<Send className="size-5" />}
           title="Nenhuma publicação ainda"
-          description="Suba uma imagem, um carrossel ou um reel, escreva a legenda e agende. O tick publica no horário, com jitter, e respeita o cap diário e o silêncio da conta."
+          description="Gere um carrossel com a IA a partir de um tema, de um vídeo da biblioteca ou de um roteiro — ou suba uma imagem, carrossel ou reel prontos. O tick publica no horário, com jitter, e respeita o cap diário e o silêncio da conta."
         />
       ) : (
         <Card>
