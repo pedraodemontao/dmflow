@@ -78,6 +78,71 @@ export const scriptSchema = z.object({
 export type Script = z.infer<typeof scriptSchema>
 
 /**
+ * A forma do carrossel que o gerador devolve (card 05).
+ *
+ * Os tetos de `title`/`body` não são gosto — são a régua de RENDER: o satori
+ * (`next/og`) não tem *shrink-to-fit*, então fonte fixa + teto de caracteres é
+ * o que garante que o texto cabe no slide sem cortar. Os valores abaixo foram
+ * medidos contra o preview da fase 2 (`scripts/render-preview.mts`) e são a
+ * ÚNICA cerca — o schema que mede o texto cru, não o expandido, porque
+ * carrossel não tem spintax.
+ */
+export const CAROUSEL_MIN_SLIDES = 3
+export const CAROUSEL_MAX_SLIDES = 10
+export const SLIDE_TITLE_MAX_CHARS = 60
+export const SLIDE_BODY_MAX_CHARS = 220
+
+/** Legenda do POST — limite da própria Meta para caption de mídia, não o de DM (`META_LIMITS`, outro domínio). */
+export const CAROUSEL_CAPTION_MAX_CHARS = 2200
+
+const carouselSlideSchema = z.object({
+  kind: z.enum(['cover', 'body', 'cta']).describe('Papel do slide: capa, meio ou fechamento'),
+  title: z
+    .string()
+    .min(1)
+    .max(SLIDE_TITLE_MAX_CHARS)
+    .describe(`Título do slide, até ${SLIDE_TITLE_MAX_CHARS} caracteres — vai em destaque na tela`),
+  body: z
+    .string()
+    .min(1)
+    .max(SLIDE_BODY_MAX_CHARS)
+    .optional()
+    .describe(`Texto de apoio do slide, até ${SLIDE_BODY_MAX_CHARS} caracteres. Opcional — a capa costuma não precisar`),
+})
+
+export type CarouselSlide = z.infer<typeof carouselSlideSchema>
+
+/**
+ * A ordem não é preferência: capa e fechamento têm layout próprio
+ * (`slide-element.tsx`, fase 2), e um `cta` no meio ou uma `cover` fora da
+ * posição 0 sai do lugar errado sem que o Zod avise.
+ */
+const carouselSlidesSchema = z
+  .array(carouselSlideSchema)
+  .min(CAROUSEL_MIN_SLIDES)
+  .max(CAROUSEL_MAX_SLIDES)
+  .describe(
+    `Entre ${CAROUSEL_MIN_SLIDES} e ${CAROUSEL_MAX_SLIDES} slides: o primeiro é "cover" (UM gancho, não teste A/B), o último é "cta", os do meio são "body" — um slide, uma ideia.`,
+  )
+  .refine((slides) => slides[0]?.kind === 'cover', 'O primeiro slide precisa ser "cover"')
+  .refine((slides) => slides.at(-1)?.kind === 'cta', 'O último slide precisa ser "cta"')
+  .refine(
+    (slides) => slides.slice(1, -1).every((slide) => slide.kind === 'body'),
+    'Os slides entre a capa e o fechamento precisam ser "body"',
+  )
+
+export const carouselSchema = z.object({
+  slides: carouselSlidesSchema,
+  caption: z
+    .string()
+    .min(1)
+    .max(CAROUSEL_CAPTION_MAX_CHARS)
+    .describe('Legenda do post, com hashtags — UMA só, sem spintax: legenda de post não é envio repetido'),
+})
+
+export type Carousel = z.infer<typeof carouselSchema>
+
+/**
  * A forma da entrega: o material que o CTA do roteiro prometeu, em blocos
  * tipados — NUNCA HTML. O conteúdo vem de um modelo de linguagem, e HTML
  * livre de modelo é XSS servido na própria página (ver `card 01, Fase 1`). O

@@ -1,0 +1,51 @@
+/**
+ * Renderiza os três tipos de slide (capa, corpo, cta) com os textos MAIS
+ * LONGOS que o schema permite, numa pasta local — sem servidor, sem banco.
+ * É a prova visual da fase 2: o dono olha as imagens em `out/` e confirma que
+ * cabe, sem corte, legível no celular.
+ *
+ *   npx tsx --tsconfig scripts/tsconfig.json scripts/render-preview.mts
+ */
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+
+import { SLIDE_BODY_MAX_CHARS, SLIDE_TITLE_MAX_CHARS } from '../src/lib/ai/schemas'
+import { renderSlide } from '../src/lib/render/render-slide'
+import { slideElement, type Brand } from '../src/lib/render/slide-element'
+import type { CarouselSlide } from '../src/lib/ai/schemas'
+
+const OUT_DIR = join(process.cwd(), 'out')
+
+/** Handle propositalmente longo — é o pior caso pro cabeçalho da capa. */
+const brand: Brand = { handle: 'perfil.de.exemplo.longo', ctaKeyword: 'COMPARTILHAMENTO' }
+
+/** Preenche até EXATAMENTE o teto — é o pior caso que o schema deixa passar. */
+function toMaxLength(max: number): string {
+  const filler = 'texto de exemplo pra ver se cabe sem cortar nada no slide aqui '
+  let text = ''
+  while (text.length < max) text += filler
+  return text.slice(0, max).trimEnd()
+}
+
+const slides: CarouselSlide[] = [
+  { kind: 'cover', title: toMaxLength(SLIDE_TITLE_MAX_CHARS) },
+  { kind: 'body', title: toMaxLength(SLIDE_TITLE_MAX_CHARS), body: toMaxLength(SLIDE_BODY_MAX_CHARS) },
+  { kind: 'cta', title: toMaxLength(SLIDE_TITLE_MAX_CHARS), body: toMaxLength(SLIDE_BODY_MAX_CHARS) },
+]
+
+async function main() {
+  await mkdir(OUT_DIR, { recursive: true })
+
+  for (const [index, slide] of slides.entries()) {
+    const element = slideElement(slide, index, slides.length, brand)
+    const buffer = await renderSlide(element)
+    const path = join(OUT_DIR, `${index + 1}-${slide.kind}.jpg`)
+    await writeFile(path, buffer)
+    console.log(`[render-preview] ${path} (${buffer.byteLength} bytes)`)
+  }
+}
+
+main().catch((error) => {
+  console.error('[render-preview] falhou:', error)
+  process.exitCode = 1
+})

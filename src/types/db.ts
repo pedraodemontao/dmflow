@@ -276,6 +276,12 @@ export interface Script {
   theme: string | null
   duration: string | null
   source_library_item_id: string | null
+  /**
+   * `reel` | `carousel` (migration 0022). Default `reel` no banco — coluna
+   * opcional aqui porque a migration é colada à mão: código novo lendo banco
+   * antigo recebe `undefined`, nunca um erro de tipo.
+   */
+  kind?: 'reel' | 'carousel'
   output: unknown
   model_used: string | null
   tokens_in: number | null
