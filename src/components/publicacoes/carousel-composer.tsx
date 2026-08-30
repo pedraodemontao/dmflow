@@ -42,6 +42,8 @@ interface Draft {
   paths: string[]
   urls: string[]
   model?: string
+  /** Os slides como estavam no último render. A legenda fica de fora: ela não entra nas imagens. */
+  renderedSlides: string
 }
 
 const KIND_LABEL: Record<Carousel['slides'][number]['kind'], string> = {
@@ -92,6 +94,7 @@ export function CarouselComposer({
         paths: result.paths ?? [],
         urls: result.urls ?? [],
         model: result.model,
+        renderedSlides: JSON.stringify(result.carousel.slides),
       })
       setAviso(result.warning ?? null)
     } catch (error) {
@@ -116,7 +119,13 @@ export function CarouselComposer({
         setErro(result.error ?? 'Não deu certo.')
         return
       }
-      setDraft({ ...draft, carousel: result.carousel, paths: result.paths ?? [], urls: result.urls ?? [] })
+      setDraft({
+        ...draft,
+        carousel: result.carousel,
+        paths: result.paths ?? [],
+        urls: result.urls ?? [],
+        renderedSlides: JSON.stringify(result.carousel.slides),
+      })
       setAviso(result.warning ?? null)
     } catch (error) {
       setErro(error instanceof Error ? error.message : String(error))
@@ -127,8 +136,8 @@ export function CarouselComposer({
 
   async function salvar(publicarAgora: boolean) {
     if (!draft) return
-    if (draft.paths.length === 0) {
-      setErro('Renderize antes de salvar: sem imagens não há o que publicar.')
+    if (draft.paths.length === 0 || JSON.stringify(draft.carousel.slides) !== draft.renderedSlides) {
+      setErro('Renderize antes de salvar: as imagens precisam ser as do texto atual.')
       return
     }
     setErro(null)
@@ -160,7 +169,13 @@ export function CarouselComposer({
     setDraft({ ...draft, carousel: { ...draft.carousel, slides } })
   }
 
-  const editouDepoisDoRender = draft !== null && draft.paths.length === 0
+  // Slide editado depois do render: as imagens do bucket não batem com o
+  // texto da tela, e salvar levaria as velhas. Só a legenda pode mudar sem
+  // render novo — ela não está nas imagens.
+  const slidesDesatualizados =
+    draft !== null && JSON.stringify(draft.carousel.slides) !== draft.renderedSlides
+  const semImagens = draft !== null && draft.paths.length === 0
+  const precisaRenderizar = slidesDesatualizados || semImagens
 
   return (
     <div className="space-y-6">
@@ -292,15 +307,17 @@ export function CarouselComposer({
               <RefreshCw className="size-3.5" />
               {etapa === 'Renderizando…' ? etapa : 'Renderizar de novo'}
             </Button>
-            <Button type="button" disabled={ocupado || editouDepoisDoRender} onClick={() => void salvar(false)}>
+            <Button type="button" disabled={ocupado || precisaRenderizar} onClick={() => void salvar(false)}>
               {etapa === 'Salvando…' ? etapa : 'Salvar rascunho'}
             </Button>
-            <Button type="button" variant="ghost" disabled={ocupado || editouDepoisDoRender} onClick={() => void salvar(true)}>
+            <Button type="button" variant="ghost" disabled={ocupado || precisaRenderizar} onClick={() => void salvar(true)}>
               Publicar agora
             </Button>
           </div>
           <p className="label text-[9px] text-muted">
-            As imagens são as do último render. Editou o texto? Renderize de novo antes de salvar.
+            {slidesDesatualizados
+              ? 'Você editou um slide: renderize de novo antes de salvar.'
+              : 'As imagens são as do último render. A legenda pode mudar sem renderizar.'}
             {draft.model && ` · modelo: ${draft.model}`}
           </p>
         </section>

@@ -179,6 +179,9 @@ export async function rerenderCarousel(raw: unknown): Promise<ComposerResult> {
         .from('scripts')
         .update({ output: carousel.data })
         .eq('id', parsed.data.scriptId)
+      // Aviso, não exceção, de propósito: o retorno É lido e a falha VAI para a
+      // tela. Lançar jogaria fora um render que deu certo — e as imagens já
+      // carregam o texto editado; `scripts.output` aqui é registro, não fonte.
       if (error) warning = `Renderizado, mas o texto editado não foi salvo em Roteiros: ${error.message}`
     }
 
