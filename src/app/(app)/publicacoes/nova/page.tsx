@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
 import { NewPublicationForm } from '@/components/publicacoes/new-publication-form'
+import { getCommentFlows } from '../queries'
 
 /**
  * Nova publicação por upload. A página só compõe; a regra está em
@@ -10,7 +11,9 @@ import { NewPublicationForm } from '@/components/publicacoes/new-publication-for
 
 export const dynamic = 'force-dynamic'
 
-export default function NovaPublicacaoPage() {
+export default async function NovaPublicacaoPage() {
+  const flows = await getCommentFlows()
+
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-6">
       <Link
@@ -27,7 +30,7 @@ export default function NovaPublicacaoPage() {
         MP4. &ldquo;Publicar agora&rdquo; também passa pelo tick: sai em até 7 minutos.
       </p>
 
-      <NewPublicationForm />
+      <NewPublicationForm flows={flows} />
     </div>
   )
 }

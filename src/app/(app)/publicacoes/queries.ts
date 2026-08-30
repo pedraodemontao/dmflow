@@ -71,3 +71,43 @@ export async function getPublications(): Promise<PublicationListItem[]> {
     }
   })
 }
+
+export interface CommentFlowOption {
+  id: string
+  name: string
+}
+
+/**
+ * Automações com gatilho de comentário PRESO a um post — as que ganham um
+ * clone quando o post novo sai. Gatilho global (`media_id` nulo) já vale para
+ * todo post e não entra: oferecer aqui faria o dono escolher algo que não
+ * muda nada.
+ */
+export async function getCommentFlows(): Promise<CommentFlowOption[]> {
+  const { data: triggers, error } = await supabaseAdmin
+    .from('triggers')
+    .select('flow_id')
+    .eq('type', 'comment')
+    .not('media_id', 'is', null)
+
+  if (error) {
+    console.error('[dm-flow] gatilhos indisponíveis:', error.message)
+    return []
+  }
+
+  const flowIds = Array.from(new Set((triggers ?? []).map((t) => (t as { flow_id: string }).flow_id)))
+  if (flowIds.length === 0) return []
+
+  const { data: flows, error: flowsError } = await supabaseAdmin
+    .from('flows')
+    .select('id, name')
+    .in('id', flowIds)
+    .order('name')
+
+  if (flowsError) {
+    console.error('[dm-flow] automações indisponíveis:', flowsError.message)
+    return []
+  }
+
+  return (flows ?? []) as CommentFlowOption[]
+}

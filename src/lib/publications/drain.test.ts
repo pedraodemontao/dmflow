@@ -94,6 +94,11 @@ vi.mock('@/lib/env', () => ({
 
 const publishMock = vi.fn()
 const quotaMock = vi.fn()
+const cloneMock = vi.fn()
+
+vi.mock('@/lib/publications/clone-triggers', () => ({
+  cloneTriggersForPublication: (args: unknown) => cloneMock(args),
+}))
 
 vi.mock('@/lib/instagram/publish', async (importOriginal) => {
   const original = await importOriginal<typeof import('@/lib/instagram/publish')>()
@@ -163,6 +168,7 @@ beforeEach(() => {
   }
   publishMock.mockReset().mockResolvedValue({ platformMediaId: 'post-1' })
   quotaMock.mockReset().mockResolvedValue({ used: 0, total: 100 })
+  cloneMock.mockReset().mockResolvedValue({ cloned: 1, skipped: 0 })
 })
 
 describe('drainScheduledPublications', () => {
@@ -287,6 +293,32 @@ describe('drainScheduledPublications', () => {
 
     expect(result.published).toBe(1)
     expect(publishMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('post com automação: clona o gatilho com o media_id novo', async () => {
+    state.rows = [publication({ flow_id: 'flow-1' })]
+
+    await drainScheduledPublications(NOW)
+
+    expect(cloneMock).toHaveBeenCalledWith({ flowId: 'flow-1', mediaId: 'post-1' })
+  })
+
+  it('sem automação não tenta clonar', async () => {
+    await drainScheduledPublications(NOW)
+    expect(cloneMock).not.toHaveBeenCalled()
+  })
+
+  it('clone falhou: o post continua published e o erro aparece na linha', async () => {
+    state.rows = [publication({ flow_id: 'flow-1' })]
+    cloneMock.mockRejectedValue(new Error('violates check constraint'))
+
+    const result = await drainScheduledPublications(NOW)
+
+    expect(result.published).toBe(1)
+    const update = lastUpdate()
+    expect(update).not.toHaveProperty('status')
+    expect(String(update?.error)).toContain('gatilho não foi criado')
+    expect(String(update?.error)).toContain('violates check constraint')
   })
 
   it('publicação sem mídia é permanente e não chama a Meta', async () => {

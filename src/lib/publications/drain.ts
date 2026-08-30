@@ -8,6 +8,7 @@ import {
   publishPublication,
   type ContainerIds,
 } from '@/lib/instagram/publish'
+import { cloneTriggersForPublication } from '@/lib/publications/clone-triggers'
 import { publicationMediaUrl } from '@/lib/publications/media-url'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { Account, Publication } from '@/types/db'
@@ -162,6 +163,22 @@ async function publishOne(row: Publication, account: Account, now: Date): Promis
         `publicado como ${platformMediaId}, mas não consegui gravar o resultado: ${error.message}`,
         true,
       )
+    }
+
+    // Fase 5: o post nasce com a automação. Gatilho que não nasceu é o bug
+    // silencioso que o card mata — então a falha NÃO é acessório: o post
+    // fica `published` (está no ar) e o erro fica visível na lista.
+    if (row.flow_id) {
+      try {
+        await cloneTriggersForPublication({ flowId: row.flow_id, mediaId: platformMediaId })
+      } catch (cloneError) {
+        const message = cloneError instanceof Error ? cloneError.message : String(cloneError)
+        await supabaseAdmin
+          .from('publications')
+          .update({ error: `publicado, mas o gatilho não foi criado: ${message}`, updated_at: new Date().toISOString() })
+          .eq('id', row.id)
+        console.error('[dm-flow] gatilho do post novo não foi criado:', row.id, message)
+      }
     }
 
     return 'published'
