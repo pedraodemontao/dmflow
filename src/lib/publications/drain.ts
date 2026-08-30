@@ -173,11 +173,17 @@ async function publishOne(row: Publication, account: Account, now: Date): Promis
         await cloneTriggersForPublication({ flowId: row.flow_id, mediaId: platformMediaId })
       } catch (cloneError) {
         const message = cloneError instanceof Error ? cloneError.message : String(cloneError)
-        await supabaseAdmin
+        console.error('[dm-flow] gatilho do post novo não foi criado:', row.id, message)
+        // Não lança: cairia no catch de fora e marcaria como falha um post
+        // que está no ar. Mas o retorno é lido — gravação que falha aqui é
+        // o dono sem aviso nenhum, e isso precisa aparecer em algum lugar.
+        const { error: writeError } = await supabaseAdmin
           .from('publications')
           .update({ error: `publicado, mas o gatilho não foi criado: ${message}`, updated_at: new Date().toISOString() })
           .eq('id', row.id)
-        console.error('[dm-flow] gatilho do post novo não foi criado:', row.id, message)
+        if (writeError) {
+          console.error('[dm-flow] e não consegui nem gravar esse aviso:', row.id, writeError.message)
+        }
       }
     }
 
@@ -187,7 +193,7 @@ async function publishOne(row: Publication, account: Account, now: Date): Promis
     const attempts = row.attempts + 1
     const desistiu = isPermanentPublishError(error) || attempts >= MAX_ATTEMPTS
 
-    await supabaseAdmin
+    const { error: writeError } = await supabaseAdmin
       .from('publications')
       .update(
         desistiu
@@ -203,6 +209,13 @@ async function publishOne(row: Publication, account: Account, now: Date): Promis
       .eq('id', row.id)
 
     console.error('[dm-flow] publicação falhou:', row.id, desistiu ? '(desistiu)' : `(tentativa ${attempts})`, message)
+
+    // Sobe: com o retorno ignorado, a linha ficava em `publishing` sem contar a
+    // tentativa, e o requeue de 10 min a devolvia à fila para sempre. O tick
+    // registra a exceção; o requeue cuida da linha na rodada seguinte.
+    if (writeError) {
+      throw new Error(`não consegui gravar a falha da publicação ${row.id}: ${writeError.message}`)
+    }
     return desistiu ? 'failed' : 'deferred'
   }
 }

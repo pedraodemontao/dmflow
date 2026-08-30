@@ -16,6 +16,8 @@ interface State {
   claimSucceeds: boolean
   /** Falha a primeira gravação com `status: 'published'`. */
   failPublishedWrite: boolean
+  /** Falha a gravação de retentativa/desistência (`scheduled`/`failed` vindas do catch). */
+  failRetryWrite: boolean
   updates: Array<{ payload: Record<string, unknown>; id?: string }>
   requeued: string[]
 }
@@ -72,6 +74,9 @@ function fakeQuery(table: string) {
       if (payload.status === 'published' && state.failPublishedWrite) {
         state.failPublishedWrite = false
         return resolve({ error: { message: 'conexão caiu' } })
+      }
+      if ((payload.status === 'scheduled' || payload.status === 'failed') && 'attempts' in payload && state.failRetryWrite) {
+        return resolve({ error: { message: 'banco fora' } })
       }
       return resolve({ error: null })
     }
@@ -163,6 +168,7 @@ beforeEach(() => {
     countError: false,
     claimSucceeds: true,
     failPublishedWrite: false,
+    failRetryWrite: false,
     updates: [],
     requeued: [],
   }
@@ -284,6 +290,13 @@ describe('drainScheduledPublications', () => {
     const update = lastUpdate()
     expect(update?.status).toBe('failed')
     expect(String(update?.error)).toContain('post-1')
+  })
+
+  it('não conseguir gravar a retentativa SOBE, em vez de deixar a linha presa em publishing', async () => {
+    publishMock.mockRejectedValue(new PublishError('rede', false))
+    state.failRetryWrite = true
+
+    await expect(drainScheduledPublications(NOW)).rejects.toThrow('não consegui gravar a falha')
   })
 
   it('uma publicação por conta por tick', async () => {
