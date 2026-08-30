@@ -345,3 +345,38 @@ export interface MediaInsight {
   total_watch_time_ms: number | null
   skip_rate: number | null
 }
+
+export type PublicationKind = 'image' | 'carousel' | 'reel'
+export type PublicationStatus = 'draft' | 'scheduled' | 'publishing' | 'published' | 'failed'
+
+/**
+ * O post nasce aqui, antes de existir na Meta. `status = 'publishing'` é o
+ * claim do tick — até cinco ticks convivem (`maxDuration` 300s, cron a cada
+ * 60s). `container_ids` guarda o que já foi criado do lado da Meta
+ * ({ children: [...], parent: '...' }): se o tick morrer no meio (vídeo
+ * processa por minutos), a próxima rodada retoma pelo id gravado em vez de
+ * recriar container e duplicar o post — mesmo princípio de `startFlow`
+ * retomando run `failed` pelo `current_node`. Ver migration 0021.
+ */
+export interface Publication {
+  id: string
+  account_id: string
+  kind: PublicationKind
+  caption: string
+  /** CAMINHOS no bucket, nunca URLs — mesma regra de `Delivery.blocks` / file-url.ts. */
+  media_paths: string[]
+  cover_path: string | null
+  status: PublicationStatus
+  scheduled_at: string | null
+  published_at: string | null
+  container_ids: Record<string, unknown>
+  platform_media_id: string | null
+  permalink: string | null
+  attempts: number
+  error: string | null
+  /** Automação cujo gatilho de comentário é clonado pro post, com media_id preenchido. */
+  flow_id: string | null
+  script_id: string | null
+  created_at: string
+  updated_at: string
+}

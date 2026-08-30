@@ -28,6 +28,7 @@ const NAV = [
   { href: '/contatos', label: 'Contatos' },
   { href: '/conversas', label: 'Conversas' },
   { href: '/biblioteca', label: 'Biblioteca' },
+  { href: '/publicacoes', label: 'Publicações' },
   { href: '/ice-breakers', label: 'Ice breakers' },
 ]
 
