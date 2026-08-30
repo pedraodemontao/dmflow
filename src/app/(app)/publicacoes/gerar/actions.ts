@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 
 import { loadCarouselContext, type CarouselContextProblem } from '@/lib/ai/carousel-context'
+import { MOCK_MODEL } from '@/lib/ai/generate'
 import { generateCarousel } from '@/lib/ai/generate-carousel'
 import { carouselSchema, type Carousel } from '@/lib/ai/schemas'
 import { getAccount } from '@/lib/data'
@@ -36,6 +37,8 @@ export interface ComposerResult {
   paths?: string[]
   urls?: string[]
   model?: string
+  /** Texto de EXEMPLO (a IA não respondeu). A tela não deixa publicar. */
+  mock?: boolean
 }
 
 const uuid = z.string().uuid()
@@ -84,6 +87,10 @@ export async function generateAndRenderCarousel(raw: unknown): Promise<ComposerR
   // Sem linha em `scripts` a pasta ganha um uuid: o carrossel existe e foi
   // pago, e o bucket não precisa do roteiro para guardar os slides.
   const renderKey = generated.script?.id ?? randomUUID()
+  const mock = generated.model === MOCK_MODEL
+  const mockWarning = mock
+    ? `A IA não respondeu (${generated.fallbackReason ?? 'motivo desconhecido'}). Este texto é um EXEMPLO e não pode ser publicado — resolva o motivo e gere de novo.`
+    : null
 
   try {
     const rendered = await renderAndUploadCarousel({
@@ -100,7 +107,10 @@ export async function generateAndRenderCarousel(raw: unknown): Promise<ComposerR
       paths: rendered.paths,
       urls: rendered.urls,
       model: generated.model,
-      warning: generated.scriptError ? `Gerado, mas não salvo em Roteiros: ${generated.scriptError}` : undefined,
+      mock,
+      warning:
+        mockWarning ??
+        (generated.scriptError ? `Gerado, mas não salvo em Roteiros: ${generated.scriptError}` : undefined),
     }
   } catch (error) {
     // O texto já existe e foi pago: volta com ele, sem imagens, para o dono
@@ -114,7 +124,8 @@ export async function generateAndRenderCarousel(raw: unknown): Promise<ComposerR
       paths: [],
       urls: [],
       model: generated.model,
-      warning: `Texto gerado, mas o render falhou: ${detail}. Edite se quiser e renderize de novo.`,
+      mock,
+      warning: mockWarning ?? `Texto gerado, mas o render falhou: ${detail}. Edite se quiser e renderize de novo.`,
     }
   }
 }

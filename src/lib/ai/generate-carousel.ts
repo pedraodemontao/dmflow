@@ -52,6 +52,13 @@ export interface GeneratedCarousel {
   /** `null` no mock: não houve chamada, e gravar 0 fingiria que houve. */
   tokensIn: number | null
   tokensOut: number | null
+  /**
+   * Por que caiu no mock. Nulo quando a IA respondeu. Existe porque um mock
+   * chegou a ser PUBLICADO na conta real em 30/08 — a Anthropic estava sem
+   * crédito, o gerador caiu no fallback como desenhado, e nada na tela dizia
+   * que aquilo era texto de exemplo.
+   */
+  fallbackReason?: string | null
   /** A linha gravada em `scripts`, ou `null` se a gravação falhou. */
   script: ScriptRow | null
   scriptError: string | null
@@ -183,7 +190,13 @@ async function runGeneration(
   input: GenerateCarouselInput,
 ): Promise<Omit<GeneratedCarousel, 'script' | 'scriptError'>> {
   if (!hasAnthropicKey()) {
-    return { output: mockCarousel(input), model: MOCK_MODEL, tokensIn: null, tokensOut: null }
+    return {
+      output: mockCarousel(input),
+      model: MOCK_MODEL,
+      tokensIn: null,
+      tokensOut: null,
+      fallbackReason: 'ANTHROPIC_API_KEY não configurada',
+    }
   }
 
   try {
@@ -207,7 +220,7 @@ async function runGeneration(
   } catch (error) {
     const detail = error instanceof AnthropicError ? error.message : String(error)
     console.error('[ai] geração do carrossel falhou, caindo no mock:', detail)
-    return { output: mockCarousel(input), model: MOCK_MODEL, tokensIn: null, tokensOut: null }
+    return { output: mockCarousel(input), model: MOCK_MODEL, tokensIn: null, tokensOut: null, fallbackReason: detail }
   }
 }
 

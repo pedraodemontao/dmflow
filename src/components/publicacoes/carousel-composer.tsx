@@ -42,6 +42,8 @@ interface Draft {
   paths: string[]
   urls: string[]
   model?: string
+  /** Texto de exemplo: a IA não respondeu. Nunca vai para o Instagram. */
+  mock: boolean
   /** Os slides como estavam no último render. A legenda fica de fora: ela não entra nas imagens. */
   renderedSlides: string
 }
@@ -94,6 +96,7 @@ export function CarouselComposer({
         paths: result.paths ?? [],
         urls: result.urls ?? [],
         model: result.model,
+        mock: result.mock === true,
         renderedSlides: JSON.stringify(result.carousel.slides),
       })
       setAviso(result.warning ?? null)
@@ -136,6 +139,10 @@ export function CarouselComposer({
 
   async function salvar(publicarAgora: boolean) {
     if (!draft) return
+    if (draft.mock) {
+      setErro('Isto é texto de exemplo — a IA não respondeu. Não vai para o Instagram.')
+      return
+    }
     if (draft.paths.length === 0 || JSON.stringify(draft.carousel.slides) !== draft.renderedSlides) {
       setErro('Renderize antes de salvar: as imagens precisam ser as do texto atual.')
       return
@@ -176,6 +183,8 @@ export function CarouselComposer({
     draft !== null && JSON.stringify(draft.carousel.slides) !== draft.renderedSlides
   const semImagens = draft !== null && draft.paths.length === 0
   const precisaRenderizar = slidesDesatualizados || semImagens
+  // Mock publicado na conta real em 30/08 é o motivo desta linha existir.
+  const ehMock = draft?.mock === true
 
   return (
     <div className="space-y-6">
@@ -302,15 +311,21 @@ export function CarouselComposer({
             </div>
           )}
 
+          {ehMock && (
+            <p className="rounded-md border border-danger/50 px-3 py-2 text-[11px] text-danger">
+              Texto de EXEMPLO — a IA não respondeu. Os botões de salvar ficam travados até uma geração real.
+            </p>
+          )}
+
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" disabled={ocupado} onClick={() => void renderizar()}>
               <RefreshCw className="size-3.5" />
               {etapa === 'Renderizando…' ? etapa : 'Renderizar de novo'}
             </Button>
-            <Button type="button" disabled={ocupado || precisaRenderizar} onClick={() => void salvar(false)}>
+            <Button type="button" disabled={ocupado || precisaRenderizar || ehMock} onClick={() => void salvar(false)}>
               {etapa === 'Salvando…' ? etapa : 'Salvar rascunho'}
             </Button>
-            <Button type="button" variant="ghost" disabled={ocupado || precisaRenderizar} onClick={() => void salvar(true)}>
+            <Button type="button" variant="ghost" disabled={ocupado || precisaRenderizar || ehMock} onClick={() => void salvar(true)}>
               Publicar agora
             </Button>
           </div>
