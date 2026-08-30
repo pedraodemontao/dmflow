@@ -75,6 +75,18 @@ export function ScriptRow({ item }: { item: ScriptListItem }) {
         </div>
       </button>
 
+      {/* Card 05: o roteiro vira carrossel — mesma ideia, lida em vez de falada. */}
+      {item.script && (
+        <div className="px-4 pb-2 pl-11">
+          <Link
+            href={`/publicacoes/gerar?script=${item.id}`}
+            className="label text-[10px] text-muted hover:text-foreground"
+          >
+            Virar carrossel →
+          </Link>
+        </div>
+      )}
+
       {item.delivery && (
         <div className="flex flex-wrap items-center gap-2 px-4 pb-3 pl-11">
           <Gift className="size-3 shrink-0 text-muted" />

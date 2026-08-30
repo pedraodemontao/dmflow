@@ -120,8 +120,16 @@ export function LibraryCard({
         {/* As duas ações do card, lado a lado: a que fecha o ciclo do produto
             (virar roteiro) e a de organização. Gerar vem primeiro porque é o
             motivo de a biblioteca existir — sem ele a tela é só um acervo. */}
-        <div className="grid grid-cols-[1fr_auto] gap-2">
+        <div className="grid grid-cols-[1fr_auto_auto] gap-2">
           <GenerateScript itemId={item.id} autor={item.owner_handle} />
+          {/* Card 05: o mesmo molde vira carrossel. Link, não action — a
+              geração é paga e acontece na tela de compor, com prévia. */}
+          <Link
+            href={`/publicacoes/gerar?item=${item.id}`}
+            className="label flex h-8 items-center justify-center rounded-md border border-border px-2.5 text-[9.5px] text-muted transition-colors duration-150 hover:border-foreground hover:text-foreground"
+          >
+            Carrossel
+          </Link>
 
         <button
           type="button"
