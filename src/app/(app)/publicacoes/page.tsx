@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Plus, Send, Sparkles } from 'lucide-react'
+import { Palette, Plus, Send, Sparkles } from 'lucide-react'
 
 import { PublicationRow } from '@/components/publicacoes/publication-row'
 import { Button, Card, EmptyState } from '@/components/ui'
@@ -33,6 +33,11 @@ export default async function PublicacoesPage() {
           </p>
         </div>
         <div className="flex shrink-0 gap-2">
+          <Link href="/publicacoes/marca">
+            <Button size="sm" variant="ghost" aria-label="Marca dos slides">
+              <Palette className="size-3.5" />
+            </Button>
+          </Link>
           <Link href="/publicacoes/gerar">
             <Button size="sm">
               <Sparkles className="size-3.5" />

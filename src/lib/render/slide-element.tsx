@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 
 import type { CarouselSlide } from '@/lib/ai/schemas'
 import { charLength, truncateChars } from '@/lib/flow/types'
+import { QUANTIA, type Palette } from '@/lib/render/palette'
 
 /**
  * A árvore de um slide, em JSX puro — o que `render-slide.ts` (fase 2) passa
@@ -15,14 +16,17 @@ import { charLength, truncateChars } from '@/lib/flow/types'
  */
 
 /**
- * O que muda por render, não a paleta (fixa, QUANTIA sempre): o handle que a
- * capa mostra e a palavra que o slide de CTA precisa garantir visível — ainda
- * que o texto do modelo não repita ela do jeito esperado.
+ * O que muda por render: o handle que a capa mostra, a palavra que o slide de
+ * CTA precisa garantir visível — ainda que o texto do modelo não repita ela do
+ * jeito esperado — e, desde a migration 0023, a paleta da conta. Sem paleta,
+ * o padrão QUANTIA: todo slide continua saindo como antes.
  */
 export interface Brand {
   /** Sem o `@` — quem chama decide o prefixo. */
   handle: string
   ctaKeyword: string
+  /** Ausente = QUANTIA (`palette.ts`). */
+  palette?: Palette
 }
 
 /**
@@ -40,14 +44,6 @@ export const FONT_FAMILY = {
   label: 'Quantia Label',
 } as const
 
-/** Paleta QUANTIA (`docs/marca/quantia-manual.md`, seção 04) — não é por persona. */
-const COLOR = {
-  paper: '#F2F0E9',
-  ink: '#14181B',
-  blue: '#0F4C6B',
-  ruler: '#8A8476',
-} as const
-
 export const SLIDE_WIDTH = 1080
 export const SLIDE_HEIGHT = 1350
 const PADDING = 88
@@ -56,14 +52,14 @@ const PADDING = 88
  * O rótulo mono, caixa alta, com entreletra — "o ativo tipográfico da marca"
  * (manual, seção 05). Usado pro handle da capa e pra paginação do body.
  */
-function label(text: string): ReactElement {
+function label(text: string, palette: Palette): ReactElement {
   return (
     <span
       style={{
         display: 'flex',
         fontFamily: FONT_FAMILY.label,
         fontSize: 28,
-        color: COLOR.ruler,
+        color: palette.ruler,
         textTransform: 'uppercase',
         letterSpacing: 3,
       }}
@@ -73,7 +69,7 @@ function label(text: string): ReactElement {
   )
 }
 
-function title(text: string, fontSize: number): ReactElement {
+function title(text: string, fontSize: number, palette: Palette): ReactElement {
   return (
     <div
       style={{
@@ -81,7 +77,7 @@ function title(text: string, fontSize: number): ReactElement {
         fontFamily: FONT_FAMILY.title,
         fontSize,
         lineHeight: 1.08,
-        color: COLOR.ink,
+        color: palette.ink,
       }}
     >
       {text}
@@ -89,7 +85,7 @@ function title(text: string, fontSize: number): ReactElement {
   )
 }
 
-function body(text: string): ReactElement {
+function body(text: string, palette: Palette): ReactElement {
   return (
     <div
       style={{
@@ -98,7 +94,7 @@ function body(text: string): ReactElement {
         fontFamily: FONT_FAMILY.body,
         fontSize: 40,
         lineHeight: 1.4,
-        color: COLOR.ink,
+        color: palette.ink,
       }}
     >
       {text}
@@ -107,10 +103,10 @@ function body(text: string): ReactElement {
 }
 
 /** `n/N` — nunca no primeiro slide (ali é o handle, não paginação). */
-function pageLabel(index: number, total: number): ReactElement {
+function pageLabel(index: number, total: number, palette: Palette): ReactElement {
   const current = String(index + 1).padStart(2, '0')
   const of = String(total).padStart(2, '0')
-  return label(`${current} / ${of}`)
+  return label(`${current} / ${of}`, palette)
 }
 
 /**
@@ -123,13 +119,6 @@ function pageLabel(index: number, total: number): ReactElement {
 const MAX_KEYWORD_CHARS = 18
 
 /**
- * A palavra-chave, garantida — não depende de o texto do modelo mencionar
- * ela do jeito certo. Azul-Aferição é a ÚNICA cor de acento da marca, e o
- * manual reserva ela para CTA/saldo positivo (regra 60-30-10): não usar em
- * mais nada do slide. Borda reta, sem raio — a Nota de Auditoria (seção 08)
- * reprova qualquer `border-radius`.
- */
-/**
  * O satori não quebra nem encolhe: palavra-chave de 16 letras a 72px vazava
  * da caixa pela direita (medido no preview com `COMPARTILHAMENTO`). O corpo
  * desce conforme o comprimento — os degraus foram escolhidos para a
@@ -141,7 +130,13 @@ export function ctaKeywordFontSize(length: number): number {
   return 44
 }
 
-function ctaBadge(keyword: string): ReactElement {
+/**
+ * A palavra-chave, garantida — não depende de o texto do modelo mencionar
+ * ela do jeito certo. O acento é a ÚNICA cor viva do slide, e o manual a
+ * reserva para o CTA (regra 60-30-10): não usar em mais nada. Borda reta,
+ * sem raio — a Nota de Auditoria (seção 08) reprova qualquer border-radius.
+ */
+function ctaBadge(keyword: string, palette: Palette): ReactElement {
   const upper = keyword.toUpperCase()
   const safe = charLength(upper) > MAX_KEYWORD_CHARS ? truncateChars(upper, MAX_KEYWORD_CHARS) : upper
 
@@ -152,17 +147,17 @@ function ctaBadge(keyword: string): ReactElement {
         flexDirection: 'column',
         marginTop: 48,
         padding: 32,
-        border: `2px solid ${COLOR.ink}`,
+        border: `2px solid ${palette.ink}`,
       }}
     >
-      {label('Comenta')}
+      {label(palette.ctaLabel, palette)}
       <span
         style={{
           display: 'flex',
           marginTop: 8,
           fontFamily: FONT_FAMILY.title,
           fontSize: ctaKeywordFontSize(charLength(safe)),
-          color: COLOR.blue,
+          color: palette.accent,
         }}
       >
         {safe}
@@ -175,18 +170,18 @@ function ctaBadge(keyword: string): ReactElement {
  * Lista numerada: o índice em mono (o "ativo tipográfico" da marca) e o item
  * em corpo. Item de 80 caracteres quebra em duas linhas — por isso o índice
  * alinha no TOPO do item, não na baseline (que o satori cravava na última
- * linha, medido no preview). Índice em régua, não em azul: o manual reserva
- * o azul para o CTA, regra 60-30-10.
+ * linha, medido no preview). Índice em régua, não no acento: o manual reserva
+ * o acento para o CTA, regra 60-30-10.
  */
-function listItems(items: readonly string[]): ReactElement {
+function listItems(items: readonly string[], palette: Palette): ReactElement {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', marginTop: 40 }}>
       {items.map((item, index) => (
         <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: 28, marginTop: index === 0 ? 0 : 30 }}>
-          <span style={{ display: 'flex', fontFamily: FONT_FAMILY.label, fontSize: 30, marginTop: 8, color: COLOR.ruler }}>
+          <span style={{ display: 'flex', fontFamily: FONT_FAMILY.label, fontSize: 30, marginTop: 8, color: palette.ruler }}>
             {String(index + 1).padStart(2, '0')}
           </span>
-          <span style={{ display: 'flex', flex: 1, fontFamily: FONT_FAMILY.body, fontSize: 38, lineHeight: 1.35, color: COLOR.ink }}>
+          <span style={{ display: 'flex', flex: 1, fontFamily: FONT_FAMILY.body, fontSize: 38, lineHeight: 1.35, color: palette.ink }}>
             {item}
           </span>
         </div>
@@ -206,19 +201,19 @@ export function statFontSize(length: number): number {
   return 110
 }
 
-function statNumber(text: string): ReactElement {
+function statNumber(text: string, palette: Palette): ReactElement {
   return (
-    <div style={{ display: 'flex', fontFamily: FONT_FAMILY.title, fontSize: statFontSize(charLength(text)), lineHeight: 1, color: COLOR.ink }}>
+    <div style={{ display: 'flex', fontFamily: FONT_FAMILY.title, fontSize: statFontSize(charLength(text)), lineHeight: 1, color: palette.ink }}>
       {text}
     </div>
   )
 }
 
 /** A afirmação sozinha, com a régua da marca à esquerda — é citação de si mesmo, não parágrafo. */
-function statement(text: string): ReactElement {
+function statement(text: string, palette: Palette): ReactElement {
   return (
-    <div style={{ display: 'flex', borderLeft: `6px solid ${COLOR.ink}`, paddingLeft: 44 }}>
-      <div style={{ display: 'flex', fontFamily: FONT_FAMILY.title, fontSize: 84, lineHeight: 1.15, color: COLOR.ink }}>
+    <div style={{ display: 'flex', borderLeft: `6px solid ${palette.ink}`, paddingLeft: 44 }}>
+      <div style={{ display: 'flex', fontFamily: FONT_FAMILY.title, fontSize: 84, lineHeight: 1.15, color: palette.ink }}>
         {text}
       </div>
     </div>
@@ -242,7 +237,8 @@ export function slideElement(
   total: number,
   brand: Brand,
 ): ReactElement {
-  const header = slide.kind === 'cover' ? label(`@${brand.handle}`) : pageLabel(index, total)
+  const palette = brand.palette ?? QUANTIA
+  const header = slide.kind === 'cover' ? label(`@${brand.handle}`, palette) : pageLabel(index, total, palette)
 
   return (
     <div
@@ -253,7 +249,7 @@ export function slideElement(
         height: SLIDE_HEIGHT,
         boxSizing: 'border-box',
         padding: PADDING,
-        backgroundColor: COLOR.paper,
+        backgroundColor: palette.paper,
       }}
     >
       <div style={{ display: 'flex' }}>{header}</div>
@@ -266,15 +262,15 @@ export function slideElement(
         }}
       >
         {slide.kind === 'body' && slide.layout === 'frase' ? (
-          statement(slide.title)
+          statement(slide.title, palette)
         ) : slide.kind === 'body' && slide.layout === 'numero' ? (
-          statNumber(slide.title)
+          statNumber(slide.title, palette)
         ) : (
-          title(slide.title, titleSize(slide.kind))
+          title(slide.title, titleSize(slide.kind), palette)
         )}
-        {slide.kind === 'body' && slide.layout === 'lista' && slide.items ? listItems(slide.items) : null}
-        {slide.body && !(slide.kind === 'body' && slide.layout === 'frase') ? body(slide.body) : null}
-        {slide.kind === 'cta' ? ctaBadge(brand.ctaKeyword) : null}
+        {slide.kind === 'body' && slide.layout === 'lista' && slide.items ? listItems(slide.items, palette) : null}
+        {slide.body && !(slide.kind === 'body' && slide.layout === 'frase') ? body(slide.body, palette) : null}
+        {slide.kind === 'cta' ? ctaBadge(brand.ctaKeyword, palette) : null}
       </div>
     </div>
   )

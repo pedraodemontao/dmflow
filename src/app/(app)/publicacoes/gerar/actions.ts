@@ -9,6 +9,7 @@ import { MOCK_MODEL } from '@/lib/ai/generate'
 import { generateCarousel } from '@/lib/ai/generate-carousel'
 import { carouselSchema, type Carousel } from '@/lib/ai/schemas'
 import { getAccount } from '@/lib/data'
+import { loadBrandPalette } from '@/lib/render/palette'
 import { renderAndUploadCarousel } from '@/lib/render/render-carousel'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { Persona, Script as ScriptRow } from '@/types/db'
@@ -96,7 +97,11 @@ export async function generateAndRenderCarousel(raw: unknown): Promise<ComposerR
     const rendered = await renderAndUploadCarousel({
       renderKey,
       carousel: generated.output,
-      brand: { handle: context.handle, ctaKeyword: context.persona.cta_keyword },
+      brand: {
+        handle: context.handle,
+        ctaKeyword: context.persona.cta_keyword,
+        palette: await loadBrandPalette(context.accountId),
+      },
     })
 
     return {
@@ -181,7 +186,11 @@ export async function rerenderCarousel(raw: unknown): Promise<ComposerResult> {
     const rendered = await renderAndUploadCarousel({
       renderKey: parsed.data.renderKey,
       carousel: carousel.data,
-      brand: { handle: account.username ?? '', ctaKeyword: persona.cta_keyword },
+      brand: {
+        handle: account.username ?? '',
+        ctaKeyword: persona.cta_keyword,
+        palette: await loadBrandPalette(account.id),
+      },
     })
 
     let warning: string | undefined
