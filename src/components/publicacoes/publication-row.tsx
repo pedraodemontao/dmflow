@@ -1,8 +1,9 @@
 'use client'
 
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { CalendarClock, ExternalLink, Images, Play, Send, Trash2, X } from 'lucide-react'
+import { BarChart3, CalendarClock, ExternalLink, Images, Play, Send, Trash2, X } from 'lucide-react'
 
 import {
   cancelPublication,
@@ -144,15 +145,25 @@ export function PublicationRow({ publication }: { publication: PublicationListIt
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          {publication.status === 'published' && publication.permalink && (
-            <a
-              href={publication.permalink}
-              target="_blank"
-              rel="noreferrer"
-              className="label inline-flex items-center gap-1 text-[10px] text-muted hover:text-foreground"
-            >
-              abrir <ExternalLink className="size-3" />
-            </a>
+          {publication.status === 'published' && (
+            <>
+              <Link
+                href={`/publicacoes/${publication.id}`}
+                className="label inline-flex items-center gap-1 text-[10px] text-accent hover:text-foreground"
+              >
+                <BarChart3 className="size-3" /> métricas
+              </Link>
+              {publication.permalink && (
+                <a
+                  href={publication.permalink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="label inline-flex items-center gap-1 text-[10px] text-muted hover:text-foreground"
+                >
+                  abrir <ExternalLink className="size-3" />
+                </a>
+              )}
+            </>
           )}
 
           {podeAgendar && !agendando && (
