@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { RefreshCw, Sparkles } from 'lucide-react'
 
-import { createPublication } from '@/app/(app)/publicacoes/actions'
+import { createPublication, uploadPublicationImage } from '@/app/(app)/publicacoes/actions'
 import { generateAndRenderCarousel, rerenderCarousel } from '@/app/(app)/publicacoes/gerar/actions'
 import type { FlowOption } from '@/components/publicacoes/new-publication-form'
 import { Badge, Button, Input, Label, Select, Textarea } from '@/components/ui'
@@ -68,6 +68,8 @@ export function CarouselComposer({
   const [theme, setTheme] = useState('')
   const [flowId, setFlowId] = useState('')
   const [draft, setDraft] = useState<Draft | null>(null)
+  /** Caminho da arte de fundo da capa no bucket. O render que sai é sempre o do último `renderizar`. */
+  const [coverArt, setCoverArt] = useState<string | null>(null)
   const [etapa, setEtapa] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -107,7 +109,7 @@ export function CarouselComposer({
     }
   }
 
-  async function renderizar() {
+  async function renderizar(coverPathOverride?: string | null) {
     if (!draft) return
     setErro(null)
     setAviso(null)
@@ -117,6 +119,7 @@ export function CarouselComposer({
         renderKey: draft.renderKey,
         scriptId: draft.scriptId,
         carousel: draft.carousel,
+        coverBackgroundPath: coverPathOverride === undefined ? coverArt : coverPathOverride,
       })
       if (!result.ok || !result.carousel) {
         setErro(result.error ?? 'Não deu certo.')
@@ -163,6 +166,28 @@ export function CarouselComposer({
         return
       }
       router.push('/publicacoes')
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : String(error))
+    } finally {
+      setEtapa(null)
+    }
+  }
+
+  /** Sobe a arte e já re-renderiza: arte gravada sem render novo seria capa velha no salvar. */
+  async function subirArteDaCapa(file: File) {
+    setErro(null)
+    setEtapa('Subindo a arte…')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('target', 'feed')
+      const result = await uploadPublicationImage(formData)
+      if (!result.ok || !result.path) {
+        setErro(result.error ?? 'Falha ao subir a arte.')
+        return
+      }
+      setCoverArt(result.path)
+      await renderizar(result.path)
     } catch (error) {
       setErro(error instanceof Error ? error.message : String(error))
     } finally {
@@ -243,6 +268,30 @@ export function CarouselComposer({
               ))}
             </div>
           )}
+
+          <div className="rounded-md border border-border bg-surface-2 p-3">
+            <Label htmlFor="cover-art">Arte de fundo da capa (opcional)</Label>
+            <p className="label mt-1 text-[9px] text-muted">
+              Gere a arte fora (ex. skill de imagem) em 4:5, sem texto — o gancho é desenhado por cima, na tipografia da marca.
+            </p>
+            <div className="mt-2 flex items-center gap-2">
+              <Input
+                id="cover-art"
+                type="file"
+                accept="image/jpeg,image/png"
+                disabled={ocupado}
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) void subirArteDaCapa(file)
+                }}
+              />
+              {coverArt && (
+                <Button type="button" size="sm" variant="ghost" disabled={ocupado} onClick={() => { setCoverArt(null); void renderizar(null) }}>
+                  Remover
+                </Button>
+              )}
+            </div>
+          </div>
 
           <div className="space-y-3">
             {draft.carousel.slides.map((slide, i) => (

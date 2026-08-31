@@ -50,6 +50,19 @@ const slides: CarouselSlide[] = [
 async function main() {
   await mkdir(OUT_DIR, { recursive: true })
 
+  // Capa com arte: um fundo de mentira gerado na hora (sharp), porque o preview
+  // não depende de rede nem de imagem versionada no repo.
+  const { default: sharp } = await import('sharp')
+  const fundo = await sharp({
+    create: { width: 1080, height: 1350, channels: 3, background: { r: 30, g: 80, b: 110 } },
+  })
+    .jpeg()
+    .toBuffer()
+  const comArte: Brand = { ...brand, coverBackgroundDataUri: `data:image/jpeg;base64,${fundo.toString('base64')}` }
+  const capaArte = slideElement({ kind: 'cover', layout: 'texto', title: toMaxLength(SLIDE_TITLE_MAX_CHARS) }, 0, 6, comArte)
+  await writeFile(join(OUT_DIR, '0-cover-arte.jpg'), await renderSlide(capaArte))
+  console.log(`[render-preview] ${join(OUT_DIR, '0-cover-arte.jpg')}`)
+
   for (const [index, slide] of slides.entries()) {
     const element = slideElement(slide, index, slides.length, brand)
     const buffer = await renderSlide(element)

@@ -27,6 +27,12 @@ export interface Brand {
   ctaKeyword: string
   /** Ausente = QUANTIA (`palette.ts`). */
   palette?: Palette
+  /**
+   * Arte de fundo da CAPA, como data URI — o dono sobe (gerada fora, ex.
+   * skill de imagem do Codex); o render põe o degradê de contraste e o
+   * gancho por cima. Texto continua nosso: modelo de imagem erra grafia.
+   */
+  coverBackgroundDataUri?: string
 }
 
 /**
@@ -231,6 +237,60 @@ function titleSize(kind: CarouselSlide['kind']): number {
   return kind === 'cover' ? 104 : 68
 }
 
+/**
+ * A capa com arte: fundo full-bleed, degradê de contraste de baixo pra cima
+ * (o gancho senta embaixo) e o texto na cor do PAPEL — sobre foto, é o papel
+ * que contrasta, não a tinta. O degradê usa preto fixo, não `palette.ink`:
+ * contraste sobre foto é acessibilidade, não identidade.
+ */
+function coverWithArt(slide: CarouselSlide, brand: Brand, palette: Palette): ReactElement {
+  return (
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        width: SLIDE_WIDTH,
+        height: SLIDE_HEIGHT,
+        position: 'relative',
+        backgroundColor: palette.paper,
+      }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element -- satori, não DOM */}
+      <img
+        src={brand.coverBackgroundDataUri}
+        alt=""
+        style={{ position: 'absolute', top: 0, left: 0, width: SLIDE_WIDTH, height: SLIDE_HEIGHT, objectFit: 'cover' }}
+      />
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: SLIDE_WIDTH,
+          height: SLIDE_HEIGHT,
+          backgroundImage: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.12) 100%)',
+        }}
+      />
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          justifyContent: 'space-between',
+          padding: PADDING,
+        }}
+      >
+        <span style={{ display: 'flex', fontFamily: FONT_FAMILY.label, fontSize: 28, color: palette.paper, textTransform: 'uppercase', letterSpacing: 3, opacity: 0.9 }}>
+          {`@${brand.handle}`}
+        </span>
+        <div style={{ display: 'flex', fontFamily: FONT_FAMILY.title, fontSize: 104, lineHeight: 1.08, color: palette.paper }}>
+          {slide.title}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function slideElement(
   slide: CarouselSlide,
   index: number,
@@ -238,6 +298,7 @@ export function slideElement(
   brand: Brand,
 ): ReactElement {
   const palette = brand.palette ?? QUANTIA
+  if (slide.kind === 'cover' && brand.coverBackgroundDataUri) return coverWithArt(slide, brand, palette)
   const header = slide.kind === 'cover' ? label(`@${brand.handle}`, palette) : pageLabel(index, total, palette)
 
   return (

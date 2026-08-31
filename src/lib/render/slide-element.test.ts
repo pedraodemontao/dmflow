@@ -130,3 +130,30 @@ describe('statFontSize', () => {
     expect(statFontSize('12 clientes'.length)).toBe(110)
   })
 })
+
+describe('capa com arte de fundo', () => {
+  const comArte: Brand = { ...brand, coverBackgroundDataUri: 'data:image/jpeg;base64,QUJD' }
+
+  it('mantém o gancho e o handle por cima da arte', () => {
+    const slide: CarouselSlide = { kind: 'cover', layout: 'texto', title: 'O ponto do brigadeiro' }
+    const text = allText(slide, 0, 5, comArte)
+
+    expect(text).toContain('O ponto do brigadeiro')
+    expect(text).toContain('@docesdaju')
+  })
+
+  it('carrega a arte e o degradê de contraste', () => {
+    const slide: CarouselSlide = { kind: 'cover', layout: 'texto', title: 'Capa' }
+    const raw = JSON.stringify(slideElement(slide, 0, 5, comArte))
+
+    expect(raw).toContain('data:image/jpeg;base64,QUJD')
+    expect(raw).toContain('linear-gradient')
+  })
+
+  it('sem arte, a capa continua a de sempre', () => {
+    const slide: CarouselSlide = { kind: 'cover', layout: 'texto', title: 'Capa' }
+    const raw = JSON.stringify(slideElement(slide, 0, 5, brand))
+
+    expect(raw).not.toContain('linear-gradient')
+  })
+})

@@ -10,6 +10,8 @@ import { generateCarousel } from '@/lib/ai/generate-carousel'
 import { carouselSchema, type Carousel } from '@/lib/ai/schemas'
 import { getAccount } from '@/lib/data'
 import { loadBrandPalette } from '@/lib/render/palette'
+import { publicationMediaUrl } from '@/lib/publications/media-url'
+import { env } from '@/lib/env'
 import { renderAndUploadCarousel } from '@/lib/render/render-carousel'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import type { Persona, Script as ScriptRow } from '@/types/db'
@@ -139,6 +141,8 @@ const rerenderSchema = z.object({
   renderKey: uuid,
   scriptId: uuid.nullish(),
   carousel: z.unknown(),
+  /** Arte de fundo da capa: caminho no bucket (subido pela tela), nunca URL. */
+  coverBackgroundPath: z.string().regex(/^uploads\/[A-Za-z0-9._/-]+$/).nullish(),
 })
 
 /** Texto editado → JPEGs novos (pasta nova no bucket) → `scripts.output` atualizado. Sem chamada ao modelo. */
@@ -182,6 +186,18 @@ export async function rerenderCarousel(raw: unknown): Promise<ComposerResult> {
   const persona = (personaRow as Persona | null) ?? null
   if (!persona) return { ok: false, error: 'Nenhuma persona ativa.' }
 
+  // A arte sobe pro bucket pela tela; aqui ela vira data URI porque o satori
+  // precisa dos bytes, e buscar nós mesmos evita depender do fetch dele.
+  let coverBackgroundDataUri: string | undefined
+  if (parsed.data.coverBackgroundPath) {
+    const url = publicationMediaUrl(parsed.data.coverBackgroundPath, env.SUPABASE_URL)
+    if (url) {
+      const res = await fetch(url, { cache: 'no-store' })
+      if (!res.ok) return { ok: false, error: `Não achei a arte da capa no bucket (${res.status}).` }
+      coverBackgroundDataUri = `data:image/jpeg;base64,${Buffer.from(await res.arrayBuffer()).toString('base64')}`
+    }
+  }
+
   try {
     const rendered = await renderAndUploadCarousel({
       renderKey: parsed.data.renderKey,
@@ -190,6 +206,7 @@ export async function rerenderCarousel(raw: unknown): Promise<ComposerResult> {
         handle: account.username ?? '',
         ctaKeyword: persona.cta_keyword,
         palette: await loadBrandPalette(account.id),
+        coverBackgroundDataUri,
       },
     })
 
