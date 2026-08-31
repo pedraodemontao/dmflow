@@ -17,6 +17,7 @@ import {
   SLIDE_TITLE_MAX_CHARS,
 } from '../src/lib/ai/schemas'
 import { renderSlide } from '../src/lib/render/render-slide'
+import { TWEET_TEXT_MAX_CHARS, tweetElement } from '../src/lib/render/tweet-element'
 import { slideElement, type Brand } from '../src/lib/render/slide-element'
 import type { CarouselSlide } from '../src/lib/ai/schemas'
 
@@ -59,6 +60,10 @@ async function main() {
     .jpeg()
     .toBuffer()
   const comArte: Brand = { ...brand, coverBackgroundDataUri: `data:image/jpeg;base64,${fundo.toString('base64')}` }
+  const tweet = tweetElement({ name: 'Perfil De Exemplo Longo', handle: 'perfil.de.exemplo.longo', text: toMaxLength(TWEET_TEXT_MAX_CHARS) })
+  await writeFile(join(OUT_DIR, '0-padrao-tweet.jpg'), await renderSlide(tweet))
+  console.log(`[render-preview] ${join(OUT_DIR, '0-padrao-tweet.jpg')}`)
+
   const capaArte = slideElement({ kind: 'cover', layout: 'texto', title: toMaxLength(SLIDE_TITLE_MAX_CHARS) }, 0, 6, comArte)
   await writeFile(join(OUT_DIR, '0-cover-arte.jpg'), await renderSlide(capaArte))
   console.log(`[render-preview] ${join(OUT_DIR, '0-cover-arte.jpg')}`)
