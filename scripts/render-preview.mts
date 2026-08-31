@@ -9,7 +9,13 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
-import { SLIDE_BODY_MAX_CHARS, SLIDE_TITLE_MAX_CHARS } from '../src/lib/ai/schemas'
+import {
+  SLIDE_BODY_MAX_CHARS,
+  SLIDE_ITEM_MAX_CHARS,
+  SLIDE_LIST_MAX_ITEMS,
+  SLIDE_STAT_MAX_CHARS,
+  SLIDE_TITLE_MAX_CHARS,
+} from '../src/lib/ai/schemas'
 import { renderSlide } from '../src/lib/render/render-slide'
 import { slideElement, type Brand } from '../src/lib/render/slide-element'
 import type { CarouselSlide } from '../src/lib/ai/schemas'
@@ -28,9 +34,17 @@ function toMaxLength(max: number): string {
 }
 
 const slides: CarouselSlide[] = [
-  { kind: 'cover', title: toMaxLength(SLIDE_TITLE_MAX_CHARS) },
-  { kind: 'body', title: toMaxLength(SLIDE_TITLE_MAX_CHARS), body: toMaxLength(SLIDE_BODY_MAX_CHARS) },
-  { kind: 'cta', title: toMaxLength(SLIDE_TITLE_MAX_CHARS), body: toMaxLength(SLIDE_BODY_MAX_CHARS) },
+  { kind: 'cover', layout: 'texto', title: toMaxLength(SLIDE_TITLE_MAX_CHARS) },
+  { kind: 'body', layout: 'texto', title: toMaxLength(SLIDE_TITLE_MAX_CHARS), body: toMaxLength(SLIDE_BODY_MAX_CHARS) },
+  {
+    kind: 'body',
+    layout: 'lista',
+    title: toMaxLength(SLIDE_TITLE_MAX_CHARS),
+    items: Array.from({ length: SLIDE_LIST_MAX_ITEMS }, () => toMaxLength(SLIDE_ITEM_MAX_CHARS)),
+  },
+  { kind: 'body', layout: 'numero', title: toMaxLength(SLIDE_STAT_MAX_CHARS), body: toMaxLength(SLIDE_BODY_MAX_CHARS) },
+  { kind: 'body', layout: 'frase', title: toMaxLength(SLIDE_TITLE_MAX_CHARS) },
+  { kind: 'cta', layout: 'texto', title: toMaxLength(SLIDE_TITLE_MAX_CHARS), body: toMaxLength(SLIDE_BODY_MAX_CHARS) },
 ]
 
 async function main() {
@@ -39,7 +53,7 @@ async function main() {
   for (const [index, slide] of slides.entries()) {
     const element = slideElement(slide, index, slides.length, brand)
     const buffer = await renderSlide(element)
-    const path = join(OUT_DIR, `${index + 1}-${slide.kind}.jpg`)
+    const path = join(OUT_DIR, `${index + 1}-${slide.kind}-${slide.layout}.jpg`)
     await writeFile(path, buffer)
     console.log(`[render-preview] ${path} (${buffer.byteLength} bytes)`)
   }

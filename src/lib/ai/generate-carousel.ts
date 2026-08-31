@@ -91,7 +91,8 @@ function beatsBlock(script: Script): string {
 }
 
 const closing =
-  'Entregue: os slides (campo "slides", capa → corpo → CTA) e a legenda do post (campo "caption"), com hashtags.'
+  'Entregue: os slides (campo "slides", capa → corpo → CTA) e a legenda do post (campo "caption"), com hashtags. ' +
+  'Escolha o layout de cada slide do meio pelo CONTEÚDO: passos ou checklist viram "lista"; um dado que impressiona vira "numero" (o número no title, o rótulo no body); a afirmação central vira "frase"; o resto é "texto". Varie os layouts — feed com dez slides iguais cansa.'
 
 /**
  * O prompt do pedido. Três formas, na ordem de prioridade: um roteiro que já
@@ -238,23 +239,39 @@ export function mockCarousel(input: GenerateCarouselInput): Carousel {
   const coverTitle = script ? script.headline : `${theme}: o que ${input.persona.niche} ignora`
 
   const beats = script?.beats.slice(0, MOCK_BODY_SLIDES) ?? []
-  const bodySlides: CarouselSlide[] = Array.from({ length: MOCK_BODY_SLIDES }, (_, index) => {
-    const beat = beats[index]
-    return {
+  // Um slide de cada layout, de propósito: é o mock que exercita o render
+  // inteiro nos testes e no preview — layout que só a IA produz é layout que
+  // quebra sem ninguém ver.
+  const bodySlides: CarouselSlide[] = [
+    {
       kind: 'body',
-      title: truncate(beat?.tela || `Passo ${index + 1} de ${themeLower}`, SLIDE_TITLE_MAX_CHARS),
-      body: truncate(
-        beat?.fala || `O jeito certo de lidar com ${themeLower}, direto ao ponto.`,
-        SLIDE_BODY_MAX_CHARS,
-      ),
-    }
-  })
+      layout: 'texto',
+      title: truncate(beats[0]?.tela || `Passo 1 de ${themeLower}`, SLIDE_TITLE_MAX_CHARS),
+      body: truncate(beats[0]?.fala || `O jeito certo de lidar com ${themeLower}, direto ao ponto.`, SLIDE_BODY_MAX_CHARS),
+    },
+    {
+      kind: 'body',
+      layout: 'lista',
+      title: truncate(`O caminho em 3 passos`, SLIDE_TITLE_MAX_CHARS),
+      items: [
+        truncate(`Comece pequeno em ${themeLower}`, 80),
+        'Teste com uma pessoa real',
+        'Corrija e repita',
+      ],
+    },
+    {
+      kind: 'body',
+      layout: 'numero',
+      title: '1º passo',
+      body: truncate(`é o que separa quem faz de quem assiste em ${themeLower}`, SLIDE_BODY_MAX_CHARS),
+    },
+  ]
 
   const slides: CarouselSlide[] = [
-    { kind: 'cover', title: truncate(coverTitle, SLIDE_TITLE_MAX_CHARS) },
+    { kind: 'cover', layout: 'texto', title: truncate(coverTitle, SLIDE_TITLE_MAX_CHARS) },
     ...bodySlides,
     {
-      kind: 'cta',
+      kind: 'cta', layout: 'texto',
       title: truncate(`Comenta ${keyword}`, SLIDE_TITLE_MAX_CHARS),
       body: truncate(
         `Comenta ${keyword} aqui embaixo que eu te mando o passo a passo sobre ${themeLower}.`,

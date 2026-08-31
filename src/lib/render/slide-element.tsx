@@ -172,6 +172,60 @@ function ctaBadge(keyword: string): ReactElement {
 }
 
 /**
+ * Lista numerada: o índice em mono (o "ativo tipográfico" da marca) e o item
+ * em corpo. Item de 80 caracteres quebra em duas linhas — por isso o índice
+ * alinha no TOPO do item, não na baseline (que o satori cravava na última
+ * linha, medido no preview). Índice em régua, não em azul: o manual reserva
+ * o azul para o CTA, regra 60-30-10.
+ */
+function listItems(items: readonly string[]): ReactElement {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', marginTop: 40 }}>
+      {items.map((item, index) => (
+        <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: 28, marginTop: index === 0 ? 0 : 30 }}>
+          <span style={{ display: 'flex', fontFamily: FONT_FAMILY.label, fontSize: 30, marginTop: 8, color: COLOR.ruler }}>
+            {String(index + 1).padStart(2, '0')}
+          </span>
+          <span style={{ display: 'flex', flex: 1, fontFamily: FONT_FAMILY.body, fontSize: 38, lineHeight: 1.35, color: COLOR.ink }}>
+            {item}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/**
+ * O dado gigante do layout "numero". Sem shrink-to-fit no satori, o corpo
+ * desce por comprimento — mesmo mecanismo do `ctaKeywordFontSize`, degraus
+ * medidos no preview com o teto do schema (12 caracteres).
+ */
+export function statFontSize(length: number): number {
+  if (length <= 4) return 240
+  if (length <= 8) return 160
+  return 110
+}
+
+function statNumber(text: string): ReactElement {
+  return (
+    <div style={{ display: 'flex', fontFamily: FONT_FAMILY.title, fontSize: statFontSize(charLength(text)), lineHeight: 1, color: COLOR.ink }}>
+      {text}
+    </div>
+  )
+}
+
+/** A afirmação sozinha, com a régua da marca à esquerda — é citação de si mesmo, não parágrafo. */
+function statement(text: string): ReactElement {
+  return (
+    <div style={{ display: 'flex', borderLeft: `6px solid ${COLOR.ink}`, paddingLeft: 44 }}>
+      <div style={{ display: 'flex', fontFamily: FONT_FAMILY.title, fontSize: 84, lineHeight: 1.15, color: COLOR.ink }}>
+        {text}
+      </div>
+    </div>
+  )
+}
+
+/**
  * Tamanho do título: a capa é o gancho, carrega mais peso que o resto.
  * Calibrado contra `scripts/render-preview.mts` com o texto MAIS LONGO que o
  * schema permite (60 caracteres) — ainda sobra respiro embaixo mesmo no pior
@@ -211,8 +265,15 @@ export function slideElement(
           justifyContent: 'center',
         }}
       >
-        {title(slide.title, titleSize(slide.kind))}
-        {slide.body ? body(slide.body) : null}
+        {slide.kind === 'body' && slide.layout === 'frase' ? (
+          statement(slide.title)
+        ) : slide.kind === 'body' && slide.layout === 'numero' ? (
+          statNumber(slide.title)
+        ) : (
+          title(slide.title, titleSize(slide.kind))
+        )}
+        {slide.kind === 'body' && slide.layout === 'lista' && slide.items ? listItems(slide.items) : null}
+        {slide.body && !(slide.kind === 'body' && slide.layout === 'frase') ? body(slide.body) : null}
         {slide.kind === 'cta' ? ctaBadge(brand.ctaKeyword) : null}
       </div>
     </div>

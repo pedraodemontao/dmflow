@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { CarouselSlide } from '@/lib/ai/schemas'
-import { FONT_FAMILY, ctaKeywordFontSize, slideElement, type Brand } from '@/lib/render/slide-element'
+import { FONT_FAMILY, ctaKeywordFontSize, slideElement, statFontSize, type Brand } from '@/lib/render/slide-element'
 
 /**
  * O que importa testar aqui é a DECISÃO, não o pixel: satori não roda no
@@ -31,7 +31,7 @@ const brand: Brand = { handle: 'docesdaju', ctaKeyword: 'DOCE' }
 
 describe('slideElement', () => {
   it('a capa mostra @handle e NÃO mostra paginação', () => {
-    const slide: CarouselSlide = { kind: 'cover', title: 'O ponto do brigadeiro' }
+    const slide: CarouselSlide = { kind: 'cover', layout: 'texto', title: 'O ponto do brigadeiro' }
     const text = allText(slide, 0, 5, brand)
 
     expect(text).toContain('@docesdaju')
@@ -39,7 +39,7 @@ describe('slideElement', () => {
   })
 
   it('o body mostra n/N, não o handle', () => {
-    const slide: CarouselSlide = { kind: 'body', title: 'Passo 1', body: 'Texto do passo.' }
+    const slide: CarouselSlide = { kind: 'body', layout: 'texto', title: 'Passo 1', body: 'Texto do passo.' }
     const text = allText(slide, 1, 5, brand)
 
     expect(text).toContain('02 / 05')
@@ -47,14 +47,14 @@ describe('slideElement', () => {
   })
 
   it('o cta mostra a palavra-chave, mesmo que o título do modelo não repita ela', () => {
-    const slide: CarouselSlide = { kind: 'cta', title: 'Fechamento qualquer, sem a palavra' }
+    const slide: CarouselSlide = { kind: 'cta', layout: 'texto', title: 'Fechamento qualquer, sem a palavra' }
     const text = allText(slide, 4, 5, brand)
 
     expect(text).toContain('DOCE')
   })
 
   it('corta palavra-chave absurdamente longa — persona.cta_keyword não tem teto no banco', () => {
-    const slide: CarouselSlide = { kind: 'cta', title: 'Comenta' }
+    const slide: CarouselSlide = { kind: 'cta', layout: 'texto', title: 'Comenta' }
     const longa = 'UMAPALAVRACHAVEENORMEESEMESPACONENHUM'
     const text = allText(slide, 4, 5, { handle: 'x', ctaKeyword: longa })
 
@@ -63,7 +63,7 @@ describe('slideElement', () => {
   })
 
   it('o cta troca de palavra-chave conforme a persona — não é texto fixo no código', () => {
-    const slide: CarouselSlide = { kind: 'cta', title: 'Comenta' }
+    const slide: CarouselSlide = { kind: 'cta', layout: 'texto', title: 'Comenta' }
     const text = allText(slide, 4, 5, { handle: 'outraconta', ctaKeyword: 'SERRA' })
 
     expect(text).toContain('SERRA')
@@ -71,8 +71,8 @@ describe('slideElement', () => {
   })
 
   it('body e cover não ganham o selo de cta', () => {
-    const cover = allText({ kind: 'cover', title: 'Capa' }, 0, 3, brand)
-    const body = allText({ kind: 'body', title: 'Meio', body: 'x' }, 1, 3, brand)
+    const cover = allText({ kind: 'cover', layout: 'texto', title: 'Capa' }, 0, 3, brand)
+    const body = allText({ kind: 'body', layout: 'texto', title: 'Meio', body: 'x' }, 1, 3, brand)
 
     expect(cover).not.toContain('DOCE')
     expect(body).not.toContain('DOCE')
@@ -94,5 +94,39 @@ describe('ctaKeywordFontSize', () => {
     expect(ctaKeywordFontSize('DOCE'.length)).toBe(72)
     expect(ctaKeywordFontSize('COMPARTILHA'.length)).toBe(56)
     expect(ctaKeywordFontSize('COMPARTILHAMENTO'.length)).toBe(44)
+  })
+})
+
+describe('layouts do body', () => {
+  it('lista mostra os itens com a numeração', () => {
+    const slide: CarouselSlide = { kind: 'body', layout: 'lista', title: 'O caminho', items: ['primeiro passo', 'segundo passo'] }
+    const text = allText(slide, 1, 3, brand)
+
+    expect(text).toContain('primeiro passo')
+    expect(text).toContain('segundo passo')
+    expect(text).toContain('01')
+  })
+
+  it('numero desenha o dado e o rótulo', () => {
+    const slide: CarouselSlide = { kind: 'body', layout: 'numero', title: '87%', body: 'dos leads somem sem resposta' }
+    const text = allText(slide, 1, 3, brand)
+
+    expect(text).toContain('87%')
+    expect(text).toContain('dos leads somem sem resposta')
+  })
+
+  it('frase mostra a afirmação sozinha', () => {
+    const slide: CarouselSlide = { kind: 'body', layout: 'frase', title: 'Entregar vem antes da confiança.' }
+    const text = allText(slide, 1, 3, brand)
+
+    expect(text).toContain('Entregar vem antes da confiança.')
+  })
+})
+
+describe('statFontSize', () => {
+  it('desce em degraus para o dado comprido caber', () => {
+    expect(statFontSize('3x'.length)).toBe(240)
+    expect(statFontSize('R$ 12k'.length)).toBe(160)
+    expect(statFontSize('12 clientes'.length)).toBe(110)
   })
 })

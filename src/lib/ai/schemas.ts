@@ -95,8 +95,26 @@ export const SLIDE_BODY_MAX_CHARS = 220
 /** Legenda do POST — limite da própria Meta para caption de mídia, não o de DM (`META_LIMITS`, outro domínio). */
 export const CAROUSEL_CAPTION_MAX_CHARS = 2200
 
+/** Item de lista: uma linha só no slide — duas quebrariam o alinhamento da numeração. */
+export const SLIDE_ITEM_MAX_CHARS = 80
+export const SLIDE_LIST_MIN_ITEMS = 2
+export const SLIDE_LIST_MAX_ITEMS = 5
+/** Layout "numero": o dado é desenhado GIGANTE; acima disso não cabe nem no menor degrau. */
+export const SLIDE_STAT_MAX_CHARS = 12
+
+/**
+ * O modelo escolhe o DESENHO de cada slide do meio — um template só cansa em
+ * uma semana de feed. As combinações são travadas por refine, não por prosa
+ * no prompt: prompt se descumpre com boa intenção, schema não.
+ */
 const carouselSlideSchema = z.object({
   kind: z.enum(['cover', 'body', 'cta']).describe('Papel do slide: capa, meio ou fechamento'),
+  layout: z
+    .enum(['texto', 'lista', 'numero', 'frase'])
+    .default('texto')
+    .describe(
+      'Desenho do slide — SÓ nos "body"; capa e fechamento usam "texto". texto: título + apoio. lista: título + 2 a 5 itens curtos. numero: UM dado forte (title é o número, ex. "3x" ou "87%"; body é o rótulo do dado). frase: uma afirmação só, sem apoio. Varie: dois slides seguidos com o mesmo layout cansam.',
+    ),
   title: z
     .string()
     .min(1)
@@ -108,7 +126,19 @@ const carouselSlideSchema = z.object({
     .max(SLIDE_BODY_MAX_CHARS)
     .optional()
     .describe(`Texto de apoio do slide, até ${SLIDE_BODY_MAX_CHARS} caracteres. Opcional — a capa costuma não precisar`),
+  items: z
+    .array(z.string().min(1).max(SLIDE_ITEM_MAX_CHARS))
+    .min(SLIDE_LIST_MIN_ITEMS)
+    .max(SLIDE_LIST_MAX_ITEMS)
+    .optional()
+    .describe(`Só no layout "lista": os itens na ordem, até ${SLIDE_ITEM_MAX_CHARS} caracteres cada`),
 })
+  .refine((s) => s.layout !== 'lista' || (s.items?.length ?? 0) >= SLIDE_LIST_MIN_ITEMS, 'Layout "lista" exige os itens')
+  .refine((s) => s.layout === 'lista' || s.items === undefined, 'Itens só existem no layout "lista"')
+  .refine((s) => s.layout !== 'numero' || s.title.length <= SLIDE_STAT_MAX_CHARS, `No layout "numero" o título é o dado: até ${SLIDE_STAT_MAX_CHARS} caracteres`)
+  .refine((s) => s.layout !== 'numero' || (s.body?.length ?? 0) > 0, 'Layout "numero" exige o rótulo do dado no body')
+  .refine((s) => s.layout !== 'frase' || s.body === undefined, 'Layout "frase" é a afirmação sozinha, sem body')
+  .refine((s) => s.kind === 'body' || s.layout === 'texto', 'Capa e fechamento usam layout "texto" — o desenho deles é próprio')
 
 export type CarouselSlide = z.infer<typeof carouselSlideSchema>
 

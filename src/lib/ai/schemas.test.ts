@@ -266,6 +266,42 @@ describe('carouselSchema', () => {
     expect(carouselSchema.safeParse(ctaNoMeio).success).toBe(false)
   })
 
+  it('lista exige itens, e itens só existem na lista', () => {
+    const semItens = carrossel({ slides: [{ kind: 'cover', title: 'Capa' }, slide({ layout: 'lista' }), { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(semItens).success).toBe(false)
+
+    const itensNoTexto = carrossel({ slides: [{ kind: 'cover', title: 'Capa' }, slide({ items: ['a', 'b'] }), { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(itensNoTexto).success).toBe(false)
+
+    const certa = carrossel({ slides: [{ kind: 'cover', title: 'Capa' }, slide({ layout: 'lista', body: undefined, items: ['um', 'dois', 'três'] }), { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(certa).success).toBe(true)
+  })
+
+  it('numero: o título é o dado (curto) e o rótulo é obrigatório', () => {
+    const tituloLongo = carrossel({ slides: [{ kind: 'cover', title: 'Capa' }, slide({ layout: 'numero', title: 'muito mais que doze' }), { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(tituloLongo).success).toBe(false)
+
+    const semRotulo = carrossel({ slides: [{ kind: 'cover', title: 'Capa' }, slide({ layout: 'numero', title: '3x', body: undefined }), { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(semRotulo).success).toBe(false)
+
+    const certo = carrossel({ slides: [{ kind: 'cover', title: 'Capa' }, slide({ layout: 'numero', title: '87%' }), { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(certo).success).toBe(true)
+  })
+
+  it('frase é a afirmação sozinha; capa e fechamento ficam no texto', () => {
+    const fraseComBody = carrossel({ slides: [{ kind: 'cover', title: 'Capa' }, slide({ layout: 'frase' }), { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(fraseComBody).success).toBe(false)
+
+    const capaLista = carrossel({ slides: [{ kind: 'cover', title: 'Capa', layout: 'frase' }, slide(), { kind: 'cta', title: 'Comenta' }] })
+    expect(carouselSchema.safeParse(capaLista).success).toBe(false)
+  })
+
+  it('layout ausente vira texto no parse — carrossel gravado antes do campo continua válido', () => {
+    const parsed = carouselSchema.safeParse(carrossel())
+    expect(parsed.success).toBe(true)
+    if (parsed.success) expect(parsed.data.slides[1].layout).toBe('texto')
+  })
+
   it(`recusa menos de ${CAROUSEL_MIN_SLIDES} slides`, () => {
     const curto = carrossel({ slides: [{ kind: 'cover', title: 'A capa' }, { kind: 'cta', title: 'Comenta' }] })
     expect(carouselSchema.safeParse(curto).success).toBe(false)
