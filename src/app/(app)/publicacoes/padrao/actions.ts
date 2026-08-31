@@ -5,7 +5,10 @@ import { randomUUID } from 'node:crypto'
 import { z } from 'zod'
 
 import { createPublication, type PublicationActionResult } from '@/app/(app)/publicacoes/actions'
+import { activePersona } from '@/lib/ai/carousel-context'
+import { cloneStaticFromImage, type CloneImage, type CloneMode } from '@/lib/ai/clone-content'
 import { getAccount } from '@/lib/data'
+import { IMAGE_MAX_BYTES, isImageType } from '@/lib/publications/rules'
 import { PUBLICATION_MEDIA_BUCKET } from '@/lib/publications/media-url'
 import { CAPTION_MAX_CHARS } from '@/lib/publications/rules'
 import { loadBrandPalette } from '@/lib/render/palette'
@@ -87,4 +90,36 @@ export async function savePatternPublication(raw: unknown): Promise<PublicationA
     flowId: parsed.data.flowId ?? null,
     scheduledAt: parsed.data.scheduledAt ?? null,
   })
+}
+
+export interface CloneTextResult {
+  ok: boolean
+  error?: string
+  text?: string
+}
+
+/** Clonar foto estática: um print → o texto do card, copiado ou modelado. O nome e o handle são sempre os do dono. */
+export async function cloneStaticText(formData: FormData): Promise<CloneTextResult> {
+  const mode = String(formData.get('mode') ?? '')
+  if (mode !== 'copiar' && mode !== 'modelar') return { ok: false, error: 'Modo inválido.' }
+
+  const file = formData.get('file')
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: 'Suba o print do post.' }
+  if (!isImageType(file.type)) return { ok: false, error: 'Só JPEG ou PNG.' }
+  if (file.size > IMAGE_MAX_BYTES) return { ok: false, error: 'Print maior que 8 MB.' }
+
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta do Instagram conectada.' }
+  const persona = await activePersona(account.id, null)
+  if (!persona) return { ok: false, error: 'Nenhuma persona ativa.' }
+
+  const image: CloneImage = {
+    mediaType: file.type as CloneImage['mediaType'],
+    base64: Buffer.from(await file.arrayBuffer()).toString('base64'),
+  }
+
+  const cloned = await cloneStaticFromImage({ persona, mode: mode as CloneMode, images: [image] })
+  if (!cloned.ok) return { ok: false, error: cloned.error }
+
+  return { ok: true, text: cloned.output.text }
 }

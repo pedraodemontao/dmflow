@@ -4,7 +4,9 @@ import { randomUUID } from 'node:crypto'
 
 import { z } from 'zod'
 
-import { loadCarouselContext, type CarouselContextProblem } from '@/lib/ai/carousel-context'
+import { activePersona, loadCarouselContext, type CarouselContextProblem } from '@/lib/ai/carousel-context'
+import { cloneCarouselFromImages, type CloneImage, type CloneMode } from '@/lib/ai/clone-content'
+import { IMAGE_MAX_BYTES, isImageType } from '@/lib/publications/rules'
 import { MOCK_MODEL } from '@/lib/ai/generate'
 import { generateCarousel } from '@/lib/ai/generate-carousel'
 import { carouselSchema, type Carousel } from '@/lib/ai/schemas'
@@ -233,5 +235,87 @@ export async function rerenderCarousel(raw: unknown): Promise<ComposerResult> {
     }
   } catch (error) {
     return { ok: false, error: `Render falhou: ${error instanceof Error ? error.message : String(error)}` }
+  }
+}
+
+/**
+ * Clonar carrossel de prints (31/08): os slides de um conteúdo que performou
+ * viram um Draft do compositor — extraídos por visão, renderizados na nossa
+ * marca. `copiar` mantém o texto (para conteúdo do PRÓPRIO dono); `modelar`
+ * reescreve na voz da persona. O resultado cai no MESMO fluxo do gerar:
+ * editar, re-renderizar, salvar.
+ */
+export async function cloneCarousel(formData: FormData): Promise<ComposerResult> {
+  const mode = String(formData.get('mode') ?? '')
+  if (mode !== 'copiar' && mode !== 'modelar') return { ok: false, error: 'Modo inválido.' }
+
+  const files = formData.getAll('files').filter((f): f is File => f instanceof File && f.size > 0)
+  if (files.length < 1 || files.length > 10) return { ok: false, error: 'Suba de 1 a 10 prints, na ordem dos slides.' }
+
+  const images: CloneImage[] = []
+  for (const file of files) {
+    if (!isImageType(file.type)) return { ok: false, error: 'Só JPEG ou PNG.' }
+    if (file.size > IMAGE_MAX_BYTES) return { ok: false, error: `Print maior que 8 MB: ${file.name}` }
+    images.push({ mediaType: file.type, base64: Buffer.from(await file.arrayBuffer()).toString('base64') })
+  }
+
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta do Instagram conectada.' }
+  const persona = await activePersona(account.id, null)
+  if (!persona) return { ok: false, error: 'Nenhuma persona ativa. Modelar e copiar saem na voz dela — cadastre antes.' }
+
+  const cloned = await cloneCarouselFromImages({ persona, mode: mode as CloneMode, images })
+  if (!cloned.ok) return { ok: false, error: cloned.error }
+
+  // Vai para `scripts` como toda peça de IA — é o histórico que a tela de
+  // Roteiros lê. Falha ao gravar não descarta o clone: o dono já pagou.
+  const { data: scriptRow, error: scriptError } = await supabaseAdmin
+    .from('scripts')
+    .insert({
+      account_id: account.id,
+      persona_id: persona.id,
+      kind: 'carousel',
+      theme: `clonado (${mode})`,
+      output: cloned.output,
+      model_used: cloned.model,
+    })
+    .select('id')
+    .single()
+  if (scriptError) console.error('[ai] clone não gravado em scripts:', scriptError.message)
+
+  const renderKey = (scriptRow as { id: string } | null)?.id ?? randomUUID()
+
+  try {
+    const rendered = await renderAndUploadCarousel({
+      renderKey,
+      carousel: cloned.output,
+      brand: {
+        handle: account.username ?? '',
+        ctaKeyword: persona.cta_keyword,
+        palette: await loadBrandPalette(account.id),
+      },
+    })
+    return {
+      ok: true,
+      scriptId: (scriptRow as { id: string } | null)?.id ?? null,
+      renderKey,
+      carousel: cloned.output,
+      paths: rendered.paths,
+      urls: rendered.urls,
+      model: cloned.model,
+      warning: scriptError ? `Clonado, mas não salvo em Roteiros: ${scriptError.message}` : undefined,
+    }
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error)
+    return {
+      ok: true,
+      scriptId: (scriptRow as { id: string } | null)?.id ?? null,
+      renderKey,
+      carousel: cloned.output,
+      paths: [],
+      urls: [],
+      model: cloned.model,
+      warning: `Clonado, mas o render falhou: ${detail}. Renderize de novo.`,
+    }
   }
 }

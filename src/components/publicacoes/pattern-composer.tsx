@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { Eye, Send } from 'lucide-react'
 
-import { previewPattern, savePatternPublication } from '@/app/(app)/publicacoes/padrao/actions'
+import { cloneStaticText, previewPattern, savePatternPublication } from '@/app/(app)/publicacoes/padrao/actions'
 import type { FlowOption } from '@/components/publicacoes/new-publication-form'
 import { Button, Input, Label, Select, Textarea } from '@/components/ui'
 import { CAPTION_MAX_CHARS } from '@/lib/publications/rules'
@@ -35,11 +35,32 @@ export function PatternComposer({
   const [previewedCard, setPreviewedCard] = useState<string | null>(null)
   const [etapa, setEtapa] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [cloneMode, setCloneMode] = useState<'modelar' | 'copiar'>('modelar')
 
   const ocupado = etapa !== null
   const card = { pattern: 'tweet' as const, name, handle, text }
   const cardKey = JSON.stringify(card)
   const desatualizado = previewedCard !== cardKey
+
+  async function clonarDePrint(file: File) {
+    setErro(null)
+    setEtapa('Lendo o print…')
+    try {
+      const formData = new FormData()
+      formData.append('mode', cloneMode)
+      formData.append('file', file)
+      const result = await cloneStaticText(formData)
+      if (!result.ok || !result.text) {
+        setErro(result.error ?? 'Não deu certo.')
+        return
+      }
+      setText(result.text)
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : String(error))
+    } finally {
+      setEtapa(null)
+    }
+  }
 
   async function gerarPrevia() {
     setErro(null)
@@ -113,6 +134,32 @@ export function PatternComposer({
         <p className={`label mt-1 text-[9px] ${text.length > TWEET_TEXT_MAX_CHARS ? 'text-danger' : 'text-muted'}`}>
           {text.length}/{TWEET_TEXT_MAX_CHARS}
         </p>
+      </div>
+
+      <div className="rounded-md border border-border bg-surface-2 p-3">
+        <Label htmlFor="clone-print">Ou clone de um print</Label>
+        <p className="label mt-1 text-[9px] text-muted">
+          Suba o print de um post de texto que performou. Modelar reescreve na sua voz; copiar
+          mantém o texto — copiar é para conteúdo SEU, de terceiro é plágio.
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <Input
+            id="clone-print"
+            type="file"
+            accept="image/jpeg,image/png"
+            disabled={ocupado}
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) void clonarDePrint(file)
+            }}
+          />
+          <Button type="button" size="sm" variant={cloneMode === 'modelar' ? 'primary' : 'outline'} disabled={ocupado} onClick={() => setCloneMode('modelar')}>
+            Modelar
+          </Button>
+          <Button type="button" size="sm" variant={cloneMode === 'copiar' ? 'primary' : 'outline'} disabled={ocupado} onClick={() => setCloneMode('copiar')}>
+            Copiar
+          </Button>
+        </div>
       </div>
 
       <Button type="button" variant="outline" disabled={ocupado || !text.trim()} onClick={() => void gerarPrevia()}>

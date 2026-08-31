@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { RefreshCw, Sparkles } from 'lucide-react'
 
 import { createPublication, uploadPublicationImage } from '@/app/(app)/publicacoes/actions'
-import { generateAndRenderCarousel, rerenderCarousel } from '@/app/(app)/publicacoes/gerar/actions'
+import { cloneCarousel, generateAndRenderCarousel, rerenderCarousel } from '@/app/(app)/publicacoes/gerar/actions'
 import type { FlowOption } from '@/components/publicacoes/new-publication-form'
 import { Badge, Button, Input, Label, Select, Textarea } from '@/components/ui'
 import {
@@ -70,6 +70,8 @@ export function CarouselComposer({
   const [draft, setDraft] = useState<Draft | null>(null)
   /** Caminho da arte de fundo da capa no bucket. O render que sai é sempre o do último `renderizar`. */
   const [coverArt, setCoverArt] = useState<string | null>(null)
+  const [cloneFiles, setCloneFiles] = useState<File[]>([])
+  const [cloneMode, setCloneMode] = useState<'modelar' | 'copiar'>('modelar')
   const [etapa, setEtapa] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
   const [aviso, setAviso] = useState<string | null>(null)
@@ -87,6 +89,37 @@ export function CarouselComposer({
         pillarId: pillarId || null,
         theme: theme || null,
       })
+      if (!result.ok || !result.carousel || !result.renderKey) {
+        setErro(result.error ?? 'Não deu certo.')
+        return
+      }
+      setDraft({
+        scriptId: result.scriptId ?? null,
+        renderKey: result.renderKey,
+        carousel: result.carousel,
+        paths: result.paths ?? [],
+        urls: result.urls ?? [],
+        model: result.model,
+        mock: result.mock === true,
+        renderedSlides: JSON.stringify(result.carousel.slides),
+      })
+      setAviso(result.warning ?? null)
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : String(error))
+    } finally {
+      setEtapa(null)
+    }
+  }
+
+  async function clonar() {
+    setErro(null)
+    setAviso(null)
+    setEtapa('Lendo os prints…')
+    try {
+      const formData = new FormData()
+      formData.append('mode', cloneMode)
+      for (const file of cloneFiles) formData.append('files', file)
+      const result = await cloneCarousel(formData)
       if (!result.ok || !result.carousel || !result.renderKey) {
         setErro(result.error ?? 'Não deu certo.')
         return
@@ -253,6 +286,33 @@ export function CarouselComposer({
           <Sparkles className="size-3.5" />
           {etapa && !draft ? etapa : draft ? 'Gerar outro (paga de novo)' : 'Gerar carrossel'}
         </Button>
+
+        <div className="rounded-md border border-border bg-surface-2 p-3">
+          <Label htmlFor="clone-files">Ou clone de prints</Label>
+          <p className="label mt-1 text-[9px] text-muted">
+            Suba os slides de um carrossel que performou, na ordem. Modelar reescreve na sua voz;
+            copiar mantém o texto — copiar é para conteúdo SEU, de terceiro é plágio.
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <Input
+              id="clone-files"
+              type="file"
+              accept="image/jpeg,image/png"
+              multiple
+              disabled={ocupado}
+              onChange={(e) => setCloneFiles(Array.from(e.target.files ?? []))}
+            />
+            <Button type="button" size="sm" variant={cloneMode === 'modelar' ? 'primary' : 'outline'} disabled={ocupado} onClick={() => setCloneMode('modelar')}>
+              Modelar
+            </Button>
+            <Button type="button" size="sm" variant={cloneMode === 'copiar' ? 'primary' : 'outline'} disabled={ocupado} onClick={() => setCloneMode('copiar')}>
+              Copiar
+            </Button>
+            <Button type="button" size="sm" variant="outline" disabled={ocupado || cloneFiles.length === 0} onClick={() => void clonar()}>
+              {etapa === 'Lendo os prints…' ? etapa : 'Clonar carrossel'}
+            </Button>
+          </div>
+        </div>
       </section>
 
       {erro && <p className="text-[11px] text-danger">{erro}</p>}
