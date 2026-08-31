@@ -52,6 +52,8 @@ const MODEL_BY_TASK = {
   script: 'claude-opus-5',
   /** Material de entrega: a peça estruturada. */
   delivery: 'claude-sonnet-5',
+  /** Legenda de post a partir da foto: peça curta, forma dada — econômico. */
+  caption: 'claude-sonnet-5',
   /** Carrossel: forma fixa, teto de caractere por slide — estruturado como a entrega. */
   carousel: 'claude-sonnet-5',
 } as const
@@ -71,7 +73,7 @@ export type AiTask = keyof typeof MODEL_BY_TASK
  * 3.000 tokens sobra folga para a pontuação do JSON em cima disso sem chegar
  * perto do teto do roteiro, que não tem tal cerca (beats de tamanho livre).
  */
-const MAX_TOKENS_BY_TASK = { script: 4000, delivery: 8000, carousel: 3000 } as const
+const MAX_TOKENS_BY_TASK = { script: 4000, delivery: 8000, carousel: 3000, caption: 1200 } as const
 
 /**
  * Uma retentativa, não mais. A primeira falha de schema costuma ser descuido e
@@ -106,6 +108,7 @@ function model(task: AiTask = 'script'): string {
     script: process.env.ANTHROPIC_MODEL_SCRIPT,
     delivery: process.env.ANTHROPIC_MODEL_DELIVERY,
     carousel: process.env.ANTHROPIC_MODEL_CAROUSEL,
+    caption: process.env.ANTHROPIC_MODEL_CAPTION,
   }
 
   return overridePorTarefa[task] || MODEL_BY_TASK[task]
@@ -159,6 +162,11 @@ export interface StructuredRequest<T> {
   toolDescription: string
   /** Qual tarefa — decide o modelo. Omitir vale como `script`, o mais capaz. */
   task?: AiTask
+  /**
+   * Imagens que entram ANTES do texto do prompt — é a ordem que a própria
+   * Anthropic recomenda para visão. Base64 cru, sem o prefixo data:.
+   */
+  images?: Array<{ mediaType: 'image/jpeg' | 'image/png'; base64: string }>
 }
 
 export interface StructuredResult<T> {
@@ -189,7 +197,17 @@ export async function generateStructured<T>(
   if (!apiKey) throw new AnthropicError('ANTHROPIC_API_KEY não configurada')
 
   const inputSchema = toolInputSchema(request.schema)
-  const messages: Message[] = [{ role: 'user', content: request.prompt }]
+  const content: string | Array<Record<string, unknown>> =
+    request.images && request.images.length > 0
+      ? [
+          ...request.images.map((image) => ({
+            type: 'image',
+            source: { type: 'base64', media_type: image.mediaType, data: image.base64 },
+          })),
+          { type: 'text', text: request.prompt },
+        ]
+      : request.prompt
+  const messages: Message[] = [{ role: 'user', content }]
 
   let tokensIn = 0
   let tokensOut = 0

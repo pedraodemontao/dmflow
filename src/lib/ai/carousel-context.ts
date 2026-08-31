@@ -64,7 +64,7 @@ export function pickSource(args: Pick<CarouselSourceArgs, 'libraryItemId' | 'scr
   return 'free'
 }
 
-async function activePersona(accountId: string, personaId: string | null): Promise<Persona | null> {
+export async function activePersona(accountId: string, personaId: string | null): Promise<Persona | null> {
   if (personaId) {
     const { data } = await supabaseAdmin.from('personas').select('*').eq('id', personaId).maybeSingle()
     if (data) return data as Persona

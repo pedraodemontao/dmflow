@@ -6,6 +6,7 @@ import { useState } from 'react'
 import {
   createPublication,
   createSignedVideoUpload,
+  generateUploadCaption,
   uploadPublicationImage,
 } from '@/app/(app)/publicacoes/actions'
 import { Button, Input, Label, Select, Textarea } from '@/components/ui'
@@ -44,6 +45,8 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
   const [quandoLocal, setQuandoLocal] = useState(() => localInputValue(new Date(Date.now() + 60 * 60 * 1000)))
   const [etapa, setEtapa] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [avisoLegenda, setAvisoLegenda] = useState<string | null>(null)
+  const [gerandoLegenda, setGerandoLegenda] = useState(false)
 
   const enviando = etapa !== null
 
@@ -128,6 +131,31 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
 
   const aceita = kind === 'reel' ? 'video/mp4,video/quicktime' : 'image/jpeg,image/png'
 
+  /** A foto que o modelo olha: a primeira do post, ou a capa do reel. */
+  async function gerarLegenda() {
+    setErro(null)
+    setAvisoLegenda(null)
+    setGerandoLegenda(true)
+    try {
+      const formData = new FormData()
+      formData.append('kind', kind)
+      formData.append('draft', caption)
+      const foto = kind === 'reel' ? cover : files[0]
+      if (foto) formData.append('file', foto)
+      const result = await generateUploadCaption(formData)
+      if (!result.ok || !result.caption) {
+        setErro(result.error ?? 'Não deu certo.')
+        return
+      }
+      setCaption(result.caption)
+      setAvisoLegenda(result.warning ?? null)
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : String(error))
+    } finally {
+      setGerandoLegenda(false)
+    }
+  }
+
   return (
     <form
       className="space-y-5"
@@ -194,7 +222,18 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
       )}
 
       <div>
-        <Label htmlFor="caption">Legenda</Label>
+        <div className="flex items-center justify-between">
+          <Label htmlFor="caption">Legenda</Label>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={enviando || gerandoLegenda}
+            onClick={() => void gerarLegenda()}
+          >
+            {gerandoLegenda ? 'Escrevendo…' : 'Gerar com IA'}
+          </Button>
+        </div>
         <Textarea
           id="caption"
           rows={6}
@@ -207,6 +246,7 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
         <p className={`label mt-1 text-[9px] ${caption.length > CAPTION_MAX_CHARS ? 'text-danger' : 'text-muted'}`}>
           {caption.length}/{CAPTION_MAX_CHARS}
         </p>
+        {avisoLegenda && <p className="mt-1 text-[10px] text-warning">{avisoLegenda}</p>}
       </div>
 
       {flows.length > 0 && (

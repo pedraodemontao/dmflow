@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache'
 import sharp from 'sharp'
 import { z } from 'zod'
 
+import { activePersona } from '@/lib/ai/carousel-context'
+import { generateCaption } from '@/lib/ai/generate-caption'
 import { getAccount } from '@/lib/data'
 import { PUBLICATION_MEDIA_BUCKET } from '@/lib/publications/media-url'
 import {
@@ -272,4 +274,50 @@ export async function deletePublication(id: string): Promise<PublicationActionRe
 
   revalidatePath('/publicacoes')
   return { ok: true, id }
+}
+
+export interface CaptionResult {
+  ok: boolean
+  error?: string
+  caption?: string
+  /** A IA não respondeu: o texto é exemplo e a tela avisa — o dono revisa antes de usar. */
+  warning?: string
+}
+
+/**
+ * A legenda do upload, escrita olhando a FOTO (visão). A imagem vai direto do
+ * formulário para o modelo — não passa pelo bucket, porque legenda se gera
+ * antes de decidir publicar, e o bucket é o que a Meta serve ao público.
+ */
+export async function generateUploadCaption(formData: FormData): Promise<CaptionResult> {
+  const account = await getAccount()
+  if (!account) return { ok: false, error: 'Nenhuma conta do Instagram conectada.' }
+
+  const persona = await activePersona(account.id, null)
+  if (!persona) return { ok: false, error: 'Nenhuma persona ativa. A legenda sai na voz dela — cadastre antes.' }
+
+  const kindRaw = String(formData.get('kind') ?? '')
+  if (kindRaw !== 'image' && kindRaw !== 'carousel' && kindRaw !== 'reel') {
+    return { ok: false, error: 'Tipo inválido.' }
+  }
+
+  const draft = String(formData.get('draft') ?? '').trim() || null
+
+  let image: { mediaType: 'image/jpeg' | 'image/png'; base64: string } | null = null
+  const file = formData.get('file')
+  if (file instanceof File && file.size > 0) {
+    if (!isImageType(file.type)) return { ok: false, error: 'Só JPEG ou PNG para a legenda.' }
+    if (file.size > IMAGE_MAX_BYTES) return { ok: false, error: 'Imagem maior que 8 MB.' }
+    image = { mediaType: file.type, base64: Buffer.from(await file.arrayBuffer()).toString('base64') }
+  }
+
+  const generated = await generateCaption({ persona, kind: kindRaw, draft, image })
+
+  return {
+    ok: true,
+    caption: generated.caption,
+    warning: generated.mock
+      ? `A IA não respondeu (${generated.fallbackReason ?? 'motivo desconhecido'}) — isto é um EXEMPLO, revise antes de publicar.`
+      : undefined,
+  }
 }

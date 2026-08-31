@@ -48,6 +48,26 @@ afterEach(() => {
 })
 
 describe('generateStructured', () => {
+  it('imagem entra como bloco ANTES do texto — a ordem que a visão espera', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', 'chave')
+    const fetchMock = mockFetch(async () => reply(toolUse({ titulo: 'ok' })))
+    vi.stubGlobal('fetch', fetchMock)
+
+    await generateStructured({
+      schema,
+      system: 'sistema',
+      prompt: 'descreva',
+      toolName: 'entregar',
+      toolDescription: 'entrega',
+      images: [{ mediaType: 'image/jpeg', base64: 'QUJD' }],
+    })
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1].body))
+    const content = body.messages[0].content
+    expect(content[0]).toMatchObject({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: 'QUJD' } })
+    expect(content[1]).toMatchObject({ type: 'text', text: 'descreva' })
+  })
+
   it('exige a chave em vez de tentar a chamada sem ela', async () => {
     vi.stubEnv('ANTHROPIC_API_KEY', '')
 
