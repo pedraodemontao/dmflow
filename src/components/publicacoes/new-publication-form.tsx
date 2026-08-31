@@ -53,7 +53,7 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
   function validar(): string | null {
     if (files.length === 0) return 'Escolha a mídia.'
     if (kind === 'carousel' && (files.length < 2 || files.length > 10)) return 'Carrossel leva de 2 a 10 imagens.'
-    if (kind !== 'carousel' && files.length !== 1) return `${kind === 'reel' ? 'Reel' : 'Imagem'} leva um arquivo só.`
+    if (kind !== 'carousel' && files.length !== 1) return `${kind === 'reel' ? 'Reel' : kind === 'story' ? 'Story' : 'Imagem'} leva um arquivo só.`
     if (kind === 'reel' && !isVideoType(files[0].type)) return 'Reel precisa de um MP4 ou MOV.'
     if (kind !== 'reel' && files.some((f) => !isImageType(f.type))) return 'Só JPEG ou PNG.'
     if (cover && !isImageType(cover.type)) return 'A capa precisa ser JPEG ou PNG.'
@@ -66,6 +66,7 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
     setEtapa(`Subindo ${rotulo}…`)
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('target', kind === 'story' ? 'story' : 'feed')
     const result = await uploadPublicationImage(formData)
     if (!result.ok || !result.path) throw new Error(`${rotulo}: ${result.error ?? 'falha ao subir'}`)
     return result.path
@@ -114,11 +115,11 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
 
       const result = await createPublication({
         kind,
-        caption,
+        caption: kind === 'story' ? '' : caption,
         mediaPaths,
         coverPath,
         scheduledAt,
-        flowId: flowId || null,
+        flowId: kind === 'story' ? null : flowId || null,
       })
       if (!result.ok) throw new Error(result.error ?? 'falha ao salvar')
 
@@ -167,7 +168,7 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
       <div>
         <Label>Tipo</Label>
         <div className="mt-1.5 flex gap-2">
-          {(['image', 'carousel', 'reel'] as const).map((option) => (
+          {(['image', 'carousel', 'reel', 'story'] as const).map((option) => (
             <Button
               key={option}
               type="button"
@@ -180,7 +181,7 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
                 setCover(null)
               }}
             >
-              {option === 'image' ? 'Imagem' : option === 'carousel' ? 'Carrossel' : 'Reel'}
+              {option === 'image' ? 'Imagem' : option === 'carousel' ? 'Carrossel' : option === 'reel' ? 'Reel' : 'Story'}
             </Button>
           ))}
         </div>
@@ -188,7 +189,7 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
 
       <div>
         <Label htmlFor="media">
-          {kind === 'carousel' ? 'Imagens (2 a 10, na ordem)' : kind === 'reel' ? 'Vídeo' : 'Imagem'}
+          {kind === 'carousel' ? 'Imagens (2 a 10, na ordem)' : kind === 'reel' ? 'Vídeo' : kind === 'story' ? 'Imagem vertical (9:16, como 1080×1920)' : 'Imagem'}
         </Label>
         <Input
           id="media"
@@ -221,6 +222,7 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
         </div>
       )}
 
+      {kind !== 'story' && (
       <div>
         <div className="flex items-center justify-between">
           <Label htmlFor="caption">Legenda</Label>
@@ -248,8 +250,9 @@ export function NewPublicationForm({ flows = [] }: { flows?: FlowOption[] }) {
         </p>
         {avisoLegenda && <p className="mt-1 text-[10px] text-warning">{avisoLegenda}</p>}
       </div>
+      )}
 
-      {flows.length > 0 && (
+      {flows.length > 0 && kind !== 'story' && (
         <div>
           <Label htmlFor="flow">Automação de comentário</Label>
           <Select id="flow" value={flowId} disabled={enviando} onChange={(e) => setFlowId(e.target.value)} className="mt-1.5">

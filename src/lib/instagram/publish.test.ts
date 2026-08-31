@@ -69,7 +69,7 @@ function fakeGraph(options: { statuses?: Record<string, Array<Record<string, str
 const creds = { igUserId: '17841400000', accessToken: 'tok' }
 
 function run(args: {
-  kind: 'image' | 'carousel' | 'reel'
+  kind: 'image' | 'carousel' | 'reel' | 'story'
   mediaUrls: string[]
   containerIds?: ContainerIds
   budgetMs?: number
@@ -182,6 +182,14 @@ describe('publishPublication', () => {
 
     await expect(result).rejects.toBeInstanceOf(PublishError)
     expect(graph.calls).toHaveLength(0)
+  })
+
+  it('story manda media_type STORIES sem caption', async () => {
+    const graph = fakeGraph()
+    const { result } = run({ kind: 'story', mediaUrls: ['https://x/s.jpg'] })
+
+    await expect(result).resolves.toEqual({ platformMediaId: 'post-1' })
+    expect(graph.posts()[0].body).toEqual({ media_type: 'STORIES', image_url: 'https://x/s.jpg' })
   })
 
   it('reel manda video_url e cover_url; imagem solta leva a legenda', async () => {

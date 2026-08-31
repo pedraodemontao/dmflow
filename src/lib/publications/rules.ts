@@ -7,6 +7,13 @@
 export const MIN_ASPECT = 4 / 5
 export const MAX_ASPECT = 1.91
 
+/**
+ * Story é outra moldura: 9:16. A Meta aceita variações e corta/enquadra o
+ * resto — a cerca aqui é contra o engano óbvio (foto de feed num story),
+ * não contra meio por cento de export.
+ */
+export const STORY_ASPECT = 9 / 16
+
 /** Imagem: 8 MB é o teto documentado da Meta para `image_url`. */
 export const IMAGE_MAX_BYTES = 8 * 1024 * 1024
 /** Vídeo sobe direto para o bucket por URL assinada; este é o nosso teto, não o da Meta. */
@@ -31,6 +38,16 @@ export const SCHEDULE_JITTER_MS = 7 * 60 * 1000
 
 export function jitteredScheduleAt(base: Date, random: () => number = Math.random): Date {
   return new Date(base.getTime() + Math.floor(random() * SCHEDULE_JITTER_MS))
+}
+
+export function isStoryAspectAccepted(width: number, height: number): boolean {
+  if (width <= 0 || height <= 0) return false
+  const ratio = width / height
+  return ratio >= STORY_ASPECT * 0.9 && ratio <= STORY_ASPECT * 1.25
+}
+
+export function describeStoryAspectProblem(width: number, height: number): string {
+  return `story é vertical 9:16, como 1080×1920 — a imagem veio ${width}×${height}`
 }
 
 export function isAspectAccepted(width: number, height: number): boolean {

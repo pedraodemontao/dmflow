@@ -47,6 +47,7 @@ const KIND_LABEL: Record<PublicationKind, string> = {
   image: 'uma foto única',
   carousel: 'um carrossel',
   reel: 'um reel',
+  story: 'um story',
 }
 
 export function buildCaptionPrompt(input: GenerateCaptionInput): string {

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   SCHEDULE_JITTER_MS,
+  describeStoryAspectProblem,
+  isStoryAspectAccepted,
   describeAspectProblem,
   isAspectAccepted,
   isImageType,
@@ -48,5 +50,14 @@ describe('tipos aceitos', () => {
     expect(isImageType('image/gif')).toBe(false)
     expect(isVideoType('video/mp4')).toBe(true)
     expect(isVideoType('video/webm')).toBe(false)
+  })
+})
+
+describe('isStoryAspectAccepted', () => {
+  it('aceita 9:16 e vizinhança, recusa moldura de feed', () => {
+    expect(isStoryAspectAccepted(1080, 1920)).toBe(true)
+    expect(isStoryAspectAccepted(1080, 1350)).toBe(false)
+    expect(isStoryAspectAccepted(1080, 1080)).toBe(false)
+    expect(describeStoryAspectProblem(1080, 1350)).toContain('9:16')
   })
 })

@@ -346,7 +346,7 @@ export interface MediaInsight {
   skip_rate: number | null
 }
 
-export type PublicationKind = 'image' | 'carousel' | 'reel'
+export type PublicationKind = 'image' | 'carousel' | 'reel' | 'story'
 export type PublicationStatus = 'draft' | 'scheduled' | 'publishing' | 'published' | 'failed'
 
 /**

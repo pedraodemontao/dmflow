@@ -15,7 +15,9 @@ import {
   IMAGE_MAX_BYTES,
   VIDEO_MAX_BYTES,
   describeAspectProblem,
+  describeStoryAspectProblem,
   isAspectAccepted,
+  isStoryAspectAccepted,
   isImageType,
   isVideoType,
   jitteredScheduleAt,
@@ -71,6 +73,8 @@ export interface UploadImageResult {
  * qualidade.
  */
 export async function uploadPublicationImage(formData: FormData): Promise<UploadImageResult> {
+  // 'story' valida 9:16; o resto valida a moldura do feed.
+  const target = String(formData.get('target') ?? 'feed')
   const file = formData.get('file')
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: 'Escolha uma imagem.' }
   if (!isImageType(file.type)) return { ok: false, error: 'Só JPEG ou PNG.' }
@@ -88,7 +92,9 @@ export async function uploadPublicationImage(formData: FormData): Promise<Upload
     return { ok: false, error: 'Não consegui ler a imagem — o arquivo está íntegro?' }
   }
 
-  if (!isAspectAccepted(width, height)) {
+  if (target === 'story') {
+    if (!isStoryAspectAccepted(width, height)) return { ok: false, error: describeStoryAspectProblem(width, height) }
+  } else if (!isAspectAccepted(width, height)) {
     return { ok: false, error: describeAspectProblem(width, height) }
   }
 
@@ -146,7 +152,8 @@ const isoDate = z.string().refine((value) => !Number.isNaN(Date.parse(value)), '
 
 const createSchema = z
   .object({
-    kind: z.enum(['image', 'carousel', 'reel']),
+    kind: z.enum(['image', 'carousel', 'reel', 'story']),
+    // Story não leva legenda — a API ignora; exigir vazio evita o dono escrever à toa.
     caption: z.string().max(CAPTION_MAX_CHARS, `Legenda acima de ${CAPTION_MAX_CHARS} caracteres`),
     mediaPaths: z.array(mediaPathSchema).min(1, 'Escolha a mídia'),
     coverPath: mediaPathSchema.nullish(),
@@ -159,7 +166,8 @@ const createSchema = z
     (v) => v.kind !== 'carousel' || (v.mediaPaths.length >= 2 && v.mediaPaths.length <= 10),
     'Carrossel leva de 2 a 10 imagens',
   )
-  .refine((v) => v.kind === 'carousel' || v.mediaPaths.length === 1, 'Imagem e reel levam uma mídia só')
+  .refine((v) => v.kind === 'carousel' || v.mediaPaths.length === 1, 'Imagem, reel e story levam uma mídia só')
+  .refine((v) => v.kind !== 'story' || !v.flowId, 'Story não recebe comentário — não há gatilho para vincular')
 
 export type CreatePublicationInput = z.infer<typeof createSchema>
 

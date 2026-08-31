@@ -27,6 +27,7 @@ const KIND_LABEL: Record<PublicationListItem['kind'], string> = {
   image: 'imagem',
   carousel: 'carrossel',
   reel: 'reel',
+  story: 'story',
 }
 
 const STATUS: Record<PublicationListItem['status'], { label: string; tone: 'neutral' | 'success' | 'warning' | 'accent' }> = {

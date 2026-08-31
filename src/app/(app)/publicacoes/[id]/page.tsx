@@ -27,6 +27,7 @@ const KIND_LABEL: Record<Publication['kind'], string> = {
   image: 'imagem',
   carousel: 'carrossel',
   reel: 'reel',
+  story: 'story',
 }
 
 const fmt = new Intl.DateTimeFormat('pt-BR', {

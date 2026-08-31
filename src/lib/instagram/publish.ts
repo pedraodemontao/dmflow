@@ -148,6 +148,16 @@ export function createCarouselContainer(
   })
 }
 
+/** Story: mesma dança de container, outra moldura. Sem caption — a API ignora em story. */
+export function createStoryContainer(
+  args: Credentials & { imageUrl: string },
+): Promise<Created> {
+  return graphPost<Created>(`/${args.igUserId}/media`, args.accessToken, {
+    media_type: 'STORIES',
+    image_url: args.imageUrl,
+  })
+}
+
 export function createReelContainer(
   args: Credentials & { videoUrl: string; caption: string; coverUrl?: string | null },
 ): Promise<Created> {
@@ -300,7 +310,9 @@ export async function publishPublication(args: PublishPublicationArgs): Promise<
       const created =
         args.kind === 'reel'
           ? await createReelContainer({ ...creds, videoUrl: args.mediaUrls[0], caption: args.caption, coverUrl: args.coverUrl })
-          : await createImageContainer({ ...creds, imageUrl: args.mediaUrls[0], caption: args.caption })
+          : args.kind === 'story'
+            ? await createStoryContainer({ ...creds, imageUrl: args.mediaUrls[0] })
+            : await createImageContainer({ ...creds, imageUrl: args.mediaUrls[0], caption: args.caption })
       ids.parent = created.id
       await args.persist(ids)
     }
