@@ -56,7 +56,10 @@ function Steps({ items }: { items: Array<{ title: string; text: string }> }) {
 
 function Quote({ text }: { text: string }) {
   return (
-    <blockquote className="mt-4 border-l-2 border-accent pl-4 text-[15px] italic text-foreground/90">
+    // `whitespace-pre-wrap`: a entrega do comparativo Codex (30/08) carrega um
+    // prompt de 250 linhas num quote — sem isto o navegador colapsa as quebras
+    // e o material prometido vira uma pasta de texto ilegível.
+    <blockquote className="mt-4 whitespace-pre-wrap break-words border-l-2 border-accent pl-4 text-[15px] italic text-foreground/90">
       {text}
     </blockquote>
   )
