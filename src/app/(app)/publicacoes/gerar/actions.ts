@@ -89,6 +89,8 @@ export async function generateAndRenderCarousel(raw: unknown): Promise<ComposerR
     refs: context.refs,
     modeledOn: context.modeledOn,
     fromScript: context.fromScript,
+    hookPatterns: context.hookPatterns,
+    ownPerformance: context.ownPerformance,
   })
 
   // Sem linha em `scripts` a pasta ganha um uuid: o carrossel existe e foi

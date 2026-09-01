@@ -31,13 +31,12 @@ const API_VERSION = '2023-06-01'
  *                que performa e uma tarde de gravação jogada fora. Modelo melhor.
  *   entrega    → cumprir uma promessa já definida, em passo a passo e checklist.
  *                A forma está dada; o trabalho é executar bem. Modelo econômico.
- *   carrossel  → o ângulo já foi decidido ANTES (é o pilar/tema, o `modeledOn`
- *                ou o próprio roteiro em `fromScript`) — o trabalho daqui é
- *                encaixar uma ideia por slide dentro de um teto de caractere
- *                rígido (`schemas.ts`, render sem shrink-to-fit). Mais perto de
- *                "executar bem uma forma dada" do que de "inventar ângulo", e
- *                por isso desce para o modelo econômico como a entrega — não é
- *                cópia por reflexo do roteiro, é o mesmo raciocínio aplicado.
+ *   carrossel  → foi classificado como "forma dada" e desceu para o modelo
+ *                econômico — e o primeiro carrossel real (01/09) devolveu o
+ *                veredito: estrutura ótima, copy morna. Slide é texto LIDO,
+ *                palavra por palavra; a diferença entre morno e afiado é a
+ *                mesma do roteiro. Sobe para o criativo. O degrau econômico
+ *                fica onde é transcrição de verdade: legenda e clonagem.
  *
  * Repare que a entrega NÃO é menor: a primeira gerou 21 blocos, mais saída que
  * o roteiro. Ela é mais FÁCIL, não mais curta — e por isso desce um degrau, não
@@ -56,8 +55,8 @@ const MODEL_BY_TASK = {
   caption: 'claude-sonnet-5',
   /** Clonagem por visão: extrair estrutura de prints é transcrição guiada — econômico. */
   clone: 'claude-sonnet-5',
-  /** Carrossel: forma fixa, teto de caractere por slide — estruturado como a entrega. */
-  carousel: 'claude-sonnet-5',
+  /** Carrossel: peça criativa lida palavra por palavra — provado em 01/09 que o econômico sai morno. */
+  carousel: 'claude-opus-5',
 } as const
 
 export type AiTask = keyof typeof MODEL_BY_TASK

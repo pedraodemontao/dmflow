@@ -44,6 +44,10 @@ export interface GenerateCarouselInput {
    * sentido ao mesmo tempo, e o roteiro é o pedido mais específico dos dois.
    */
   fromScript?: Script | null
+  /** Padrões de gancho do acervo — vão para o SYSTEM, como no roteiro. */
+  hookPatterns?: string | null
+  /** O que já converteu com a audiência dele — vai para o user prompt, como no roteiro. */
+  ownPerformance?: string | null
 }
 
 export interface GeneratedCarousel {
@@ -90,6 +94,18 @@ function beatsBlock(script: Script): string {
   return script.beats.map((beat) => `• ${beat.beat}: ${beat.tela} — ${beat.fala}`).join('\n')
 }
 
+/**
+ * Regras de COPY, não de forma — a forma o schema já trava. Nasceram do
+ * primeiro carrossel real (01/09): estrutura certa, texto morno. Cada regra
+ * mira um vício visto ali.
+ */
+const COPY_RULES = `# REGRAS DE COPY (o que separa morno de afiado)
+- Cada slide faz UMA afirmação ESPECÍFICA. Número, exemplo concreto, situação nomeada vencem frase genérica: "3 telas em 40 minutos" vence "resultados rápidos".
+- PROIBIDO clichê de coach: "sem enrolação", "direto ao ponto", "não é sorte", "o segredo é", "mude sua vida". Se a frase serviria em qualquer nicho, reescreva até só servir neste.
+- O gancho da capa nomeia um problema que o leitor reconhece em 2 segundos — na linguagem que ELE usa, não na do especialista.
+- O penúltimo slide entrega valor completo mesmo para quem não vai comentar. Reter refém não é copy, é atrito.
+- O CTA promete algo LITERAL ("o passo a passo com os 5 prompts"), nunca vago ("o material").`
+
 const closing =
   'Entregue: os slides (campo "slides", capa → corpo → CTA) e a legenda do post (campo "caption"), com hashtags. ' +
   'Escolha o layout de cada slide do meio pelo CONTEÚDO: passos ou checklist viram "lista"; um dado que impressiona vira "numero" (o número no title, o rótulo no body); a afirmação central vira "frase"; o resto é "texto". Varie os layouts — feed com dez slides iguais cansa.'
@@ -116,7 +132,10 @@ Legenda original: "${script.caption.slice(0, CAPTION_EXCERPT)}"
 Mantenha a MESMA promessa e a MESMA palavra-chave de CTA ("${keyword}") — o carrossel não inventa uma promessa nova.
 Um slide = uma ideia; a capa é UM gancho (não teste A/B); os slides do meio desenvolvem o roteiro na ordem dos beats; o último é o CTA.
 
+${input.ownPerformance ? `\n${input.ownPerformance}\n` : ''}
 ${buildCtaBlock(input.persona)}
+
+${COPY_RULES}
 
 ${closing}`
   }
@@ -136,7 +155,10 @@ TEMA/ÂNGULO: ${themeLine(input)}
 
 Um slide = uma ideia; a capa é UM gancho só (carrossel não tem teste A/B de gancho); os slides do meio desenvolvem o ângulo; o último é o CTA.
 
+${input.ownPerformance ? `\n${input.ownPerformance}\n` : ''}
 ${buildCtaBlock(input.persona)}
+
+${COPY_RULES}
 
 ${closing}`
   }
@@ -152,7 +174,10 @@ ${refs}
 
 Um slide = uma ideia; a capa é UM gancho só (carrossel não tem teste A/B de gancho); os slides do meio desenvolvem o ângulo; o último é o CTA.
 
+${input.ownPerformance ? `\n${input.ownPerformance}\n` : ''}
 ${buildCtaBlock(input.persona)}
+
+${COPY_RULES}
 
 ${closing}`
 }
@@ -203,7 +228,7 @@ async function runGeneration(
   try {
     const result = await generateStructured({
       schema: carouselSchema,
-      system: buildSystemPrompt(input.persona),
+      system: buildSystemPrompt(input.persona, input.hookPatterns),
       prompt: buildCarouselUserPrompt(input),
       toolName: TOOL_NAME,
       toolDescription: TOOL_DESCRIPTION,

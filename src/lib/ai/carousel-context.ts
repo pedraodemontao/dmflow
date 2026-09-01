@@ -1,5 +1,6 @@
 import { loadModelingContext } from '@/lib/ai/context'
-import { scoreLibrary } from '@/lib/ai/retrieve'
+import { buildOwnPerformanceBlock, getOwnPerformance } from '@/lib/ai/own-performance'
+import { formatHookPatterns, scoreLibrary } from '@/lib/ai/retrieve'
 import { scriptSchema, type Script as ScriptOutput } from '@/lib/ai/schemas'
 import { getAccount } from '@/lib/data'
 import { supabaseAdmin } from '@/lib/supabase/admin'
@@ -47,6 +48,10 @@ export interface CarouselContext {
   refs: LibraryItem[]
   modeledOn: LibraryItem | null
   fromScript: ScriptOutput | null
+  /** Padrões de gancho do que viralizou no acervo — o roteiro sempre recebeu; o carrossel não recebia, e a copy mostrou. */
+  hookPatterns: string | null
+  /** O que converteu com a audiência DELE. Nulo sem posts medidos suficientes. */
+  ownPerformance: string | null
 }
 
 export type CarouselContextResult =
@@ -120,6 +125,8 @@ export async function loadCarouselContext(args: CarouselSourceArgs): Promise<Car
         refs: c.refs,
         modeledOn: c.item,
         fromScript: null,
+        hookPatterns: c.hookPatterns,
+        ownPerformance: c.ownPerformance,
       },
     }
   }
@@ -165,6 +172,8 @@ export async function loadCarouselContext(args: CarouselSourceArgs): Promise<Car
         refs: [],
         modeledOn,
         fromScript: parsed.data,
+        hookPatterns: null,
+        ownPerformance: await ownPerformanceBlock(account.id),
       },
     }
   }
@@ -194,6 +203,17 @@ export async function loadCarouselContext(args: CarouselSourceArgs): Promise<Car
       refs: scoreLibrary(pool, `${pillarName} ${args.theme ?? ''}`, REF_LIMIT),
       modeledOn: null,
       fromScript: null,
+      hookPatterns: formatHookPatterns(pool),
+      ownPerformance: await ownPerformanceBlock(account.id),
     },
   }
+}
+
+/** Mesma regra do context.ts: o bloco é acessório — falha vira null e log, nunca derruba a geração. */
+async function ownPerformanceBlock(accountId: string): Promise<string | null> {
+  const performance = await getOwnPerformance(accountId).catch((error) => {
+    console.error('[dm-flow] desempenho próprio ignorado no carrossel:', String(error).slice(0, 120))
+    return null
+  })
+  return performance ? buildOwnPerformanceBlock(performance) : null
 }

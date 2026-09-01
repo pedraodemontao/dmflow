@@ -184,6 +184,18 @@ describe('mockCarousel', () => {
 })
 
 describe('buildCarouselUserPrompt', () => {
+  it('leva as regras de copy e o desempenho próprio quando existe', () => {
+    const prompt = buildCarouselUserPrompt(input({ ownPerformance: '# O QUE JÁ CONVERTEU COM ELE' }))
+
+    expect(prompt).toContain('REGRAS DE COPY')
+    expect(prompt).toContain('PROIBIDO clichê')
+    expect(prompt).toContain('O QUE JÁ CONVERTEU COM ELE')
+  })
+
+  it('sem desempenho medido, o bloco simplesmente não existe', () => {
+    expect(buildCarouselUserPrompt(input())).not.toContain('CONVERTEU')
+  })
+
   it('leva a palavra-chave do CTA', () => {
     expect(buildCarouselUserPrompt(input())).toContain('"DOCE"')
   })
