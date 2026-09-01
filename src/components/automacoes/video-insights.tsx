@@ -28,8 +28,10 @@ function compact(value: number | null | undefined): string {
   return COMPACT.format(value)
 }
 
-function statText(key: string, value: number | null | undefined): string {
-  if (value == null) return REELS_SEM_DADO.has(key) ? 'sem dado para Reels' : SEM_DADO
+function statText(key: string, value: number | null | undefined, mediaKind: 'video' | 'static' = 'video'): string {
+  // "sem dado para Reels" só faz sentido em Reel — num carrossel a métrica
+  // simplesmente não existe, e o rótulo errado aponta o dono pro lugar errado.
+  if (value == null) return mediaKind === 'video' && REELS_SEM_DADO.has(key) ? 'sem dado para Reels' : SEM_DADO
   return compact(value)
 }
 
@@ -56,7 +58,14 @@ function Stat({ label, value, hint }: { label: string; value: string; hint?: str
 }
 
 /** Bloco 1 — o que o vídeo fez, direto da Meta. */
-export function VideoMetrics({ insight }: { insight: MediaInsight | null }) {
+export function VideoMetrics({
+  insight,
+  mediaKind = 'video',
+}: {
+  insight: MediaInsight | null
+  /** 'static' (imagem/carrossel) esconde as métricas que só vídeo tem. */
+  mediaKind?: 'video' | 'static'
+}) {
   if (!insight) {
     return (
       <Card className="p-5">
@@ -71,34 +80,40 @@ export function VideoMetrics({ insight }: { insight: MediaInsight | null }) {
 
   return (
     <Card className="p-5">
-      <p className="label text-[10px] text-muted">O que o vídeo fez</p>
-      <p className="mt-1 text-xs leading-relaxed text-muted">
-        Direto da Meta. Retenção aqui é MÉDIA — a curva segundo a segundo só existe dentro do
-        próprio app do Instagram, nenhuma API entrega isso.
-      </p>
+      <p className="label text-[10px] text-muted">{mediaKind === 'video' ? 'O que o vídeo fez' : 'O que o post fez'}</p>
+      {mediaKind === 'video' && (
+        <p className="mt-1 text-xs leading-relaxed text-muted">
+          Direto da Meta. Retenção aqui é MÉDIA — a curva segundo a segundo só existe dentro do
+          próprio app do Instagram, nenhuma API entrega isso.
+        </p>
+      )}
 
       <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-3">
-        <Stat label="visualizações" value={statText('views', insight.views)} />
-        <Stat label="contas alcançadas" value={statText('reach', insight.reach)} />
+        <Stat label="visualizações" value={statText('views', insight.views, mediaKind)} />
+        <Stat label="contas alcançadas" value={statText('reach', insight.reach, mediaKind)} />
         <Stat
           label="seguidores trazidos"
-          value={statText('follows', insight.follows)}
-          hint="Quantos passaram a seguir a conta por causa deste vídeo."
+          value={statText('follows', insight.follows, mediaKind)}
+          hint={mediaKind === 'video' ? 'Quantos passaram a seguir a conta por causa deste vídeo.' : 'Quantos passaram a seguir a conta por causa deste post.'}
         />
-        <Stat label="visitas ao perfil" value={statText('profile_visits', insight.profile_visits)} />
-        <Stat label="cliques em link" value={statText('link_clicks', insight.link_clicks)} />
-        <Stat
-          label="tempo médio assistido"
-          value={seconds(insight.avg_watch_time_ms)}
-          hint="Média de quanto tempo cada visualização durou."
-        />
-        <Stat
-          label="taxa de pulo"
-          value={pct(insight.skip_rate)}
-          hint="% de visualizações que pularam o reel nos 3 primeiros segundos."
-        />
-        <Stat label="salvamentos" value={statText('saved', insight.saved)} />
-        <Stat label="compartilhamentos" value={statText('shares', insight.shares)} />
+        <Stat label="visitas ao perfil" value={statText('profile_visits', insight.profile_visits, mediaKind)} />
+        <Stat label="cliques em link" value={statText('link_clicks', insight.link_clicks, mediaKind)} />
+        {mediaKind === 'video' && (
+          <Stat
+            label="tempo médio assistido"
+            value={seconds(insight.avg_watch_time_ms)}
+            hint="Média de quanto tempo cada visualização durou."
+          />
+        )}
+        {mediaKind === 'video' && (
+          <Stat
+            label="taxa de pulo"
+            value={pct(insight.skip_rate)}
+            hint="% de visualizações que pularam o reel nos 3 primeiros segundos."
+          />
+        )}
+        <Stat label="salvamentos" value={statText('saved', insight.saved, mediaKind)} />
+        <Stat label="compartilhamentos" value={statText('shares', insight.shares, mediaKind)} />
       </div>
 
       <p className="mt-3 text-[10px] text-muted">

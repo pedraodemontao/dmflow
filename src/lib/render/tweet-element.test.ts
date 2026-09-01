@@ -35,3 +35,13 @@ describe('tweetElement', () => {
     expect(tweetFontSize(500)).toBe(44)
   })
 })
+
+describe('quebra de linha', () => {
+  it('cada linha do texto vira um bloco próprio', () => {
+    const el = tweetElement({ name: 'A', handle: 'a', text: 'primeira linha\n\nsegunda linha' }, QUANTIA)
+    const all = texts(el)
+
+    expect(all).toContain('primeira linha')
+    expect(all).toContain('segunda linha')
+  })
+})

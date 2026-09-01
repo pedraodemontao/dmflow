@@ -2,6 +2,8 @@
 
 import { randomUUID } from 'node:crypto'
 
+import sharp from 'sharp'
+
 import { z } from 'zod'
 
 import { activePersona, loadCarouselContext, type CarouselContextProblem } from '@/lib/ai/carousel-context'
@@ -191,12 +193,15 @@ export async function rerenderCarousel(raw: unknown): Promise<ComposerResult> {
   // A arte sobe pro bucket pela tela; aqui ela vira data URI porque o satori
   // precisa dos bytes, e buscar nós mesmos evita depender do fetch dele.
   let coverBackgroundDataUri: string | undefined
+  let coverForeground: 'paper' | 'ink' | undefined
   if (parsed.data.coverBackgroundPath) {
     const url = publicationMediaUrl(parsed.data.coverBackgroundPath, env.SUPABASE_URL)
     if (url) {
       const res = await fetch(url, { cache: 'no-store' })
       if (!res.ok) return { ok: false, error: `Não achei a arte da capa no bucket (${res.status}).` }
-      coverBackgroundDataUri = `data:image/jpeg;base64,${Buffer.from(await res.arrayBuffer()).toString('base64')}`
+      const bytes = Buffer.from(await res.arrayBuffer())
+      coverBackgroundDataUri = `data:image/jpeg;base64,${bytes.toString('base64')}`
+      coverForeground = await coverForegroundFor(bytes)
     }
   }
 
@@ -209,6 +214,7 @@ export async function rerenderCarousel(raw: unknown): Promise<ComposerResult> {
         ctaKeyword: persona.cta_keyword,
         palette: await loadBrandPalette(account.id),
         coverBackgroundDataUri,
+        coverForeground,
       },
     })
 
@@ -317,5 +323,27 @@ export async function cloneCarousel(formData: FormData): Promise<ComposerResult>
       model: cloned.model,
       warning: `Clonado, mas o render falhou: ${detail}. Renderize de novo.`,
     }
+  }
+}
+
+/**
+ * Decide a tinta do gancho MEDINDO o terço inferior da arte (onde o texto
+ * senta): luminância média acima do meio é arte clara → texto escuro e véu
+ * branco. Medido e não chutado — o degradê preto fixo deixou gancho invisível
+ * em arte clara. Erro na medição cai no caso comum (arte escura → papel).
+ */
+async function coverForegroundFor(bytes: Buffer): Promise<'paper' | 'ink'> {
+  try {
+    const image = sharp(bytes)
+    const { width = 0, height = 0 } = await image.metadata()
+    if (width === 0 || height === 0) return 'paper'
+    const top = Math.floor(height * 0.62)
+    const stats = await image.extract({ left: 0, top, width, height: height - top }).stats()
+    const [r, g, b] = stats.channels
+    const luminancia = 0.299 * (r?.mean ?? 0) + 0.587 * (g?.mean ?? 0) + 0.114 * (b?.mean ?? 0)
+    return luminancia > 128 ? 'ink' : 'paper'
+  } catch (error) {
+    console.error('[render] medição de luminância falhou, assumindo arte escura:', error)
+    return 'paper'
   }
 }

@@ -75,7 +75,10 @@ export type AiTask = keyof typeof MODEL_BY_TASK
  * 3.000 tokens sobra folga para a pontuação do JSON em cima disso sem chegar
  * perto do teto do roteiro, que não tem tal cerca (beats de tamanho livre).
  */
-const MAX_TOKENS_BY_TASK = { script: 4000, delivery: 8000, carousel: 3000, caption: 1200, clone: 3000 } as const
+// clone: 5000 e não 3000 — transcrever 10 slides densos no modo copiar passa
+// de 3000, e resposta cortada falha como "campo ausente", queimando a
+// retentativa. Teto é proteção, não gasto: só se paga o que sai.
+const MAX_TOKENS_BY_TASK = { script: 4000, delivery: 8000, carousel: 3000, caption: 1200, clone: 5000 } as const
 
 /**
  * Uma retentativa, não mais. A primeira falha de schema costuma ser descuido e

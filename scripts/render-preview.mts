@@ -64,6 +64,20 @@ async function main() {
   await writeFile(join(OUT_DIR, '0-padrao-tweet.jpg'), await renderSlide(tweet))
   console.log(`[render-preview] ${join(OUT_DIR, '0-padrao-tweet.jpg')}`)
 
+  const fundoClaro = await sharp({
+    create: { width: 1080, height: 1350, channels: 3, background: { r: 235, g: 228, b: 214 } },
+  })
+    .jpeg()
+    .toBuffer()
+  const capaClara = slideElement(
+    { kind: 'cover', layout: 'texto', title: toMaxLength(SLIDE_TITLE_MAX_CHARS) },
+    0,
+    6,
+    { ...brand, coverBackgroundDataUri: `data:image/jpeg;base64,${fundoClaro.toString('base64')}`, coverForeground: 'ink' },
+  )
+  await writeFile(join(OUT_DIR, '0-cover-arte-clara.jpg'), await renderSlide(capaClara))
+  console.log(`[render-preview] ${join(OUT_DIR, '0-cover-arte-clara.jpg')}`)
+
   const capaArte = slideElement({ kind: 'cover', layout: 'texto', title: toMaxLength(SLIDE_TITLE_MAX_CHARS) }, 0, 6, comArte)
   await writeFile(join(OUT_DIR, '0-cover-arte.jpg'), await renderSlide(capaArte))
   console.log(`[render-preview] ${join(OUT_DIR, '0-cover-arte.jpg')}`)

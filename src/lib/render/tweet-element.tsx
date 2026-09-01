@@ -109,17 +109,28 @@ export function tweetElement(card: TweetCard, palette: Palette = QUANTIA): React
           </div>
         </div>
 
-        <div
-          style={{
-            display: 'flex',
-            marginTop: 48,
-            fontFamily: FONT_FAMILY.body,
-            fontSize: tweetFontSize(charLength(text)),
-            lineHeight: 1.35,
-            color: palette.ink,
-          }}
-        >
-          {text}
+        {/* O satori ignora \n — cada linha vira um bloco, e linha vazia vira
+            respiro de parágrafo. Sem isto, texto com quebras (como todo card de
+            opinião é escrito) virava um parágrafo único. */}
+        <div style={{ display: 'flex', flexDirection: 'column', marginTop: 48 }}>
+          {text.split('\n').map((line, index) => (
+            <div
+              key={index}
+              style={{
+                display: 'flex',
+                // spread e não `minHeight: undefined`: o satori itera as chaves
+                // do estilo e quebra em valor undefined.
+                ...(line.trim() === '' ? { minHeight: 24 } : {}),
+                marginTop: index === 0 ? 0 : 8,
+                fontFamily: FONT_FAMILY.body,
+                fontSize: tweetFontSize(charLength(text)),
+                lineHeight: 1.35,
+                color: palette.ink,
+              }}
+            >
+              {line}
+            </div>
+          ))}
         </div>
       </div>
     </div>

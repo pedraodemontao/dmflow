@@ -33,6 +33,12 @@ export interface Brand {
    * gancho por cima. Texto continua nosso: modelo de imagem erra grafia.
    */
   coverBackgroundDataUri?: string
+  /**
+   * Tinta do texto sobre a arte, decidida por MEDIÇÃO da luminância do terço
+   * inferior (gerar/actions.ts) — arte clara pedia texto escuro e o degradê
+   * preto fixo não salvava. Ausente = 'paper' (arte escura, o caso comum).
+   */
+  coverForeground?: 'paper' | 'ink'
 }
 
 /**
@@ -244,6 +250,14 @@ function titleSize(kind: CarouselSlide['kind']): number {
  * contraste sobre foto é acessibilidade, não identidade.
  */
 function coverWithArt(slide: CarouselSlide, brand: Brand, palette: Palette): ReactElement {
+  const escura = (brand.coverForeground ?? 'paper') === 'paper'
+  const tinta = escura ? palette.paper : palette.ink
+  // Sobre arte clara o véu é BRANCO: escurecer uma foto clara até o papel
+  // contrastar mataria a arte; clarear preserva. Preto/branco fixos, não
+  // palette: contraste sobre foto é acessibilidade, não identidade.
+  const veu = escura
+    ? 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.12) 100%)'
+    : 'linear-gradient(to top, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.45) 45%, rgba(255,255,255,0.15) 100%)'
   return (
     <div
       style={{
@@ -268,7 +282,7 @@ function coverWithArt(slide: CarouselSlide, brand: Brand, palette: Palette): Rea
           left: 0,
           width: SLIDE_WIDTH,
           height: SLIDE_HEIGHT,
-          backgroundImage: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 45%, rgba(0,0,0,0.12) 100%)',
+          backgroundImage: veu,
         }}
       />
       <div
@@ -280,10 +294,10 @@ function coverWithArt(slide: CarouselSlide, brand: Brand, palette: Palette): Rea
           padding: PADDING,
         }}
       >
-        <span style={{ display: 'flex', fontFamily: FONT_FAMILY.label, fontSize: 28, color: palette.paper, textTransform: 'uppercase', letterSpacing: 3, opacity: 0.9 }}>
+        <span style={{ display: 'flex', fontFamily: FONT_FAMILY.label, fontSize: 28, color: tinta, textTransform: 'uppercase', letterSpacing: 3, opacity: 0.9 }}>
           {`@${brand.handle}`}
         </span>
-        <div style={{ display: 'flex', fontFamily: FONT_FAMILY.title, fontSize: 104, lineHeight: 1.08, color: palette.paper }}>
+        <div style={{ display: 'flex', fontFamily: FONT_FAMILY.title, fontSize: 104, lineHeight: 1.08, color: tinta }}>
           {slide.title}
         </div>
       </div>

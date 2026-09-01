@@ -115,7 +115,7 @@ export default async function PainelDoPostPage({ params }: { params: Promise<{ i
         </Card>
       ) : (
         <div className="space-y-4">
-          <VideoMetrics insight={insight} />
+          <VideoMetrics insight={insight} mediaKind={publication.kind === 'reel' ? 'video' : 'static'} />
           {flow ? (
             <VideoFunnelCard steps={funnel} hasViews={insight?.views != null} />
           ) : (
