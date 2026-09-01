@@ -146,7 +146,7 @@ ${closing}`
     return `Crie um carrossel de imagens NOVO para ${input.persona.name}, MODELADO neste conteúdo real que JÁ PERFORMOU no nicho. Copie a INTELIGÊNCIA (estrutura, ângulo, tipo de gancho) — NÃO o texto. Reescreva tudo na voz dele, no tema dele (${input.persona.niche}).
 
 # CONTEÚDO DE REFERÊNCIA (modele isto)
-- Autor: @${molde.owner_handle ?? '?'} (${molde.plays} plays${molde.outlier !== null ? `, ${molde.outlier}× a mediana do próprio perfil` : ''})
+- Autor: @${molde.owner_handle ?? '?'} (${molde.post_type === 'Sidecar' ? `${molde.likes} curtidas` : `${molde.plays} plays`}${molde.outlier !== null ? `, ${molde.outlier}× a mediana do próprio perfil` : ''})
 - Estrutura que funcionou: ${molde.structure ?? '?'}
 - Legenda original: "${molde.caption.slice(0, CAPTION_EXCERPT)}"
 

@@ -162,14 +162,19 @@ describe('parseApifyPosts', () => {
     expect(items[0].likes).toBe(10)
   })
 
-  it('descarta o que não é vídeo', () => {
+  it('descarta foto solta, mas carrossel entra com régua própria (0025)', () => {
     const items = parseApifyPosts([
       apifyPost({ url: 'https://www.instagram.com/p/FOTO/', type: 'Image', videoPlayCount: null, videoViewCount: null }),
+      apifyPost({ url: 'https://www.instagram.com/p/CARROSSEL/', type: 'Sidecar', productType: 'carousel_container', videoPlayCount: null, videoViewCount: null, videoDuration: null }),
       apifyPost(),
     ])
 
-    expect(items).toHaveLength(1)
-    expect(items[0].postType).toBe('clips')
+    expect(items).toHaveLength(2)
+    const sidecar = items.find((item) => item.postType === 'Sidecar')
+    expect(sidecar).toBeDefined()
+    expect(sidecar?.plays).toBe(0)
+    expect(sidecar?.likes).toBe(3200)
+    expect(items.some((item) => item.postType === 'clips')).toBe(true)
   })
 
   it('trata curtida escondida (-1) como zero e legenda ausente como vazia', () => {
@@ -258,6 +263,37 @@ describe('profileMetrics', () => {
       outlier: null,
       engagement: null,
     }))
+
+  const sidecar = (id: string, likes: number) => ({
+    id,
+    post_type: 'Sidecar',
+    plays: 0,
+    likes,
+    comments: 10,
+    outlier: null,
+    engagement: null,
+  })
+
+  it('carrossel não envenena a régua de plays, e ganha a dele por curtidas', () => {
+    const rows = [...amostra([1000, 1000, 1000, 1000, 1000, 1000]), ...[800, 800, 800, 800, 800, 8000].map((v, i) => sidecar(`side-${i}`, v))]
+    const { medianPlays, medianCarouselLikes, changed } = profileMetrics(rows)
+
+    // Seis Sidecar com plays=0 derrubariam a mediana de plays a zero — a régua
+    // dos vídeos tem que continuar 1000.
+    expect(medianPlays).toBe(1000)
+    expect(medianCarouselLikes).toBe(800)
+    // O carrossel viral é outlier CONTRA A RÉGUA DELE (8000/800 = 10×).
+    expect(changed.find((row) => row.id === 'side-5')?.outlier).toBe(10)
+    // E engajamento de carrossel é nulo: não há denominador de plays.
+    expect(changed.find((row) => row.id === 'side-5')?.engagement).toBeNull()
+  })
+
+  it('carrossel com amostra pequena fica sem multiplicador, como o vídeo', () => {
+    const rows = [...amostra([1000, 1000, 1000, 1000, 1000, 1000]), sidecar('side-0', 5000)]
+    const { changed } = profileMetrics(rows)
+
+    expect(changed.find((row) => row.id === 'side-0')?.outlier ?? null).toBeNull()
+  })
 
   it('usa a mediana e ignora o viral solitário', () => {
     const { medianPlays, changed } = profileMetrics(amostra([1000, 1000, 1000, 1000, 1000, 100_000]))

@@ -161,13 +161,15 @@ export function parseApifyPosts(raw: unknown[]): ScrapedItem[] {
     const handle = post.ownerUsername?.trim().toLowerCase()
     if (!handle) continue
 
-    // Só vídeo: a biblioteca serve para modelar reel. Carrossel e foto não têm
+    // Vídeo e carrossel entram; foto solta continua fora. O carrossel ganhou
+    // régua própria (mediana de curtidas, migration 0025) — antes era descartado
     // gancho falado nem estrutura para copiar.
     const isVideo =
       post.type === 'Video' ||
       typeof post.videoPlayCount === 'number' ||
       typeof post.videoViewCount === 'number'
-    if (!isVideo) continue
+    const isSidecar = post.type === 'Sidecar'
+    if (!isVideo && !isSidecar) continue
 
     if (porUrl.has(post.url)) continue
 
@@ -176,7 +178,7 @@ export function parseApifyPosts(raw: unknown[]): ScrapedItem[] {
       ownerHandle: handle,
       // `productType` distingue reel ('clips') de vídeo de feed; o `type` só
       // diz "Video". Guardar o mais específico não custa nada e a tela filtra.
-      postType: post.productType?.trim() || post.type?.trim() || 'Video',
+      postType: isSidecar ? 'Sidecar' : post.productType?.trim() || post.type?.trim() || 'Video',
       thumbUrl: post.displayUrl?.trim() || null,
       // As DUAS contagens, sem uma cair para a outra. Num vídeo real deram
       // 4.719 views contra 112.806 plays — 24× de diferença. Preencher plays
@@ -307,6 +309,8 @@ function toNumber(value: unknown): number | null {
 
 export interface MetricRow {
   id: string
+  /** 'Sidecar' compete na régua de curtidas; o resto, na de plays. */
+  post_type?: unknown
   plays: unknown
   likes: unknown
   comments: unknown
@@ -315,8 +319,10 @@ export interface MetricRow {
 }
 
 export interface ProfileMetrics {
-  /** A régua do perfil. `null` quando não há play nenhum registrado. */
+  /** A régua dos VÍDEOS do perfil. `null` quando não há play nenhum registrado. */
   medianPlays: number | null
+  /** A régua dos CARROSSÉIS: mediana de curtidas dos Sidecar. Nula sem amostra. */
+  medianCarouselLikes: number | null
   sampleSize: number
   /** Só o que MUDOU. Reescrever linha idêntica é rede à toa. */
   changed: Array<{ id: string; outlier: number | null; engagement: number | null }>
@@ -350,7 +356,13 @@ export function profileMetrics(rows: MetricRow[]): ProfileMetrics {
    * se há amostra suficiente para afirmar um multiplicador é quem tem número,
    * não quem está na tabela.
    */
-  const plays = rows.map((row) => toNumber(row.plays) ?? 0).filter((valor) => valor > 0)
+  // Cada tipo na sua régua: Sidecar não tem play (e um play zero dele NÃO é
+  // "sem medição" — é outro esporte), e vídeo não entra na mediana de
+  // curtidas de carrossel. Misturar foi exatamente o que a porta antiga
+  // evitava descartando; agora se evita separando.
+  const videoRows = rows.filter((row) => row.post_type !== 'Sidecar')
+  const sidecarRows = rows.filter((row) => row.post_type === 'Sidecar')
+  const plays = videoRows.map((row) => toNumber(row.plays) ?? 0).filter((valor) => valor > 0)
   /**
    * Arredondado porque `tracked_profiles.median_plays` é `bigint`.
    *
@@ -372,26 +384,38 @@ export function profileMetrics(rows: MetricRow[]): ProfileMetrics {
   const medianPlays = medianaCrua === null ? null : Math.round(medianaCrua)
   const sampleSize = plays.length
 
+  // Curtida zero num Sidecar também é "sem medição" (perfil que esconde
+  // contagem), pela mesma razão do plays.
+  const carouselLikes = sidecarRows.map((row) => toNumber(row.likes) ?? 0).filter((valor) => valor > 0)
+  const carouselCrua = median(carouselLikes)
+  const medianCarouselLikes = carouselCrua === null ? null : Math.round(carouselCrua)
+  const carouselSample = carouselLikes.length
+
   const changed: ProfileMetrics['changed'] = []
 
   for (const row of rows) {
-    const outlier = outlierScore({
-      plays: toNumber(row.plays),
-      medianPlays,
-      sampleSize,
-    })
-    const engagement = engagementRate({
-      likes: toNumber(row.likes),
-      comments: toNumber(row.comments),
-      plays: toNumber(row.plays),
-    })
+    const ehSidecar = row.post_type === 'Sidecar'
+    // `outlierScore` é uma razão contra a mediana — serve às duas réguas; o
+    // que muda é o numerador e a régua, nunca a matemática.
+    const outlier = ehSidecar
+      ? outlierScore({ plays: toNumber(row.likes), medianPlays: medianCarouselLikes, sampleSize: carouselSample })
+      : outlierScore({ plays: toNumber(row.plays), medianPlays, sampleSize })
+    // Engajamento divide por plays; carrossel não tem denominador — nulo é
+    // honesto, taxa inventada não.
+    const engagement = ehSidecar
+      ? null
+      : engagementRate({
+          likes: toNumber(row.likes),
+          comments: toNumber(row.comments),
+          plays: toNumber(row.plays),
+        })
 
     if (outlier !== toNumber(row.outlier) || engagement !== toNumber(row.engagement)) {
       changed.push({ id: row.id, outlier, engagement })
     }
   }
 
-  return { medianPlays, sampleSize, changed }
+  return { medianPlays, medianCarouselLikes, sampleSize, changed }
 }
 
 // ============================================================
@@ -546,18 +570,18 @@ export async function recomputeProfileMetrics(args: {
     try {
       const { data, error } = await supabaseAdmin
         .from('library_items')
-        .select('id, plays, likes, comments, outlier, engagement')
+        .select('id, post_type, plays, likes, comments, outlier, engagement')
         .eq('account_id', args.accountId)
         .eq('profile_id', profileId)
         .limit(RECOMPUTE_LIMIT)
 
       if (error) throw new Error(error.message)
 
-      const { medianPlays, changed } = profileMetrics((data ?? []) as MetricRow[])
+      const { medianPlays, medianCarouselLikes, changed } = profileMetrics((data ?? []) as MetricRow[])
 
       const { error: profileError } = await supabaseAdmin
         .from('tracked_profiles')
-        .update({ median_plays: medianPlays })
+        .update({ median_plays: medianPlays, median_carousel_likes: medianCarouselLikes })
         .eq('id', profileId)
         .eq('account_id', args.accountId)
 

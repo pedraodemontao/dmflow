@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition, type ReactNode } from 'react'
-import { ArrowUpRight, Check, Eye, Gift, Heart, MessageCircle, Play } from 'lucide-react'
+import { ArrowUpRight, Check, Eye, Gift, Heart, Images, MessageCircle, Play } from 'lucide-react'
 
 import { setLibraryItemWatched } from '@/app/(app)/biblioteca/actions'
 import { GenerateScript } from '@/components/biblioteca/generate-script'
@@ -101,7 +101,12 @@ export function LibraryCard({
         )}
 
         <dl className="label mt-auto flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-2.5 text-[10px] text-muted tabular-nums">
-          <Metric icon={<Play className="size-3" />} label="plays" value={compact(item.plays)} />
+          {/* Carrossel não tem play — "0 plays" leria como fracasso, e é outra régua. */}
+          {item.post_type === 'Sidecar' ? (
+            <Metric icon={<Images className="size-3" />} label="formato" value="carrossel" />
+          ) : (
+            <Metric icon={<Play className="size-3" />} label="plays" value={compact(item.plays)} />
+          )}
           <Metric icon={<Heart className="size-3" />} label="curtidas" value={compact(item.likes)} />
           <Metric
             icon={<MessageCircle className="size-3" />}
