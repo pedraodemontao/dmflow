@@ -1,0 +1,180 @@
+{
+  "title": "OpenCut: repositório e instalação passo a passo",
+  "subtitle": "Material complementar do post CAP — instale a versão Classic localmente e faça seu primeiro teste.",
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "O repositório e o caminho para instalar"
+    },
+    {
+      "type": "paragraph",
+      "text": "Aqui está o material do post “CAP”: os endereços oficiais e um roteiro para rodar o OpenCut no seu computador. Você vai usar uma versão local pelo navegador e terminar com um pequeno teste de edição."
+    },
+    {
+      "type": "callout",
+      "text": "Situação conferida em 12/09/2026: o OpenCut está sendo reescrito. O próprio projeto aponta a versão Classic para uso hoje, mas ela está arquivada e sem manutenção. O desktop da reescrita ainda é um protótipo. Não conte com equivalência completa aos recursos do CapCut."
+    },
+    {
+      "type": "heading",
+      "text": "1. Guarde estes endereços"
+    },
+    {
+      "type": "quote",
+      "text": "Projeto principal: https://github.com/OpenCut-app/OpenCut\nVersão usada neste guia: https://github.com/OpenCut-app/opencut-classic\nEditor online: https://opencut.app\nInstruções oficiais: https://github.com/OpenCut-app/opencut-classic#readme"
+    },
+    {
+      "type": "paragraph",
+      "text": "Se você abriu este material no Instagram, continue no computador para executar os comandos. Copie os endereços acima para o navegador. Para experimentar primeiro sem preparar um ambiente local, abra o editor online."
+    },
+    {
+      "type": "heading",
+      "text": "2. Prepare o computador"
+    },
+    {
+      "type": "steps",
+      "items": [
+        {
+          "title": "Instale o Git",
+          "text": "Use o instalador adequado ao seu sistema em https://git-scm.com/downloads. Ele será usado para baixar o código do projeto."
+        },
+        {
+          "title": "Instale o Bun",
+          "text": "Siga a instalação oficial em https://bun.sh/docs/installation. Feche e reabra o terminal depois de instalar."
+        },
+        {
+          "title": "Instale e abra o Docker",
+          "text": "Siga https://docs.docker.com/get-started/get-docker/. Neste roteiro ele mantém os serviços locais do projeto. Aguarde o Docker iniciar antes de continuar."
+        }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "No Windows, abra o PowerShell. No macOS ou Linux, abra o Terminal. Confira se as ferramentas respondem:"
+    },
+    {
+      "type": "quote",
+      "text": "git --version\nbun --version\ndocker --version\ndocker compose version"
+    },
+    {
+      "type": "paragraph",
+      "text": "Cada linha deve retornar uma versão. Se alguma ferramenta não for encontrada, termine a instalação dela e abra outro terminal antes de avançar."
+    },
+    {
+      "type": "heading",
+      "text": "3. Baixe a versão Classic"
+    },
+    {
+      "type": "paragraph",
+      "text": "Escolha uma pasta de trabalho e execute uma linha por vez. Se você já tiver uma pasta com esse nome, use outra pasta vazia para este teste."
+    },
+    {
+      "type": "quote",
+      "text": "git clone https://github.com/OpenCut-app/opencut-classic.git\ncd opencut-classic"
+    },
+    {
+      "type": "heading",
+      "text": "4. Prepare a configuração local"
+    },
+    {
+      "type": "paragraph",
+      "text": "Execute apenas o comando do seu sistema. Ele cria a configuração a partir do exemplo fornecido pelo projeto."
+    },
+    {
+      "type": "quote",
+      "text": "# macOS ou Linux\ncp apps/web/.env.example apps/web/.env.local\n\n# Windows PowerShell\nCopy-Item apps/web/.env.example apps/web/.env.local"
+    },
+    {
+      "type": "paragraph",
+      "text": "Abra apps/web/.env.local no editor de texto. Troque o valor de BETTER_AUTH_SECRET por um segredo aleatório exclusivo. Você pode gerar um valor com o comando abaixo e colar a saída depois do sinal de igual. Guarde esse arquivo apenas localmente."
+    },
+    {
+      "type": "quote",
+      "text": "bun -e \"console.log(require('node:crypto').randomBytes(32).toString('hex'))\""
+    },
+    {
+      "type": "callout",
+      "text": "Este é um ambiente de teste local. O exemplo inclui credenciais de desenvolvimento e integrações opcionais com valores de exemplo. Recursos ligados a serviços externos podem exigir configuração adicional; não publique esse ambiente na internet como está."
+    },
+    {
+      "type": "heading",
+      "text": "5. Inicie os serviços e o editor"
+    },
+    {
+      "type": "paragraph",
+      "text": "Na pasta opencut-classic, com o Docker aberto, rode:"
+    },
+    {
+      "type": "quote",
+      "text": "docker compose up -d db redis serverless-redis-http\nbun install\nbun dev:web"
+    },
+    {
+      "type": "paragraph",
+      "text": "A primeira execução pode demorar enquanto os arquivos são baixados. Mantenha o terminal aberto e espere a mensagem de que o servidor está pronto. Depois, abra http://localhost:3000 no navegador do mesmo computador. Se o terminal indicar outra porta, use o endereço que ele mostrar."
+    },
+    {
+      "type": "heading",
+      "text": "6. Faça um teste pequeno"
+    },
+    {
+      "type": "checklist",
+      "items": [
+        "A página do editor abriu no computador.",
+        "Criei um projeto de teste e importei um vídeo curto, usando uma cópia do original.",
+        "Consegui fazer um corte e conferir a reprodução.",
+        "Testei a exportação disponível nessa versão e abri o arquivo gerado.",
+        "Confirmei os recursos de que preciso antes de usar a ferramenta em um trabalho real."
+      ]
+    },
+    {
+      "type": "paragraph",
+      "text": "Esse teste é sua validação prática. Abrir a interface não garante que todo formato de vídeo, efeito ou exportação vá funcionar no seu ambiente. Se a exportação falhar, guarde o erro e teste outro clipe curto antes de montar um projeto longo."
+    },
+    {
+      "type": "heading",
+      "text": "7. Para fechar e abrir de novo"
+    },
+    {
+      "type": "paragraph",
+      "text": "Para encerrar o servidor, pressione Ctrl+C no terminal. Para parar os serviços locais, execute docker compose stop. Na próxima vez, entre novamente na pasta do projeto e rode:"
+    },
+    {
+      "type": "quote",
+      "text": "docker compose up -d db redis serverless-redis-http\nbun dev:web"
+    },
+    {
+      "type": "heading",
+      "text": "Se aparecer um erro"
+    },
+    {
+      "type": "list",
+      "items": [
+        "“git” ou “bun” não reconhecido: confira a instalação e reabra o terminal.",
+        "Erro de conexão com o Docker: abra o aplicativo Docker e espere ele ficar pronto.",
+        "Porta ocupada: veja qual serviço já usa a porta indicada. Não encerre um banco ou serviço de outro projeto sem saber para que ele serve.",
+        "Página não abre: confirme que bun dev:web continua rodando e use o endereço exibido no terminal.",
+        "Erro de banco ou configuração: confira o arquivo .env.local e o estado dos serviços com docker compose ps.",
+        "Erro de dependência ou exportação: copie a mensagem completa e consulte o repositório. Como a versão Classic está arquivada, pode haver incompatibilidades sem correção."
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "Prompt para pedir ajuda à IA"
+    },
+    {
+      "type": "quote",
+      "text": "Estou configurando o OpenCut Classic localmente, seguindo https://github.com/OpenCut-app/opencut-classic#readme.\n\nMeu sistema operacional: [preencha].\nComando que executei: [preencha].\nMensagem de erro completa, sem senhas ou tokens: [cole aqui].\n\nLeia a documentação e diagnostique a causa antes de alterar arquivos. Confira as versões das ferramentas, a pasta atual e os serviços locais. Sugira uma correção por vez e explique como verificar o resultado. Preserve meus arquivos e outros projetos. Não exponha o ambiente na internet."
+    },
+    {
+      "type": "heading",
+      "text": "Referências e limite deste guia"
+    },
+    {
+      "type": "paragraph",
+      "text": "Comandos revisados contra o README, o package.json e o docker-compose.yml oficiais da versão Classic. A instalação não foi executada em Windows, macOS e Linux durante a preparação deste material; o resultado depende do seu ambiente e das dependências disponíveis."
+    },
+    {
+      "type": "quote",
+      "text": "Classic: https://github.com/OpenCut-app/opencut-classic\nConfiguração de exemplo: https://github.com/OpenCut-app/opencut-classic/blob/main/apps/web/.env.example\nServiços locais: https://github.com/OpenCut-app/opencut-classic/blob/main/docker-compose.yml\nEstado do desktop novo: https://github.com/OpenCut-app/OpenCut/blob/main/apps/desktop/README.md"
+    }
+  ]
+}
