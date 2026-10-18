@@ -1,0 +1,5 @@
+[mcp_servers.21st]
+url = "https://21st.dev/api/mcp"
+
+[mcp_servers.21st.http_headers]
+x-api-key = "21st_sk_afc9a7263644b3ca92c814426a65447321482bdff1be2acd7b6c57e38fe7b1f2"
